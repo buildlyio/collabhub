@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body_class %}template-homepage{% endblock %}
+
+{% block extra_css %}
+
+{% endblock extra_css %}
+
+{% block content %}
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<div class="contenedor">
+  <h4>Dashboard Report</h4>
+  <div class="contenedor">
+  <!-- Default panel contents -->
+  <h3>Report </h3>
+  <p>Status of the Hunt</p>
+    <div class='panel panel-default'>
+      <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Date Checked</th>
+        </tr>
+      </thead>
+      {% for report in getReport %}
+        <tr>
+          <th scope="row"><a href="/hunters_update/{{ report.site.id }}">{{ report.name|truncatechars:85 }}</a></th>
+          <td>{{ report.last_polled_date_time|date:"SHORT_DATE_FORMAT" }}</td>
+        </tr>
+      {% endfor %}
+      </table>
+    </div>
+  
+
+
+    <a href="/hunters/" class="btn btn-xs btn-success">Back to Hunt</a>
+  </div>
+
+</div>
+
+{% endblock content %}

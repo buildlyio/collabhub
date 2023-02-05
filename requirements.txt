@@ -1,0 +1,14 @@
+Django>=3.2,<3.3
+mysqlclient==2.1.0
+django-debug-toolbar
+django-crispy-forms
+colorful
+django_social_share
+django-allauth
+pyopenssl
+django-paypal
+sentry-sdk
+django-crontab
+celery
+redis
+django-celery-beat

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body_class %}template-homepage{% endblock %}
+
+{% block extra_css %}
+
+<link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+
+<div class="contenedor">
+  <h4>Annual Montiroing Checkout</h4>
+
+    {{ form.render }}
+
+    <a href="/monitorsites/" class="btn btn-xs btn-success">Back to Sites</a>
+</div>
+
+{% endblock content %}
