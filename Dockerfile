@@ -69,10 +69,3 @@ CMD python3 manage.py collectstatic --noinput --clear
 #   phase facilities of your hosting platform. This is used only so the
 #   instance can be started with a simple "docker run" command.
 CMD set -xe; gunicorn mysite.wsgi:application
-
-# install cron and add the crontab file
-RUN echo "*/2 * * * * cd /app && python manage.py check" | crontab -
-RUN crontab -l
-
-# run the command on container startup
-CMD cron && tail -f /var/log/cron.log
