@@ -12,3 +12,4 @@ django-crontab
 celery
 redis
 django-celery-beat
+django-bootstrap-modal-forms

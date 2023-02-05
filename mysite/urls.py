@@ -9,11 +9,12 @@ from . import views
 urlpatterns = [
     path('django-admin/', admin.site.urls),
     path('', homepage),
-    path("register", views.register_request, name="register"),
+    path("register/", views.register_request, name="register"),
     path("login", views.login_request, name="login"),
     path("logout", views.logout_request, name= "logout"),
 
     # Paypal forms
+    path("payment/", views.paypal_payment, name= "paypal_payment"),
     path('paypal/', include('paypal.standard.ipn.urls')),
     path('/paypal-return/', views.PaypalReturnView.as_view(), name='paypal-return'),
     path('/paypal-cancel/', views.PaypalCancelView.as_view(), name='paypal-cancel'),

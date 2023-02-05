@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.views.generic import TemplateView
 
 from allauth.socialaccount.forms import SignupForm
+
 class MyCustomSocialSignupForm(SignupForm):
 
     def save(self, request):
@@ -53,6 +54,29 @@ def logout_request(request):
 	logout(request)
 	messages.info(request, "You have successfully logged out.")
 	return redirect("/")
+
+from django.urls import reverse
+from django.shortcuts import render
+from paypal.standard.forms import PayPalPaymentsForm
+
+def paypal_payment(request):
+
+    # What you want the button to do.
+    paypal_dict = {
+        "business": "team@open.build",
+        "amount": "10000000.00",
+        "item_name": "DevHunter Assigned",
+        "invoice": "00001",
+        "notify_url": request.build_absolute_uri(reverse('paypal-ipn')),
+        "return": request.build_absolute_uri(reverse('paypal-return')),
+        "cancel_return": request.build_absolute_uri(reverse('paypal-cancel')),
+        "custom": "premium_plan",  # Custom command to correlate to some function later (optional)
+    }
+
+    # Create the instance.
+    form = PayPalPaymentsForm(initial=paypal_dict)
+    context = {"form": form}
+    return render(request, "payment.html", context)
 
 class PaypalReturnView(TemplateView):
     template_name = 'paypal_success.html'
