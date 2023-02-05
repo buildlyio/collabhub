@@ -22,7 +22,7 @@ class MyView(LoginRequiredMixin, View):
     login_url = '/login/'
     redirect_field_name = 'redirect_to'
 
-@login_required(login_url='/register/')
+
 def homepage(request):
     """View function for home page of site."""
 
