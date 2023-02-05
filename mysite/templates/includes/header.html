@@ -20,29 +20,27 @@
               <a href="/hunters/" class="nav-item nav-link">Your Hunts</a>
               {% endif %}
           </div>
-
-          <div class="navbar-nav">
-            <div class="nav-item">
-              {% if user.is_authenticated %}  
-              <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                  <i>Welcome, {{user.username}}</i></a>
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                  <li><a class="dropdown-item" href="/register">Account Details</a> </li>
-                  <li><a class="dropdown-item" href="/logout">Logout</a></li>
-                </ul>
+          {% if user.is_authenticated %}  
+            <div class="navbar-nav">
+              <div class="nav-item">
+                <div class="dropdown">
+                  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i>Welcome, {{user.username}}</i></a>
+                  </button>
+                  <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                    <li><a class="dropdown-item" href="/register">Account Details</a> </li>
+                    <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                  </ul>
+                </div>
               </div>
-              {% else %}
-              <a class="nav-item nav-link" href="/register">Register</a> | <a class="nav-item nav-link active" href="/login">Login</a> 
-               
-              {% endif %}
             </div>
-
-            <div>
-              &nbsp;
+            {% else %}
+            <div class="navbar-nav">
+                <a class="nav-item nav-link" href="/register">Register</a>
+                <a class="nav-item nav-link" href="/login">Login</a> 
             </div>
-          </div>
+            {% endif %}
+          
 
       </div>
   </div>
