@@ -6,13 +6,27 @@ from django.db import models
 from django.contrib import admin
 from django.utils import timezone
 
+class Level(Enum):
+    INTERN = 'Intern'
+    JUNIOR = 'Junior'
+    MIDLEVEL = 'Midlevel'
+    SENIOR = 'Senior'
+    CTO = 'CTO'
+
+LEVEL_CHOICES = (
+    (Level.INTERN.value, 'Intern'),
+    (Level.JUNIOR.value, 'Junior'),
+    (Level.MIDLEVEL.value, 'Mid-Level'),
+    (Level.SENIOR.value, 'Senior'),
+    (Level.CTO.value, 'CTO'),
+)
 
 class Hunter(models.Model):
     name = models.CharField(max_length=255, blank=True, help_text="Name your hunt, i.e. The Search for Ops Commander")
     position_title = models.CharField(max_length=255, blank=True, help_text="Title, (CTO, Front End, Back End etc.)")
     position_pay = models.CharField(max_length=255, blank=True, help_text="Pay Range")
     skills = models.CharField(max_length=255, blank=True, help_text="Top Skills")
-    level = models.CharField(max_length=255, blank=True, help_text="Skill level (Junior, Midlevel or Senior")
+    level = models.CharField(max_length=255, blank=True, choices=LEVEL_CHOICES, help_text="Skill level - Select One")
     description = models.TextField(blank=True, help_text="Describe in detail the type of person you are looking for")
     owner = models.ForeignKey('auth.User',blank=True, null=True, on_delete=models.CASCADE)
     url = models.CharField(max_length=255, null=True, blank=True, help_text="Your GitHub Profile URL")
