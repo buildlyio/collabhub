@@ -2,6 +2,8 @@ from datetime import timedelta
 from decimal import Decimal
 import uuid
 
+from enum import Enum
+
 from django.db import models
 from django.contrib import admin
 from django.utils import timezone
