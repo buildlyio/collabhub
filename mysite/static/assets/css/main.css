@@ -578,7 +578,7 @@ section {
 --------------------------------------------------------------*/
 .hero-small {
   width: 100%;
-  min-height: 20vh;
+  min-height: 15vh;
   background-size: cover;
   position: relative;
   padding: 12px 0;
