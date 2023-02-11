@@ -5,6 +5,11 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from django.views.generic import TemplateView
 
+from django.urls import reverse_lazy
+from .forms import PayPalPaymentsForm
+
+from bootstrap_modal_forms.generic import BSModalCreateView
+
 from allauth.socialaccount.forms import SignupForm
 
 class MyCustomSocialSignupForm(SignupForm):
@@ -77,6 +82,13 @@ def paypal_payment(request):
     form = PayPalPaymentsForm(initial=paypal_dict)
     context = {"form": form}
     return render(request, "payment.html", context)
+
+
+class PaypalView(BSModalCreateView):
+    template_name = 'payment.html'
+    form_class = PayPalPaymentsForm
+    success_message = 'Success: Payment was created.'
+    success_url = reverse_lazy('index')
 
 class PaypalReturnView(TemplateView):
     template_name = 'paypal_success.html'

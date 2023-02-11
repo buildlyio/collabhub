@@ -23,6 +23,21 @@ LEVEL_CHOICES = (
     (Level.CTO.value, 'CTO'),
 )
 
+class Status(Enum):
+    DRAFT = 'Draft'
+    PLANNED = 'Planned'
+    STARTED = 'Started'
+    FOUND = 'Found'
+    CANCELED = 'CANCELED'
+
+STATUS_CHOICES = (
+    (Status.DRAFT.value, 'Draft'),
+    (Status.PLANNED.value, 'Planned'),
+    (Status.STARTED.value, 'Started'),
+    (Status.FOUND.value, 'Found'),
+    (Status.CANCELED.value, 'CANCELED'),
+)
+
 class Hunter(models.Model):
     name = models.CharField(max_length=255, blank=True, help_text="Name your hunt, i.e. The Search for Ops Commander")
     position_title = models.CharField(max_length=255, blank=True, help_text="Title, (CTO, Front End, Back End etc.)")
@@ -33,7 +48,7 @@ class Hunter(models.Model):
     owner = models.ForeignKey('auth.User',blank=True, null=True, on_delete=models.CASCADE)
     url = models.CharField(max_length=255, null=True, blank=True, help_text="Your GitHub Profile URL")
     linkedin_url = models.CharField(max_length=255, null=True, blank=True, help_text="Your LinkedIn Profile URL")
-    status = models.CharField(max_length=255, blank=True, help_text="Acitivate the Hunt")
+    status = models.CharField(max_length=255, blank=True, choices=STATUS_CHOICES, help_text="Acitivate the Hunt", default="DRAFT")
     create_date = models.DateTimeField(null=True, blank=True)
     edit_date = models.DateTimeField(null=True, blank=True)
 

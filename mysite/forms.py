@@ -12,6 +12,9 @@ from django.contrib.auth.models import User
 from django.views.generic import FormView
 from paypal.standard.forms import PayPalPaymentsForm
 
+from bootstrap_modal_forms.forms import BSModalModelForm
+
+
 # User Forms
 class NewUserForm(UserCreationForm):
 	email = forms.EmailField(required=True)
@@ -27,7 +30,7 @@ class NewUserForm(UserCreationForm):
 			user.save()
 		return user
 
-class PaypalFormView(FormView):
+class PaypalFormView(BSModalModelForm):
     template_name = 'paypal_form.html'
     form_class = PayPalPaymentsForm
 

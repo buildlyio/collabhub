@@ -1,50 +1,45 @@
 {% load i18n %}
 {% load static %}
-  <!--Double navigation-->
-  <header>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <div class="container-fluid">
-      <div class="logo">
-        <a href="/">
-          <img src="{% static 'img/svg/logoDevhunter.svg' %}" width="150" class="img-fluid flex-center">
-        </a>
-      </div>
-      <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
-          <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse justify-content-between" id="navbarCollapse">
-          <div class="navbar-nav">
-              <a href="/hunters/dashboard/1" class="nav-item nav-link active">Dashboard</a>
-              {% if user.is_authenticated %} 
-              <a href="/hunter_add/" class="nav-item nav-link">Start a Hunt</a>
-              <a href="/hunters/" class="nav-item nav-link">Your Hunts</a>
-              {% endif %}
-          </div>
-          {% if user.is_authenticated %}  
-            <div class="navbar-nav">
-              <div class="nav-item">
-                <div class="dropdown">
-                  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i>Welcome, {{user.username}}</i></a>
-                  </button>
-                  <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                    <li><a class="dropdown-item" href="/register">Account Details</a> </li>
-                    <li><a class="dropdown-item" href="/logout">Logout</a></li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            {% else %}
-            <div class="navbar-nav">
-                <a class="nav-item nav-link" href="/register">Register</a>
-                <a class="nav-item nav-link" href="/login">Login</a> 
-            </div>
-            {% endif %}
-          
 
+  
+  <body class="page-index">
+  
+    <!-- ======= Header ======= -->
+    <header id="header" class="header d-flex align-items-center fixed-top">
+      <div class="container-fluid container-xl d-flex align-items-center justify-content-between">
+  
+
+        <a href="/">
+          <img src="{% static 'img/svg/logoDevhunter.svg' %}" width="250">
+        </a>
+  
+        <i class="mobile-nav-toggle mobile-nav-show bi bi-list"></i>
+        <i class="mobile-nav-toggle mobile-nav-hide d-none bi bi-x"></i>
+  
+        <nav id="navbar" class="navbar">
+          <ul>
+            <li></li><a href="/hunters/dashboard/1" class="nav-item nav-link active">Dashboard</a></li>
+            {% if user.is_authenticated %} 
+            <li></li><a href="/hunter_add/" class="nav-item nav-link">Start a Hunt</a></li>
+            <li></li><a href="/hunters/" class="nav-item nav-link">Your Hunts</a></li>
+            {% endif %}
+
+            {% if user.is_authenticated %}              <i>Welcome, {{user.username}}</i></a>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+            <li><a class="dropdown-item" href="/register">Account Details</a> </li>
+            <li><a class="dropdown-item" href="/logout">Logout</a></li>
+            </ul>
+            {% else %}
+          
+            <li><a class="nav-item nav-link" href="/register">Register</a></li>
+            <li><a class="nav-item nav-link" href="/login">Login</a></li>
+            {% endif %}
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </nav><!-- .navbar -->
+  
       </div>
-  </div>
-</nav>
-</header>
+    </header><!-- End Header -->
+
 
 

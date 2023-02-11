@@ -191,3 +191,6 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 PAYPAL_RECEIVER_EMAIL = "team@open.build"
 PAYPAL_TEST = True
+
+SITE_ID = 1
+
