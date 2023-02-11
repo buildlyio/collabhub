@@ -81,8 +81,6 @@ class HunterCreate(CreateView,LoginRequiredMixin,):
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
-        form.instance.url = form.instance.url.replace("http://","")
-        form.instance.url = form.instance.url.replace("https://","")
         form.save()
         messages.success(self.request, 'Success, Monitored Site Created!')
         return redirect('/hunters/')

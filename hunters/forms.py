@@ -36,9 +36,15 @@ class HunterForm(forms.ModelForm):
 
             HTML("""<br/>"""),
             TabHolder(
+                Tab('Position Description',
+                     Fieldset('',
+                        'name','position_title','level','skills','description','pay','status',
+                        ),
+                ),
+
                 Tab('Developer Profile',
                      Fieldset('',
-                        'name','position_title','level','skills','description','pay','url','status',
+                        'developer','certification','status',
                         ),
                 ),
             ),
