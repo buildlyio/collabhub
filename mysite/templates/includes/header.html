@@ -24,11 +24,11 @@
             <li></li><a href="/hunters/" class="nav-item nav-link">Your Hunts</a></li>
             {% endif %}
 
-            {% if user.is_authenticated %}              <i>Welcome, {{user.username}}</i></a>
-            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+            {% if user.is_authenticated %}              
+            <i>Welcome, {{user.username}}</i>
             <li><a class="dropdown-item" href="/register">Account Details</a> </li>
             <li><a class="dropdown-item" href="/logout">Logout</a></li>
-            </ul>
+            
             {% else %}
           
             <li><a class="nav-item nav-link" href="/register">Register</a></li>

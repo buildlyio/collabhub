@@ -79,8 +79,8 @@
         <div class="container-fluid">
           <div class="row h-100 justify-content-center align-items-center">
 
-            <div class="col-lg-8">
-              <div class="alert">
+            <div class="col-lg-6">
+              <div class="aler">
                 {% if messages %}
                   {% for x in messages %}
                     {{ x }}
@@ -90,6 +90,15 @@
               {% block content %}{% endblock %}
 
         </main>
+        <section id="hero-small" class="hero-small d-flex align-items-center">
+          <div class="container">
+            <div class="row">
+              <div class="col-xl-4">
+
+              </div>
+            </div>
+          </div>
+        </section><!-- End Hero Section -->
         {# Global javascript #}
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
         <script type="text/javascript" src="{% static 'js/mysite.js' %}"></script>
