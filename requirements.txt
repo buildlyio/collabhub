@@ -13,3 +13,5 @@ celery
 redis
 django-celery-beat
 django-bootstrap-modal-forms
+crispy_forms
+crispy-bootstrap5

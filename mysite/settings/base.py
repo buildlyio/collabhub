@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     # forms
     'colorful',
     'crispy_forms',
+    'crispy_bootstrap5',
     'bootstrap_modal_forms',
 
     # auth
@@ -187,7 +188,9 @@ PUPUT_AS_PLUGIN = False
 
 SECRET_KEY = "sdfgerg32gasd90uadafgjo1s2!@89u9ergj9249889"
 
-CRISPY_TEMPLATE_PACK = "bootstrap4"
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+
+CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 PAYPAL_RECEIVER_EMAIL = "team@open.build"
 PAYPAL_TEST = True
