@@ -15,7 +15,7 @@ DATABASES = {
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['lionfish-app-ufv5e.ondigitalocean.app', 'open.build', '127.0.0.1', '[::1]','devhunter.io',]
+ALLOWED_HOSTS = ['lionfish-app-ufv5e.ondigitalocean.app', 'open.build', '127.0.0.1', '[::1]','devhunter.io','www.devhunter.io']
 
 try:
     from .local import *
