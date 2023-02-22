@@ -38,14 +38,37 @@ STATUS_CHOICES = (
     (Status.CANCELED.value, 'CANCELED'),
 )
 
+class Position(models.Model):
+    name = models.CharField(max_length=255, blank=True)
+    create_date = models.DateTimeField(null=True, blank=True)
+    edit_date = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        # onsave add create date or update edit date
+        if self.create_date == None:
+            self.create_date = timezone.now()
+        self.edit_date = timezone.now()
+        super(Position, self).save(*args, **kwargs)
+
+
+class PositionAdmin(admin.ModelAdmin):
+    list_display = ('name','create_date','edit_date')
+    search_fields = ('name',)
+    list_filter = ('name',)
+    display = 'Positions'
+
 class Hunter(models.Model):
     name = models.CharField(max_length=255, blank=True, help_text="Name your hunt, i.e. The Search for Ops Commander")
-    position_title = models.CharField(max_length=255, blank=True, help_text="Title, (CTO, Front End, Back End etc.)")
+    position_title = models.ForeignKey(Position, blank=True, on_delete=models.CASCADE, help_text="Title, (CTO, Front End, Back End etc.)")
     position_pay = models.CharField(max_length=255, blank=True, help_text="Pay Range")
     skills = models.CharField(max_length=255, blank=True, help_text="Top Skills")
     level = models.CharField(max_length=255, blank=True, choices=LEVEL_CHOICES, help_text="Skill level - Select One")
     description = models.TextField(blank=True, help_text="Describe in detail the type of person you are looking for")
     certification = models.TextField(blank=True, help_text="Certifications required if any")
+    brief = models.FileField(blank=True, help_text="Document Upload")
     owner = models.ForeignKey('auth.User',blank=True, null=True, on_delete=models.CASCADE)
     url = models.CharField(max_length=255, null=True, blank=True, help_text="Your GitHub Profile URL")
     linkedin_url = models.CharField(max_length=255, null=True, blank=True, help_text="Your LinkedIn Profile URL")

@@ -10,6 +10,14 @@ from django.urls import reverse
 # Monitor Forms
 class HunterForm(forms.ModelForm):
 
+    brief = forms.FileField(
+        label="Upload a file",
+        help_text="Select a PDF or DOC file to upload.",
+        error_messages={
+            "required": "Choose a PDF or DOC file"
+        },
+    )
+
     class Meta:
         model = Hunter
         exclude = ['create_date','edit_date']
@@ -38,7 +46,7 @@ class HunterForm(forms.ModelForm):
             TabHolder(
                 Tab('Position Description',
                      Fieldset('',
-                        'name','position_title','level','skills','description','pay','status',
+                        'name','position_title','level','skills','description','brief','pay','status',
                         ),
                 ),
 

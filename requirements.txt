@@ -14,3 +14,5 @@ redis
 django-celery-beat
 django-bootstrap-modal-forms
 crispy-bootstrap5
+django-storages
+boto3

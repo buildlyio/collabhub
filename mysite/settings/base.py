@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'hunters',
 
+    'storages',
+
     # forms
     'colorful',
     'crispy_forms',
@@ -180,7 +182,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 # e.g. in notification emails. Don't include '/admin' or a trailing slash
-BASE_URL = 'https://health.open.build'
+BASE_URL = 'https://devhunter.io'
 
 LOGIN_REDIRECT_URL = '/'
 
@@ -192,7 +194,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-PAYPAL_RECEIVER_EMAIL = "team@open.build"
+PAYPAL_RECEIVER_EMAIL = "info@devhunter.io"
 PAYPAL_TEST = True
 
 SITE_ID = 1

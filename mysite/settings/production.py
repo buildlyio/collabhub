@@ -15,7 +15,7 @@ DATABASES = {
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['lionfish-app-ufv5e.ondigitalocean.app', 'open.build', '127.0.0.1', '[::1]','devhunter.io','www.devhunter.io']
+ALLOWED_HOSTS = ['lionfish-app-ufv5e.ondigitalocean.app', '127.0.0.1', '[::1]','devhunter.io','www.devhunter.io']
 
 try:
     from .local import *
@@ -45,30 +45,30 @@ sentry_sdk.init(
     # something more human-readable.
     # release="myapp@1.0.0",
 )
-CELERY_BEAT_SCHEDULE = {
-    # 'create_iclp_sensor_report': {
-    #     'task': 'sensor.services.tasks.create_iclp_sensor_report',
-    #     # execute every 15 minute with offset of 2
-    #     'schedule': crontab(minute='02,17,32,47'),
-    # },
-    'check_sites': {
-        'task': 'monitorsites.tasks.my_scheduled_job',
-        # execute every 10 minute with offset of 2
-        'schedule': crontab(minute='03,13,23,33,43,53'),
-    }
-}
-
-CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', "locahost:6379")
-#: Only add pickle to this list if your broker is secured
-#: from unwanted access (see userguide/security.html)
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_RESULT_BACKEND = 'db+sqlite:///results.sqlite'
-CELERY_TASK_SERIALIZER = 'json'
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"  # new
-DEFAULT_FROM_EMAIL = "help@open.build"
+DEFAULT_FROM_EMAIL = "help@devhunter.io"
 EMAIL_HOST = "smtp.sendgrid.net"  # new
 EMAIL_HOST_USER = "apikey"  # new
 EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_PASSWORD")  # new
 EMAIL_PORT = 587  # new
 EMAIL_USE_TLS = True  # new
+
+AWS_STORAGE_BUCKET_NAME = 'devhunter'
+AWS_ACCESS_KEY_ID = 'DO00MW9V6QPPJKVCGHYA'
+AWS_SECRET_ACCESS_KEY = os.environ.get("SPACES_SECRET")
+AWS_S3_CUSTOM_DOMAIN = 'cms-static.nyc3.digitaloceanspaces.com' + "/" + AWS_STORAGE_BUCKET_NAME
+AWS_S3_ENDPOINT_URL  = 'https://cms-static.nyc3.digitaloceanspaces.com'
+
+
+MEDIA_URL = AWS_S3_CUSTOM_DOMAIN + "/" + AWS_STORAGE_BUCKET_NAME + "/"
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+AWS_LOCATION = 'static'
+STATIC_URL = f'https://{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/{AWS_LOCATION}/'
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage'
+
+AWS_DEFAULT_ACL = 'public-read'
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = True
