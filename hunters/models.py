@@ -68,7 +68,7 @@ class Hunter(models.Model):
     level = models.CharField(max_length=255, blank=True, choices=LEVEL_CHOICES, help_text="Skill level - Select One")
     description = models.TextField(blank=True, help_text="Describe in detail the type of person you are looking for")
     certification = models.TextField(blank=True, help_text="Certifications required if any")
-    brief = models.FileField(blank=True, help_text="Document Upload")
+    brief = models.FileField(null=True, blank=True, help_text="Document Upload")
     owner = models.ForeignKey('auth.User',blank=True, null=True, on_delete=models.CASCADE)
     url = models.CharField(max_length=255, null=True, blank=True, help_text="Your GitHub Profile URL")
     linkedin_url = models.CharField(max_length=255, null=True, blank=True, help_text="Your LinkedIn Profile URL")

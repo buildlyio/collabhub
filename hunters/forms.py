@@ -13,9 +13,6 @@ class HunterForm(forms.ModelForm):
     brief = forms.FileField(
         label="Upload a file",
         help_text="Select a PDF or DOC file to upload.",
-        error_messages={
-            "required": "Choose a PDF or DOC file"
-        },
     )
 
     class Meta:
