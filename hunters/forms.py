@@ -9,8 +9,7 @@ from django.urls import reverse
 
 # Monitor Forms
 class HunterForm(forms.ModelForm):
-
-    brief = forms.FileField(
+    brief = forms.FileField(required=False,
         label="Upload a file",
         help_text="Select a PDF or DOC file to upload.",
     )
