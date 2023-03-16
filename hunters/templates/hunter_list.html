@@ -24,7 +24,7 @@
               <tr>
                 <th scope="row"><a href="/hunter_update/{{ hunt.id }}">{{ hunt.name|truncatechars:85 }}</a></th>
                 <td>{{ hunt.status|truncatechars:85 }}</td>
-                <td><a href="/report/{{ hunt.id }}" class="btn btn-xs btn-success"> HUNT REPORT </a></td>
+                <td><a href="/hunters/report/{{ hunt.id }}" class="btn btn-xs btn-success"> HUNT REPORT </a></td>
               </tr>
             {% endfor %}
             </table>

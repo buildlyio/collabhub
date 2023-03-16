@@ -41,10 +41,10 @@ def dashboard(request,pk):
 @login_required(login_url='/')
 def report(request,pk):
 
-    getReport = HunterEntry.objects.all().filter(site_id=pk)
+    getReport = HunterEntry.objects.all().filter(id=pk)
     getHunt = Hunter.objects.get(pk=pk)
 
-    return render(request, 'report.html', {'getReport': getReport,})
+    return render(request, 'report.html', {'getReport': getReport, 'id': pk})
 
 
 class HunterList(ListView,LoginRequiredMixin):

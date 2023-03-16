@@ -42,13 +42,7 @@ class HunterForm(forms.ModelForm):
             TabHolder(
                 Tab('Position Description',
                      Fieldset('',
-                        'name','position_title','level','skills','description','brief','pay','status',
-                        ),
-                ),
-
-                Tab('Developer Profile',
-                     Fieldset('',
-                        'developer','certification','status',
+                        'name','position_title','level','skills','description','brief','position_pay','status','language','location','remote'
                         ),
                 ),
             ),
