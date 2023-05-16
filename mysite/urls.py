@@ -3,37 +3,33 @@ from django.urls import include, path
 from django.contrib import admin
 
 from django.conf.urls import url
-from hunters.views import *
+from bounty.views import *
 from . import views
 
 urlpatterns = [
     path('django-admin/', admin.site.urls),
     path('', homepage),
-    path("register/", views.register_request, name="register"),
+    path("register/", views.register, name="register"),
     path("login", views.login_request, name="login"),
     path("logout", views.logout_request, name= "logout"),
-
-    # Paypal forms
-    path("payment/", views.paypal_payment, name= "paypal_payment"),
-    path('paypal/', include('paypal.standard.ipn.urls')),
-    path('/paypal-return/', views.PaypalReturnView.as_view(), name='paypal-return'),
-    path('/paypal-cancel/', views.PaypalCancelView.as_view(), name='paypal-cancel'),
-
-     path('payment2/', views.PaypalView.as_view(), name='payment2'),
+    path("edit_profile/", views.edit_profile, name="edit_profile"),
 
     path('accounts/', include('allauth.urls')),
+    path('bounty/<int:bounty_id>/submit/', submit_user_for_bounty, name='submit_user_for_bounty'),
+
 ]
 
 
 urlpatterns = urlpatterns + [
-    # Hunters
-    url(r'^hunters/dashboard/(?P<pk>\w+)/$', dashboard),
-    url(r'^hunters/report/(?P<pk>\w+)/$', report),
-    url(r'^hunters/$', HunterList.as_view(), name='hunters_list'),
+    # Bountys
+    url(r'^bounty/dashboard/(?P<pk>\w+)/$', dashboard),
+    url(r'^bounty/report/(?P<pk>\w+)/$', report),
+    url(r'^bounties/$', BountyList.as_view(), name='bountys_list'),
     # Forms
-    url(r'^hunter_add/$', HunterCreate.as_view(), name='hunters_add'),
-    url(r'^hunter_update/(?P<pk>\w+)/$', HunterUpdate.as_view(), name='hunters_update'),
-    url(r'^hunter_delete/(?P<pk>\w+)/$', HunterDelete.as_view(), name='hunters_delete'),
+    url(r'^bounty_add/$', BountyCreate.as_view(), name='bountys_add'),
+    url(r'^bounty_update/(?P<pk>\w+)/$', BountyUpdate.as_view(), name='bountys_update'),
+    url(r'^bounty_delete/(?P<pk>\w+)/$', BountyDelete.as_view(), name='bountys_delete'),
+    url(r'^bounty_detail/(?P<pk>\w+)/$', BountyDetailView.as_view(), name='bounty_detail'),
 ]
 
 if settings.DEBUG:

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+{% block page_title %}Bounty List{% endblock %}
+
+
+{% block content %}
+  <div class="container my-4">
+    <form method="get" action="{% url 'bountys_list' %}" class="mb-4">
+      <div class="input-group">
+        <input type="search" name="search_query" class="form-control" placeholder="Search for a bounty...">
+        <button type="submit" class="btn btn-primary">Search</button>
+      </div>
+    </form>
+
+    <form method="get" action="{% url 'bountys_list' %}" class="mb-4">
+      <div class="row">
+        <div class="col-md-3">
+          <div class="mb-3">
+            <label for="id_tags" class="form-label">Tags</label>
+            <input type="text" class="form-control" id="id_tags" name="tags" value="{{ request.GET.tags }}">
+          </div>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">Filter</button>
+    </form>
+    <h2>Open Bounties</h2>
+    {% if request.GET.search_query %}<div>filtered by: {{ request.GET.search_query }}</div>{% endif %}
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+      {% for bounty in object_list %}
+      <div class="col">
+        <div class="card h-100">
+          {% if bounty.screenshot.url %}
+          <a href="/bounty_detail/{{ bounty.id }}">
+          <img src="{{ bounty.screenshot.url }}" class="card-img-top" alt="{{ bounty.title }}">
+          </a>
+          {% endif %}
+          <div class="card-body">
+            <a href="/bounty_detail/{{ bounty.id }}"><h5 class="card-title">{{ bounty.title }}</h5></a>
+            <p class="card-text">{{ bounty.description }}</p>
+            <p class="card-text">Tags: {{ bounty.tags }}</p>
+            <p class="card-text">Hosting Environment: {{ bounty.hosting_environment }}</p>
+            <p class="card-text">Complexity Estimate: {{ bounty.complexity_estimate }}</p>
+            <ul class="list-group list-group-flush">
+              {% for issue in bounty.issues.all %}
+              <li class="list-group-item">
+                <h6>{{ issue.title }}</h6>
+                <p>{{ issue.description }}</p>
+                <p>Language: {{ issue.language }}</p>
+                <p>Framework: {{ issue.framework }}</p>
+                <p>Estimated Complexity: {{ issue.complexity_estimate }}</p>
+                <a href="#" class="btn btn-primary">Register to Work on this Issue</a>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+
+
+{% endblock content %}

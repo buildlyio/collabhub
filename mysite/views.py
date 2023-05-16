@@ -1,41 +1,84 @@
 from django.shortcuts import  render, redirect
-from .forms import NewUserForm
+from .forms import RegistrationForm, RegistrationUpdateForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from django.views.generic import TemplateView
-
+from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
-from .forms import PayPalPaymentsForm
 
 from bootstrap_modal_forms.generic import BSModalCreateView
 
-from allauth.socialaccount.forms import SignupForm
+from django.conf import settings
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+from django.shortcuts import render, redirect
 
-class MyCustomSocialSignupForm(SignupForm):
+from bounty.forms import BountyHunterForm, BountySetterForm
 
-    def save(self, request):
+from bounty.models import BountyHunter, BountySetter
 
-        # Ensure you call the parent class's save.
-        # .save() returns a User object.
-        user = super(MyCustomSocialSignupForm, self).save(request)
-
-        # Add your own processing here.
-
-        # You must return the original result.
-        return user
-
-def register_request(request):
-	if request.method == "POST":
-		form = NewUserForm(request.POST)
+def register(request):
+	if request.method == 'POST':
+		form = RegistrationForm(request.POST)
 		if form.is_valid():
+			# Create a new user object
 			user = form.save()
-			login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-			messages.success(request, "Registration successful." )
-			return redirect("/")
-		messages.error(request, "Unsuccessful registration. Invalid information.")
-	form = NewUserForm()
-	return render (request=request, template_name="register.html", context={"register_form":form})
+			
+			# Create a new BountyHunter or BountySetter object for the user
+			if request.POST.get('user_type') == 'bounty_hunter':
+				user.bounty_hunter = BountyHunter.objects.create(user=user)
+			else:
+				user.bounty_setter = BountySetter.objects.create(user=user)
+
+	else:
+		form = RegistrationForm()
+		
+	return render(request, 'register.html', {'form': form})
+
+
+@login_required
+def edit_profile(request):
+    if request.method == 'POST':
+        form = RegistrationUpdateForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+
+            # Get the related BountyHunter or BountySetter object
+            if hasattr(request.user, 'bountyhunter'):
+                profile = request.user.bountyhunter
+                profile_form = BountyHunterForm(request.POST, instance=profile)
+            elif hasattr(request.user, 'bountysetter'):
+                profile = request.user.bountysetter
+                profile_form = BountySetterForm(request.POST, instance=profile)
+            else:
+                # If the user doesn't have a related object, redirect to homepage
+                messages.info(request, "You have not Registered as Bounty Hunter or Searcher, please contact support.")
+                return redirect('edit_profile')
+
+            if profile_form.is_valid():
+                profile_form.save()
+                return redirect('edit_profile')
+    else:
+        form = RegistrationUpdateForm(instance=request.user)
+
+        # Get the related BountyHunter or BountySetter object
+        if hasattr(request.user, 'bountyhunter'):
+            profile = request.user.bountyhunter
+            profile_form = BountyHunterForm(instance=profile)
+        elif hasattr(request.user, 'bountysetter'):
+            profile = request.user.bountysetter
+            profile_form = BountySetterForm(instance=profile)
+        else:
+            # If the user doesn't have a related object, redirect to homepage
+            messages.info(request, "You have not Registered as Bounty Hunter or Searcher, please contact support.")
+            return redirect('/')
+
+    context = {
+        'form': form,
+    }
+    return render(request, 'register_update.html', context)
+
 
 def login_request(request):
 	if request.method == "POST":
@@ -60,38 +103,4 @@ def logout_request(request):
 	messages.info(request, "You have successfully logged out.")
 	return redirect("/")
 
-from django.urls import reverse
-from django.shortcuts import render
-from paypal.standard.forms import PayPalPaymentsForm
 
-def paypal_payment(request):
-
-    # What you want the button to do.
-    paypal_dict = {
-        "business": "team@open.build",
-        "amount": "10000000.00",
-        "item_name": "DevHunter Assigned",
-        "invoice": "00001",
-        "notify_url": request.build_absolute_uri(reverse('paypal-ipn')),
-        "return": request.build_absolute_uri(reverse('paypal-return')),
-        "cancel_return": request.build_absolute_uri(reverse('paypal-cancel')),
-        "custom": "premium_plan",  # Custom command to correlate to some function later (optional)
-    }
-
-    # Create the instance.
-    form = PayPalPaymentsForm(initial=paypal_dict)
-    context = {"form": form}
-    return render(request, "payment.html", context)
-
-
-class PaypalView(BSModalCreateView):
-    template_name = 'payment.html'
-    form_class = PayPalPaymentsForm
-    success_message = 'Success: Payment was created.'
-    success_url = reverse_lazy('index')
-
-class PaypalReturnView(TemplateView):
-    template_name = 'paypal_success.html'
-
-class PaypalCancelView(TemplateView):
-    template_name = 'paypal_cancel.html'

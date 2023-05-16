@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-8">
+      <h1>{{ bounty.title }}</h1>
+      <p><strong>Skills:</strong> {{ bounty.skills }}</p>
+      <p><strong>Level:</strong> {{ bounty.get_level_display }}</p>
+      <p><strong>Description:</strong> {{ bounty.description }}</p>
+      <p><strong>Certification:</strong> {{ bounty.certification }}</p>
+      <p><strong>Amount:</strong> {{ bounty.get_amount_display }}</p>
+      <p><strong>Issue ID:</strong> {{ bounty.issue_id }}</p>
+      <p><strong>Complexity Estimate:</strong> {{ bounty.get_complexity_estimate_display }}</p>
+      <p><strong>URL:</strong> <a href="{{ bounty.url }}">{{ bounty.url }}</a></p>
+      <p><strong>Status:</strong> {{ bounty.get_status_display }}</p>
+      <p><strong>Tags:</strong>
+        {% for tag in bounty.tags.all %}
+          <span class="badge badge-primary">{{ tag.name }}</span>
+        {% endfor %}
+      </p>
+      {% if request.user.is_authenticated and request.user.bountyhunter %}
+        <form method="post" action="{% url 'submit_user_for_bounty' bounty.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-secondary">Submit Your Profile for this Bug Bounty</button>
+        </form>
+        <br/>
+    {% endif %}
+    
+
+    </div>
+    <div class="col-md-4">
+      <h3>Issue Details</h3>
+      <p><strong>Title:</strong> {{ bounty.issue.title }}</p>
+      <p><strong>Description:</strong> {{ bounty.issue.description }}</p>
+      <p><strong>Issue Number:</strong> {{ bounty.issue.issue_number }}</p>
+      <p><strong>Priority:</strong> {{ bounty.issue.priority }}</p>
+      <p><strong>Complexity Estimate:</strong> {{ bounty.issue.complexity_estimate }}</p>
+      <p><strong>Language:</strong> {{ bounty.issue.language }}</p>
+      <p><strong>Framework:</strong> {{ bounty.issue.framework }}</p>
+      <p><strong>Hosting Environment:</strong> {{ bounty.issue.hosting_environment }}</p>
+      {% if bounty.issue.screenshot %}
+        <p><strong>Screenshot:</strong> <img src="{{ bounty.issue.screenshot.url }}" class="img-thumbnail"></p>
+      {% endif %}
+      <p><strong>Tags:</strong>
+        {% for tag in bounty.issue.tags.all %}
+          <span class="badge badge-primary">{{ tag.name }}</span>
+        {% endfor %}
+      </p>
+    </div>
+  </div>
+  <h2>Submitted Bounty Hunters</h2>
+    {% if submissions %}
+    <table class="table">
+    <thead>
+        <tr>
+        <th>Name</th>
+        <th>Skills</th>
+        <th>Experience</th>
+        <th>Status</th>
+        <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for submission in submissions %}
+        <tr>
+        <td>{{ submission.bounty_hunter.user.username }}</td>
+        <td>{{ submission.bounty_hunter.skills }}</td>
+        <td>{{ submission.bounty_hunter.experience }}</td>
+        <td>{{ submission.get_status_display }}</td>
+        <td>
+            <form method="POST" action="{% url 'bounty_detail' pk=bounty.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="selected_submission" value="{{ submission.bounty_hunter.id }}">
+            <button type="submit" class="btn btn-success">Accept</button>
+            </form>
+        </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+    {% else %}
+    <p>No submissions yet.</p>
+    {% endif %}
+  <a type="submit" class="btn btn-primary" href="/bounties">Back to Bounty List</a>
+
+</div>
+{% endblock %}

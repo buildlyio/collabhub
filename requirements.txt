@@ -16,3 +16,7 @@ django-bootstrap-modal-forms
 crispy-bootstrap5
 django-storages
 boto3
+PyGithub
+Django-filter
+Pillow
+stripe

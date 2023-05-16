@@ -1,5 +1,5 @@
-# devhunter_app
-Beta version of the DevHunter app
+# bugbounty_app
+Beta version of the BugBounty app
 
 ## Getting Started
 

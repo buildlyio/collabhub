@@ -36,7 +36,8 @@ INSTALLED_APPS = [
     'django_social_share',
     'paypal.standard.ipn',
     'django_celery_beat',
-    'hunters',
+    'django_filters',
+    'bounty',
 
     'storages',
 
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap5',
     'bootstrap_modal_forms',
+    'github',
 
     # auth
     'django.contrib.sites',
@@ -54,7 +56,6 @@ INSTALLED_APPS = [
 
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.apple',
-    'allauth.socialaccount.providers.github',
     'allauth.socialaccount.providers.gitlab',
 ]
 
@@ -182,7 +183,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 # e.g. in notification emails. Don't include '/admin' or a trailing slash
-BASE_URL = 'https://devhunter.io'
+BASE_URL = 'https://bountyhunter.io'
 
 LOGIN_REDIRECT_URL = '/'
 
@@ -194,7 +195,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-PAYPAL_RECEIVER_EMAIL = "info@devhunter.io"
+PAYPAL_RECEIVER_EMAIL = "bounty@buildly.io"
 PAYPAL_TEST = True
 
 SITE_ID = 1

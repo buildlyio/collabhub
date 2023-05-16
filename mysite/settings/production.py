@@ -5,9 +5,9 @@ from os.path import join, normpath
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'devhunter',
+        'NAME': 'bountyhunter',
         'PASSWORD': os.environ.get("PASSWORD"),
-        'USER': 'devhunter',
+        'USER': 'bountyhunter',
         'HOST': 'db-mysql-nyc3-97229-do-user-2508039-0.b.db.ondigitalocean.com',
         'PORT': '25060',
     }
@@ -15,7 +15,7 @@ DATABASES = {
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['lionfish-app-ufv5e.ondigitalocean.app', '127.0.0.1', '[::1]','devhunter.io','www.devhunter.io']
+ALLOWED_HOSTS = ['lionfish-app-ufv5e.ondigitalocean.app', '127.0.0.1', '[::1]','bountyhunter.io','www.bountyhunter.io']
 
 try:
     from .local import *
@@ -47,14 +47,14 @@ sentry_sdk.init(
 )
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"  # new
-DEFAULT_FROM_EMAIL = "help@devhunter.io"
+DEFAULT_FROM_EMAIL = "help@bountyhunter.io"
 EMAIL_HOST = "smtp.sendgrid.net"  # new
 EMAIL_HOST_USER = "apikey"  # new
 EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_PASSWORD")  # new
 EMAIL_PORT = 587  # new
 EMAIL_USE_TLS = True  # new
 
-AWS_STORAGE_BUCKET_NAME = 'devhunter'
+AWS_STORAGE_BUCKET_NAME = 'bountyhunter'
 AWS_ACCESS_KEY_ID = 'DO00MW9V6QPPJKVCGHYA'
 AWS_SECRET_ACCESS_KEY = os.environ.get("SPACES_SECRET")
 AWS_S3_CUSTOM_DOMAIN = 'cms-static.nyc3.digitaloceanspaces.com' + "/" + AWS_STORAGE_BUCKET_NAME
