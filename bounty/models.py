@@ -25,6 +25,19 @@ LEVEL_CHOICES = (
     (Level.CTO.value, 'CTO'),
 )
 
+class Complexity(Enum):
+    LOW = 'Low'
+    MEDIUM = 'Medium'
+    HIGH = 'High'
+    EXTREME = 'Extreme'
+
+COMPLEXITY_CHOICES = (
+    (Complexity.LOW.value, 'Low'),
+    (Complexity.MEDIUM.value, 'Medium'),
+    (Complexity.HIGH.value, 'High'),
+    (Complexity.EXTREME.value, 'Extreme'),
+)
+
 class Status(Enum):
     DRAFT = 'Draft'
     PLANNED = 'Planned'
@@ -87,8 +100,8 @@ class Bounty(models.Model):
     brief = models.FileField(null=True, blank=True, help_text="Document Upload")
     amount = models.CharField(max_length=255, blank=True, choices=AMOUNT_CHOICES, help_text="How Much in USD to get the work done.")
     owner = models.ForeignKey('auth.User',blank=True, null=True, on_delete=models.CASCADE)
-    issue_id = models.CharField(max_length=255, blank=True, null=True, choices=LEVEL_CHOICES, help_text="GitHub ID")
-    complexity_estimate = models.CharField(max_length=255, blank=True, null=True, choices=LEVEL_CHOICES, help_text="Difficult or Easy or not sure")
+    issue_id = models.CharField(max_length=255, blank=True, null=True, help_text="GitHub ID")
+    complexity_estimate = models.CharField(max_length=255, blank=True, null=True, choices=COMPLEXITY_CHOICES, help_text="Difficult or Easy or not sure")
     url = models.CharField(max_length=255, null=True, blank=True, help_text="Your GitHub Repository URL")
     status = models.CharField(max_length=255, blank=True, choices=STATUS_CHOICES, help_text="Acitivate the Hunt", default="DRAFT")
     repo_owner = models.CharField(max_length=100)
@@ -123,13 +136,7 @@ class BountyAdmin(admin.ModelAdmin):
 class BountySetter(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=255, blank=True, null=True)
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
-    email = models.EmailField(max_length=255, blank=True, null=True)
-    street_address = models.CharField(max_length=255, blank=True, null=True)
-    address_line2 = models.CharField(max_length=255, blank=True, null=True)
-    city = models.CharField(max_length=255, blank=True, null=True)
-    state = models.CharField(max_length=255, blank=True, null=True)
-    postal_code = models.CharField(max_length=20, blank=True, null=True)
+    email = models.EmailField(max_length=255, blank=True, null=True) 
     create_date = models.DateTimeField(null=True, blank=True)
     edit_date = models.DateTimeField(null=True, blank=True)
     
@@ -153,18 +160,8 @@ class BountySetterAdmin(admin.ModelAdmin):
 class BountyHunter(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True)
     full_name = models.CharField(max_length=255, blank=True, null=True)
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
     email = models.EmailField(max_length=255, blank=True, null=True)
-    street_address = models.CharField(max_length=255, blank=True, null=True)
-    address_line2 = models.CharField(max_length=255, blank=True, null=True)
-    city = models.CharField(max_length=255, blank=True, null=True)
-    state = models.CharField(max_length=255, blank=True, null=True)
-    postal_code = models.CharField(max_length=20, blank=True, null=True)
     github_profile = models.URLField(max_length=200, blank=True, null=True)
-    candidate_certification = models.CharField(max_length=255, blank=True)
-    candidate_resume = models.CharField(max_length=255, blank=True)
-    candidate_skills = models.CharField(max_length=255, blank=True)
-    candidate_level = models.CharField(max_length=255, blank=True)
     status = models.CharField(max_length=255, blank=True)
     create_date = models.DateTimeField(null=True, blank=True)
     edit_date = models.DateTimeField(null=True, blank=True)

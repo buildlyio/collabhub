@@ -26,7 +26,7 @@ def register(request):
 			user = form.save()
 			
 			# Create a new BountyHunter or BountySetter object for the user
-			if request.POST.get('user_type') == 'bounty_hunter':
+			if request.POST.get('is_bounty_hunter') == True:
 				user.bounty_hunter = BountyHunter.objects.create(user=user)
 			else:
 				user.bounty_setter = BountySetter.objects.create(user=user)
@@ -43,22 +43,8 @@ def edit_profile(request):
         form = RegistrationUpdateForm(request.POST, instance=request.user)
         if form.is_valid():
             form.save()
-
-            # Get the related BountyHunter or BountySetter object
-            if hasattr(request.user, 'bountyhunter'):
-                profile = request.user.bountyhunter
-                profile_form = BountyHunterForm(request.POST, instance=profile)
-            elif hasattr(request.user, 'bountysetter'):
-                profile = request.user.bountysetter
-                profile_form = BountySetterForm(request.POST, instance=profile)
-            else:
-                # If the user doesn't have a related object, redirect to homepage
-                messages.info(request, "You have not Registered as Bounty Hunter or Searcher, please contact support.")
-                return redirect('edit_profile')
-
-            if profile_form.is_valid():
-                profile_form.save()
-                return redirect('edit_profile')
+            return redirect('/')
+        messages.info(request, "You have not Registered as Bounty Hunter or Setter, please contact support.")
     else:
         form = RegistrationUpdateForm(instance=request.user)
 
@@ -71,7 +57,7 @@ def edit_profile(request):
             profile_form = BountySetterForm(instance=profile)
         else:
             # If the user doesn't have a related object, redirect to homepage
-            messages.info(request, "You have not Registered as Bounty Hunter or Searcher, please contact support.")
+            messages.info(request, "You have not Registered as Bounty Hunter or Setter, please contact support.")
             return redirect('/')
 
     context = {
