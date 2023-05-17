@@ -40,11 +40,6 @@ class RegistrationForm(UserCreationForm):
     last_name = forms.CharField(max_length=30)
     is_bounty_hunter = forms.BooleanField(required=False)
     github_profile = forms.URLField(required=False)
-    phone_number = forms.CharField(required=False)
-    street_address = forms.CharField(required=False)
-    city = forms.CharField(required=False)
-    state = forms.CharField(required=False)
-    postal_code = forms.CharField(required=False)
     
     class Meta:
         model = User
@@ -92,11 +87,6 @@ class RegistrationForm(UserCreationForm):
         else:
        
             user=user,
-            phone_number=self.cleaned_data['phone_number'],
-            street_address=self.cleaned_data['street_address'],
-            city=self.cleaned_data['city'],
-            state=self.cleaned_data['state'],
-            postal_code=self.cleaned_data['postal_code']
   
             bounty_setter = BountySetter(
                 user=user,
@@ -114,7 +104,7 @@ class RegistrationUpdateForm(UserCreationForm):
     
     class Meta:
         model = User
-        fields = ('email', 'first_name', 'last_name', 'username', 'phone_number', 'street_address', 'city', 'state', 'postal_code')
+        fields = ('email', 'first_name', 'last_name', 'username')
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
