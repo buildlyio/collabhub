@@ -15,7 +15,7 @@ DATABASES = {
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['lionfish-app-ufv5e.ondigitalocean.app', '127.0.0.1', '[::1]','bountyhunter.io','www.bountyhunter.io']
+ALLOWED_HOSTS = ['bugbounty.ondigitalocean.app', '127.0.0.1', '[::1]','bounty.buildly.io','www.bugbounty.io']
 
 try:
     from .local import *
