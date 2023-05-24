@@ -5,7 +5,7 @@ from crispy_forms.layout import Layout, Submit, Reset
 from functools import partial
 from django import forms
 from django.urls import reverse
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.contrib.auth.models import User
 
 # paypal
@@ -76,64 +76,63 @@ class RegistrationForm(UserCreationForm):
         user.last_name = self.cleaned_data['last_name']
         user.is_bounty_hunter = self.cleaned_data['is_bounty_hunter']
         user.save()
+        
         if user.is_bounty_hunter:
-            user=user,
-         
-            bounty_hunter = BountyHunter(
-                user=user,
-                github_profile=self.cleaned_data['github_profile']
-            )
-            bounty_hunter.save()
+            bounty_hunter = BountyHunter.objects.create(user=user, github_profile=self.cleaned_data['github_profile'])
         else:
-       
-            user=user,
-  
-            bounty_setter = BountySetter(
-                user=user,
-            )
-            bounty_setter.save()
+            bounty_setter = BountySetter.objects.create(user=user)
+
         return user
 
 
-class RegistrationUpdateForm(UserCreationForm):
+class RegistrationUpdateForm(UserChangeForm):
     email = forms.EmailField(required=True)
     first_name = forms.CharField(max_length=30)
     last_name = forms.CharField(max_length=30)
-    is_bounty_hunter = forms.BooleanField(required=False)
     github_profile = forms.URLField(required=False)
-    
+
     class Meta:
         model = User
-        fields = ('email', 'first_name', 'last_name', 'username')
-        
+        fields = ('email', 'first_name', 'last_name', 'username', 'github_profile')
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+        self.fields['password'].widget = forms.HiddenInput()
+
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Field('email', placeholder='Email'),
             Field('first_name', placeholder='First Name'),
             Field('last_name', placeholder='Last Name'),
-            Field('username', placeholder='username'),
+            Field('username', placeholder='Username'),
             Field('github_profile', placeholder='Github Profile URL'),
-            Submit('submit', 'Register')
+            Submit('submit', 'Update')
         )
-    
+
+        # Set initial values for is_bounty_hunter and github_profile fields
+        user = self.instance
+        if hasattr(user, 'bountyhunter'):
+            bounty_hunter = user.bountyhunter
+            self.initial['is_bounty_hunter'] = True
+            self.initial['github_profile'] = bounty_hunter.github_profile
+        else:
+            self.initial['is_bounty_hunter'] = False
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data['email']
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
-        user.is_bounty_hunter = self.cleaned_data['is_bounty_hunter']
         user.save()
-        
-        if user.is_bounty_hunter:
-            user=user,
-            bounty_hunter = BountyHunter(
-                github_profile=self.cleaned_data['github_profile'],
-            )
+
+        is_bounty_hunter = self.cleaned_data['is_bounty_hunter']
+        if is_bounty_hunter:
+            bounty_hunter, _ = BountyHunter.objects.get_or_create(user=user)
+            bounty_hunter.github_profile = self.cleaned_data['github_profile']
             bounty_hunter.save()
         else:
-            user=user,
+            BountyHunter.objects.filter(user=user).delete()
+            BountySetter.objects.get_or_create(user=user)
+
         return user

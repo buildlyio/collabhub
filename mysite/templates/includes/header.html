@@ -1,5 +1,6 @@
 {% load i18n %}
 {% load static %}
+{% load custom_filters %}
 
     <!-- ======= Top Bar ======= -->
     <section id="topbar" class="d-flex align-items-center">
@@ -31,13 +32,17 @@
         <nav id="navbar" class="navbar">
           <ul>
             {% if user.is_authenticated %} 
-            <li></li><a href="/bounty_add/" class="nav-item nav-link">Set a Bounty</a></li>
-            <li></li><a href="/bounties/" class="nav-item nav-link">Find a Bounty</a></li>
+            {% if request.user|has_bountyhunter %}
+                <li></li><a href="/bounties/" class="nav-item nav-link">Find a Bounty</a></li>
+              {% else %}
+                <li></li><a href="/bounty_add/" class="nav-item nav-link">Set a Bounty</a></li>
+                <li></li><a href="/bounties/" class="nav-item nav-link">View Bounties</a></li>
+              {% endif %}
             {% endif %}
 
             {% if user.is_authenticated %}
             <li><a class="dropdown-item" href="/edit_profile">Account Details</a> </li>
-            <li><i> &nbsp; Welcome, {{user.username}} &nbsp;</i></li>
+            <li><i> &nbsp; Welcome, {% if request.user|has_bountyhunter %} Bounty Hunter {% endif %}{{user.username}} &nbsp;</i></li>
             <li><a class="dropdown-item" href="/logout">Logout</a></li>
             {% else %}
           

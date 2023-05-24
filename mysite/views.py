@@ -13,28 +13,39 @@ from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect
+from django.db import transaction
 
 from bounty.forms import BountyHunterForm, BountySetterForm
 
 from bounty.models import BountyHunter, BountySetter
 
-def register(request):
-	if request.method == 'POST':
-		form = RegistrationForm(request.POST)
-		if form.is_valid():
-			# Create a new user object
-			user = form.save()
-			
-			# Create a new BountyHunter or BountySetter object for the user
-			if request.POST.get('is_bounty_hunter') == True:
-				user.bounty_hunter = BountyHunter.objects.create(user=user)
-			else:
-				user.bounty_setter = BountySetter.objects.create(user=user)
+from django.contrib import messages
 
-	else:
-		form = RegistrationForm()
-		
-	return render(request, 'register.html', {'form': form})
+
+def register(request):
+    form = RegistrationForm(request.POST)
+    if form.is_valid():
+        try:
+            with transaction.atomic():
+                # Create a new user object
+                user = form.save()
+
+                # Create a new BountyHunter or BountySetter object for the user
+                if request.POST.get('is_bounty_hunter') == 'True':
+                    bounty_hunter = BountyHunter.objects.create(user=user)
+                else:
+                    bounty_setter = BountySetter.objects.create(user=user)
+                
+        except Exception as e:
+            error_message = str(e)
+            form.add_error(None, error_message)  # Add the error to non-field errors
+            messages.error(request, error_message)  # Optional: Add the error to messages framework
+
+    else:
+        form = RegistrationForm()
+
+    return render(request, 'register.html', {'form': form})
+
 
 
 @login_required

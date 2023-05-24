@@ -135,8 +135,6 @@ class BountyAdmin(admin.ModelAdmin):
 
 class BountySetter(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    full_name = models.CharField(max_length=255, blank=True, null=True)
-    email = models.EmailField(max_length=255, blank=True, null=True) 
     create_date = models.DateTimeField(null=True, blank=True)
     edit_date = models.DateTimeField(null=True, blank=True)
     
@@ -152,15 +150,12 @@ class BountySetter(models.Model):
 
 
 class BountySetterAdmin(admin.ModelAdmin):
-    list_display = ('full_name','email','create_date','edit_date')
-    search_fields = ('full_name','email')
-    list_filter = ('full_name','email')
-    display = 'Bounty Setters'
+    list_display = ('user','create_date','edit_date')
+    display = 'Bounty Setters'  
+    
 
 class BountyHunter(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True)
-    full_name = models.CharField(max_length=255, blank=True, null=True)
-    email = models.EmailField(max_length=255, blank=True, null=True)
     github_profile = models.URLField(max_length=200, blank=True, null=True)
     status = models.CharField(max_length=255, blank=True)
     create_date = models.DateTimeField(null=True, blank=True)
@@ -178,10 +173,18 @@ class BountyHunter(models.Model):
 
 
 class BountyHunterAdmin(admin.ModelAdmin):
-    list_display = ('full_name','status','create_date','edit_date')
-    search_fields = ('full_name','status')
-    list_filter = ('full_name','status')
+    list_display = ('github_profile','status','create_date','edit_date')
+    search_fields = ('github_profile','status')
+    list_filter = ('github_profile','status')
     display = 'Bounty Hunters'
+    
+    def email(self, obj):
+        return obj.user.email
+    email.short_description = 'Email'
+
+    def username(self, obj):
+        return obj.user.username
+    username.short_description = 'Username'
 
 
 class BountySubmission(models.Model):
