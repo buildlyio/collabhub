@@ -5,9 +5,9 @@ from os.path import join, normpath
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'bountyhunter',
+        'NAME': 'bugbounty',
         'PASSWORD': os.environ.get("PASSWORD"),
-        'USER': 'bountyhunter',
+        'USER': 'bugbounty',
         'HOST': 'db-mysql-nyc3-97229-do-user-2508039-0.b.db.ondigitalocean.com',
         'PORT': '25060',
     }
