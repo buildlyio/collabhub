@@ -37,8 +37,8 @@
           <div class="card-body">
             <a href="/bounty_detail/{{ bounty.id }}"><h5 class="card-title">{{ bounty.title }}</h5></a>
             <p class="card-text">{{ bounty.description }}</p>
-            <p class="card-text">Tags: {{ bounty.tags }}</p>
-            <p class="card-text">Hosting Environment: {{ bounty.hosting_environment }}</p>
+            <p class="card-text">Tags: <span class="btn btn-outline-info btn-sm">{{ bounty.tags }}</span></p>
+            <p class="card-text">Bounty: <b>{{ bounty.amount }}</b></p>
             <p class="card-text">Complexity Estimate: {{ bounty.complexity_estimate }}</p>
             <ul class="list-group list-group-flush">
               {% for issue in bounty.issues.all %}
@@ -48,10 +48,13 @@
                 <p>Language: {{ issue.language }}</p>
                 <p>Framework: {{ issue.framework }}</p>
                 <p>Estimated Complexity: {{ issue.complexity_estimate }}</p>
-                <a href="#" class="btn btn-primary">Register to Work on this Issue</a>
+                
               </li>
               {% endfor %}
             </ul>
+            <div class="d-grid gap-2">
+              <a href="/bounty_detail/{{ bounty.id }}" class="btn btn-primary" type="button">Bounty Details</a>
+            </div>
           </div>
         </div>
       </div>
