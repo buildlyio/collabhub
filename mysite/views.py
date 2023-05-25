@@ -36,6 +36,10 @@ def register(request):
                 else:
                     bounty_setter = BountySetter.objects.create(user=user)
                 
+                messages.info(request, "You are now Registered, please login.")
+                redirect("/login")
+                
+                
         except Exception as e:
             error_message = str(e)
             form.add_error(None, error_message)  # Add the error to non-field errors
@@ -47,36 +51,6 @@ def register(request):
     return render(request, 'register.html', {'form': form})
 
 
-
-@login_required
-def edit_profile(request):
-    if request.method == 'POST':
-        form = RegistrationUpdateForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            return redirect('/')
-        messages.info(request, "You have not Registered as Bounty Hunter or Setter, please contact support.")
-    else:
-        form = RegistrationUpdateForm(instance=request.user)
-
-        # Get the related BountyHunter or BountySetter object
-        if hasattr(request.user, 'bountyhunter'):
-            profile = request.user.bountyhunter
-            profile_form = BountyHunterForm(instance=profile)
-        elif hasattr(request.user, 'bountysetter'):
-            profile = request.user.bountysetter
-            profile_form = BountySetterForm(instance=profile)
-        else:
-            # If the user doesn't have a related object, redirect to homepage
-            messages.info(request, "You have not Registered as Bounty Hunter or Setter, please contact support.")
-            return redirect('/')
-
-    context = {
-        'form': form,
-    }
-    return render(request, 'register_update.html', context)
-
-
 def login_request(request):
 	if request.method == "POST":
 		form = AuthenticationForm(request, data=request.POST)
@@ -86,7 +60,7 @@ def login_request(request):
 			user = authenticate(username=username, password=password)
 			if user is not None:
 				login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-				messages.info(request, f"You are now logged in as {username}.")
+				messages.info(request, "You are now logged in as {username}.")
 				return redirect("/")
 			else:
 				messages.error(request,"Invalid username or password.")
