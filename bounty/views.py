@@ -39,7 +39,7 @@ def new_bounty(request):
 
     bounty_form = NewBountyForm(request.user)
     if request.method == 'POST':
-        bounty_form = NewBountyForm(request.user, request.POST)
+        bounty_form = BountyForm(request.user, request.POST)
         if bounty_form.is_valid():
             # Create the new bounty object and associate it with the selected issue
             bounty = bounty_form.save(commit=False)

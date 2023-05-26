@@ -62,7 +62,7 @@ class BountyHunterForm(forms.ModelForm):
         super(BountyHunterForm, self).__init__(*args, **kwargs)
 
 
-class NewBountyForm(forms.ModelForm):
+class BountyForm(forms.ModelForm):
 
     class Meta:
         model = Bounty
@@ -123,61 +123,6 @@ class IssueForm(forms.ModelForm):
         fields = ['title', 'description', 'language', 'framework', 'issue_url']
         widgets = {'issue_url': forms.HiddenInput()}
 
-
-class BountyForm(forms.ModelForm):
-    # define a field for selecting the associated issue
-    issue = forms.ModelChoiceField(
-        queryset=Issue.objects.none(),
-        label='Select an issue from Github',
-        widget=forms.Select(),
-    )
-
-    class Meta:
-        model = Bounty
-        fields = ['title', 'description', 'amount', 'issue']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        # use crispy forms to set up the form layout
-        self.helper = FormHelper(self)
-        self.helper.layout = Layout(
-            Div('title', css_class='col-md-12 mb-3'),
-            Div('description', css_class='col-md-12 mb-3'),
-            Div('amount', css_class='col-md-12 mb-3'),
-            Div('issue', css_class='col-md-12 mb-3'),
-            Submit('submit', 'Create Bounty'),
-        )
-
-        # dynamically populate the issue field choices with open issues from Github
-        self.fields['issue'].queryset = self.get_open_github_issues()
-
-    def get_open_github_issues(self):
-        # get the related Bounty object's owner, repo, and access token fields
-        owner = self.instance.owner
-        repo = self.instance.repo
-        access_token = self.instance.access_token
-
-        # use the Github API to fetch open issues from the specified repository
-        url = f'https://api.github.com/repos/{owner}/{repo}/issues?state=open'
-        headers = {'Authorization': f'token {access_token}'}
-        response = requests.get(url, headers=headers)
-
-        # create Issue objects for each open issue returned from the API
-        issues = []
-        for issue_data in response.json():
-            issue, created = Issue.objects.get_or_create(
-                github_id=issue_data['id'],
-                defaults={
-                    'title': issue_data['title'],
-                    'description': issue_data['body'],
-                    'priority': 0,
-                    'complexity_estimate': 0,
-                },
-            )
-            issues.append(issue)
-
-        return issues
     
 
 from .models import BountySubmission
