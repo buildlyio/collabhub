@@ -26,13 +26,11 @@ class BountyHunterForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-
-        self.helper = FormHelper()
-        self.helper.form_method = 'post'
-        # get rid of extra keywords before calling super
         self.request = kwargs.pop('request')
         # call super to get form fields
         super(BountyHunterForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
         self.helper.form_id = 'hunter_update_form'
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-2'
@@ -66,7 +64,7 @@ class BountyForm(forms.ModelForm):
 
     class Meta:
         model = Bounty
-        fields = ('title', 'description', 'tags', 'hosting', 'complexity_estimate', 'repo',)
+        fields = ('title', 'description','skills','level','brief','amount', 'tags', 'hosting', 'complexity_estimate', 'repo',)
         
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
@@ -80,6 +78,10 @@ class BountyForm(forms.ModelForm):
                 Tab('Bounty',
                     Field('title'),
                     Field('description'),
+                    Field('skills'),
+                    Field('level'),
+                    Field('amount'),
+                    Field('brief'),
                     Field('tags'),
                     Field('hosting'),
                     Field('complexity_estimate'),
@@ -87,7 +89,7 @@ class BountyForm(forms.ModelForm):
                 ),
                 Tab('Issues',
                     Field('issue_search', css_class="form-control"),
-                    Div('issue_title', 'issue_description', 'issue_language', 'issue_framework', 'issue_github_link', css_class="search-results")
+                    Div('issue_title', 'issue_description', 'issue_language', 'issue_framework', 'issue_github_link', 'issue_screenshot')
                 ),
             ),
         )
@@ -97,6 +99,7 @@ class BountyForm(forms.ModelForm):
     issue_language = forms.CharField(required=False)
     issue_framework = forms.CharField(required=False)
     issue_github_link = forms.URLField(required=False)
+    issue_screenshot = forms.URLField(required=False)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -110,15 +113,17 @@ class BountyForm(forms.ModelForm):
             if issues:
                 issue = issues[0]
                 cleaned_data['issue_title'] = issue.title
-                cleaned_data['issue_description'] = issue.body
-                cleaned_data['issue_github_link'] = issue.html_url
+                cleaned_data['issue_description'] = issue.description
+                cleaned_data['issue_language'] = issue.language
+                cleaned_data['issue_github_link'] = issue.issue_url
+                cleaned_data['issue_screenshot'] = issue.screenshot
 
         return cleaned_data
 
 class IssueForm(forms.ModelForm):
     class Meta:
         model = Issue
-        fields = ['title', 'description', 'language', 'framework', 'issue_url']
+        fields = ['title', 'description', 'language', 'framework', 'issue_url','screenshot']
         widgets = {'issue_url': forms.HiddenInput()}
 
     

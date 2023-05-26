@@ -24,7 +24,7 @@ from django.template.loader import render_to_string
 
 
 from .models import BountyHunter, Bounty, Issue, BountySubmission, AcceptedBounty, Contract
-from .forms import BountyHunterForm, NewBountyForm, BountyForm, BountyHunterSubmissionForm
+from .forms import BountyHunterForm, BountyForm, BountyHunterSubmissionForm
 from .filters import BountyFilter, IssueFilter
 import requests
 
@@ -37,7 +37,7 @@ def new_bounty(request):
         messages.error(request, 'You do not have permission to create a new bounty.')
         return redirect('home')
 
-    bounty_form = NewBountyForm(request.user)
+    bounty_form = BountyForm(request.user)
     if request.method == 'POST':
         bounty_form = BountyForm(request.user, request.POST)
         if bounty_form.is_valid():
@@ -147,7 +147,7 @@ class BountyCreate(CreateView,LoginRequiredMixin,):
         messages.success(self.request, 'Success, Bounty Created!')
         return redirect('/bounties/')
 
-    form_class = NewBountyForm
+    form_class = BountyForm
 
 
 class BountyUpdate(UpdateView,LoginRequiredMixin,):
@@ -326,6 +326,12 @@ class BountyHunterDelete(DeleteView,LoginRequiredMixin,):
         form.save()
         messages.success(self.request, 'Success, Montior Site Deleted!')
         return redirect('/hunters/')
+    
+
+class BountyHunterDetailView(LoginRequiredMixin, DetailView):
+    model = BountyHunter
+    template_name = 'bountyhunter_detail.html'
+    context_object_name = 'bountyhunter'
 
 
 def accept_bounty(request, bounty_id, submission_id):

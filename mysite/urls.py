@@ -30,6 +30,12 @@ urlpatterns = urlpatterns + [
     url(r'^bounty_update/(?P<pk>\w+)/$', BountyUpdate.as_view(), name='bountys_update'),
     url(r'^bounty_delete/(?P<pk>\w+)/$', BountyDelete.as_view(), name='bountys_delete'),
     url(r'^bounty_detail/(?P<pk>\w+)/$', BountyDetailView.as_view(), name='bounty_detail'),
+    
+    # BountyHunterForms
+    url(r'^bountyhunter_add/$', BountyHunterCreate.as_view(), name='bountyhunter_add'),
+    url(r'^bountyhunter_update/(?P<pk>\w+)/$', BountyHunterUpdate.as_view(), name='bountyhunter_update'),
+    url(r'^bbountyhunter_delete/(?P<pk>\w+)/$', BountyHunterDelete.as_view(), name='bountyhunter_delete'),
+    url(r'^bountyhunter_detail/(?P<pk>\w+)/$', BountyHunterDetailView.as_view(), name='bountyhunter_detail'),
 ]
 
 if settings.DEBUG:
