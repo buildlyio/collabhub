@@ -2221,3 +2221,10 @@ section {
   font-size: 13px;
   color: #fff;
 }
+
+
+/* BOOTSTRAP OVERRIDES */
+
+.col-md-8 {
+  word-break: break-all;
+}

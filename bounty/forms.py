@@ -66,7 +66,7 @@ class BountyForm(forms.ModelForm):
 
     class Meta:
         model = Bounty
-        fields = ('title', 'description', 'tags', 'hosting', 'complexity_estimate', 'repo', 'repo_owner', 'repo_access_token')
+        fields = ('title', 'description', 'tags', 'hosting', 'complexity_estimate', 'repo',)
         
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
@@ -84,8 +84,6 @@ class BountyForm(forms.ModelForm):
                     Field('hosting'),
                     Field('complexity_estimate'),
                     Field('repo'),
-                    Field('repo_owner'),
-                    Field('repo_access_token'),
                 ),
                 Tab('Issues',
                     Field('issue_search', css_class="form-control"),

@@ -27,7 +27,7 @@
     {% if request.GET.search_query %}<div>filtered by: {{ request.GET.search_query }}</div>{% endif %}
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
       {% for bounty in object_list %}
-      <div class="col">
+      <div class="col col-lg-6">
         <div class="card h-100">
           {% if bounty.screenshot.url %}
           <a href="/bounty_detail/{{ bounty.id }}">
@@ -38,7 +38,7 @@
             <a href="/bounty_detail/{{ bounty.id }}"><h5 class="card-title">{{ bounty.title }}</h5></a>
             <p class="card-text">{{ bounty.description }}</p>
             <p class="card-text">Tags: <span class="btn btn-outline-info btn-sm">{{ bounty.tags }}</span></p>
-            <p class="card-text">Bounty: <b>{{ bounty.amount }}</b></p>
+            <p class="card-text">Bounty: <span class="btn btn-outline-primary btn-sm"><b>{{ bounty.get_amount_display }}</b></span></p>
             <p class="card-text">Complexity Estimate: {{ bounty.complexity_estimate }}</p>
             <ul class="list-group list-group-flush">
               {% for issue in bounty.issues.all %}
@@ -54,6 +54,9 @@
             </ul>
             <div class="d-grid gap-2">
               <a href="/bounty_detail/{{ bounty.id }}" class="btn btn-primary" type="button">Bounty Details</a>
+              {% if request.user == bounty.owner and bounty.status not in ['Started', 'Found', 'Cancelled'] %} 
+              <a href="/bounty_edit/{{ bounty.id }}" class="btn btn-info" type="button">EDIT Bounty Details</a>
+              {% endif %}
             </div>
           </div>
         </div>
