@@ -79,6 +79,67 @@
         {% endfor %}
     </tbody>
     </table>
+
+    {% if request.user is bounty.owner %}Hello!
+      {% if bounty.amount is "Small"%}
+      <script async
+        src="https://js.stripe.com/v3/buy-button.js">
+      </script>
+      
+      <stripe-buy-button
+        buy-button-id="buy_btn_1NCAGpDbhtSYlwrCtGIO9x9L"
+        publishable-key="pk_live_LLLY0VOLdioitv9tINPOFts200Wjjb8WUn"
+      >
+      </stripe-buy-button>
+
+      {% endif %}
+
+      {% if bounty.amount is "Medium"%}
+      <script async
+        src="https://js.stripe.com/v3/buy-button.js">
+      </script>
+      
+      <stripe-buy-button
+        buy-button-id="buy_btn_1NCAGpDbhtSYlwrCtGIO9x9L"
+        publishable-key="pk_live_LLLY0VOLdioitv9tINPOFts200Wjjb8WUn"
+      >
+      </stripe-buy-button>
+
+      {% endif %}
+      {% if bounty.amount is "Large"%}
+        <script async
+          src="https://js.stripe.com/v3/buy-button.js">
+        </script>
+
+        <stripe-buy-button
+          buy-button-id="buy_btn_1NCAInDbhtSYlwrC2eBM65qo"
+          publishable-key="pk_live_LLLY0VOLdioitv9tINPOFts200Wjjb8WUn"
+        >
+        </stripe-buy-button>
+        {% endif %} 
+        {% if bounty.amount is "XL"%}
+        <script async
+          src="https://js.stripe.com/v3/buy-button.js">
+        </script>
+        
+        <stripe-buy-button
+          buy-button-id="buy_btn_1NCALVDbhtSYlwrCncDl3WXl"
+          publishable-key="pk_live_LLLY0VOLdioitv9tINPOFts200Wjjb8WUn"
+        >
+        </stripe-buy-button>
+        {% endif %} 
+        {% if bounty.amount is "XXL"%}
+         <script async
+            src="https://js.stripe.com/v3/buy-button.js">
+          </script>
+          
+          <stripe-buy-button
+            buy-button-id="buy_btn_1NCAMEDbhtSYlwrCzVdm0nh8"
+            publishable-key="pk_live_LLLY0VOLdioitv9tINPOFts200Wjjb8WUn"
+          >
+          </stripe-buy-button>
+        {% endif %} 
+    {% endif %}
     {% else %}
     <p>No submissions yet.</p>
     {% endif %}

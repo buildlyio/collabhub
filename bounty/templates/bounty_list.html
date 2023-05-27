@@ -54,7 +54,7 @@
             <div class="d-grid gap-2">
               <a href="/bounty_detail/{{ bounty.id }}" class="btn btn-primary" type="button">Bounty Details</a>
               {% if request.user == bounty.owner and bounty.status != 'Started' and bounty.status != 'Found' and bounty.status != 'Cancelled' %}
-              <a href="/bounty_edit/{{ bounty.id }}" class="btn btn-info" type="button">EDIT Bounty Details</a>
+              <a href="/bounty_update/{{ bounty.id }}" class="btn btn-info" type="button">EDIT Bounty Details</a>
               {% endif %}
             </div>
           </div>

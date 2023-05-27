@@ -168,8 +168,6 @@ class BountyUpdate(UpdateView,LoginRequiredMixin,):
         return render(self.get_context_data(form=form))
 
     def form_valid(self, form):
-        form.instance.url = form.instance.url.replace("http://","")
-        form.instance.url = form.instance.url.replace("https://","")
         form.save()
         messages.success(self.request, 'Success, Bounty Updated!')
 

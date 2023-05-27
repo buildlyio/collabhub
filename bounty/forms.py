@@ -87,7 +87,7 @@ class BountyForm(forms.ModelForm):
                     Field('complexity_estimate'),
                     Field('repo'),
                 ),
-                Tab('Issues',
+                Tab('GitHub Issue',
                     Field('issue_search', css_class="form-control"),
                     Div('issue_title', 'issue_description', 'issue_language', 'issue_framework', 'issue_github_link', 'issue_screenshot')
                 ),
@@ -103,20 +103,6 @@ class BountyForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        repo = cleaned_data.get('repo')
-        repo_owner = cleaned_data.get('repo_owner')
-        repo_access_token = cleaned_data.get('repo_access_token')
-        issue_search = cleaned_data.get('issue_search')
-
-        if repo and repo_owner and repo_access_token and issue_search:
-            issues = search_issues(repo, repo_owner, repo_access_token, issue_search)
-            if issues:
-                issue = issues[0]
-                cleaned_data['issue_title'] = issue.title
-                cleaned_data['issue_description'] = issue.description
-                cleaned_data['issue_language'] = issue.language
-                cleaned_data['issue_github_link'] = issue.issue_url
-                cleaned_data['issue_screenshot'] = issue.screenshot
 
         return cleaned_data
 
