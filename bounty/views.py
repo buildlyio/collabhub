@@ -142,8 +142,25 @@ class BountyCreate(CreateView,LoginRequiredMixin,):
         return kwargs
 
     def form_valid(self, form):
+
         form.owner = self.request.user
-        form.save()
+        print("test")
+        print(form.owner)
+        print(self.request.user)
+        bounty = form.save()
+
+         # Get or create the related object (RelatedObject)
+        related_obj, _  = Issue.objects.get_or_create(bounty=bounty)
+
+        # Update the related object fields
+        related_obj.title = form.cleaned_data['issue_title']
+        related_obj.description = form.cleaned_data['issue_description']
+        related_obj.language = form.cleaned_data['issue_language']
+        related_obj.framework = form.cleaned_data['issue_framework']
+        related_obj.issue_url = form.cleaned_data['issue_github_link']
+        related_obj.screenshot = form.cleaned_data['issue_screenshot']
+        related_obj.save()
+        
         messages.success(self.request, 'Success, Bounty Created!')
         return redirect('/bounties/')
 
@@ -163,12 +180,49 @@ class BountyUpdate(UpdateView,LoginRequiredMixin,):
         kwargs['request'] = self.request
         return kwargs
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        # Retrieve the related object instance
+        bounty = self.get_object()
+
+        try:
+            related_obj = Issue.objects.get(bounty=bounty)
+            
+            # Populate the related object fields in the form
+            form.fields['issue_title'].initial = related_obj.title
+            form.fields['issue_description'].initial = related_obj.description
+            form.fields['issue_language'].initial =  related_obj.language
+            form.fields['issue_framework'].initial =  related_obj.framework
+            form.fields['issue_github_link'].initial =  related_obj.issue_url
+            form.fields['issue_screenshot'].initial  = related_obj.screenshot
+        
+        except Issue.DoesNotExist:
+            related_obj = None
+
+        
+        return form
+
     def form_invalid(self, form):
+        print("TEST")
         messages.error(self.request, 'Invalid Form', fail_silently=False)
         return render(self.get_context_data(form=form))
-
+    
     def form_valid(self, form):
-        form.save()
+        # Save the main object (Bounty)
+        bounty = form.save()
+
+        # Get or create the related object (RelatedObject)
+        related_obj, _  = Issue.objects.get_or_create(bounty=bounty)
+
+        # Update the related object fields
+        related_obj.title = form.cleaned_data['issue_title']
+        related_obj.description = form.cleaned_data['issue_description']
+        related_obj.language = form.cleaned_data['issue_language']
+        related_obj.framework = form.cleaned_data['issue_framework']
+        related_obj.issue_url = form.cleaned_data['issue_github_link']
+        related_obj.screenshot = form.cleaned_data['issue_screenshot']
+        related_obj.save()
+
         messages.success(self.request, 'Success, Bounty Updated!')
 
         return redirect('/bounties/')

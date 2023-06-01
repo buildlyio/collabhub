@@ -2228,3 +2228,7 @@ section {
 .col-md-8 {
   word-break: break-all;
 }
+
+.card-img-top {
+  max-width: 30px;
+}

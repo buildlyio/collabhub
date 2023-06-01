@@ -1,7 +1,7 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import *
 from crispy_forms.bootstrap import *
-from crispy_forms.layout import Layout, Submit, Reset
+from crispy_forms.layout import Layout, Submit, Reset, Field
 from functools import partial
 from django import forms
 from django.urls import reverse
@@ -76,11 +76,6 @@ class RegistrationForm(UserCreationForm):
         user.last_name = self.cleaned_data['last_name']
         user.is_bounty_hunter = self.cleaned_data['is_bounty_hunter']
         user.save()
-        
-        if user.is_bounty_hunter:
-            bounty_hunter = BountyHunter.objects.create(user=user, github_profile=self.cleaned_data['github_profile'])
-        else:
-            bounty_setter = BountySetter.objects.create(user=user)
 
         return user
 

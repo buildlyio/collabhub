@@ -29,17 +29,31 @@
       {% for bounty in object_list %}
       <div class="col col-lg-6">
         <div class="card h-100">
-          {% if bounty.screenshot.url %}
-          <a href="/bounty_detail/{{ bounty.id }}">
-          <img src="{{ bounty.screenshot.url }}" class="card-img-top" alt="{{ bounty.title }}">
-          </a>
-          {% endif %}
+          <div class="card-header bg-light">
+
+            {% if bounty.category == "Bug" %}
+              <a href="/bounty_detail/{{ bounty.id }}">
+                <img src="{% static 'img/bounty_logo.png' %}" class="card-img-top" alt="{{ bounty.title }}">&nbsp;&nbsp;&nbsp;<em><b>BUG</b></em>
+              </a>
+            {% else %}
+              <a href="/bounty_detail/{{ bounty.id }}">
+                <img src="{% static 'img/feature.png' %}" class="card-img-top" alt="{{ bounty.title }}">&nbsp;&nbsp;&nbsp;<em><b>FEATURE</b></em>
+              </a>
+            {% endif %}
+
+          </div>
           <div class="card-body">
             <a href="/bounty_detail/{{ bounty.id }}"><h5 class="card-title">{{ bounty.title }}</h5></a>
             <p class="card-text">{{ bounty.description }}</p>
             <p class="card-text">Tags: <span class="btn btn-outline-info btn-sm">{{ bounty.tags }}</span></p>
             <p class="card-text">Bounty: <span class="btn btn-outline-primary btn-sm"><b>{{ bounty.get_amount_display }}</b></span></p>
             <p class="card-text">Complexity Estimate: {{ bounty.complexity_estimate }}</p>
+            <p class="card-text">Status: {{ bounty.status }}</p>
+            {% if bounty.screenshot.url %}
+            <a href="/bounty_detail/{{ bounty.id }}">
+            <img src="{{ bounty.screenshot.url }}" class="screenshot-list" alt="{{ bounty.title }}"> 
+            </a>
+            {% endif %}
             <ul class="list-group list-group-flush">
               {% for issue in bounty.issues.all %}
               <li class="list-group-item">
@@ -53,7 +67,7 @@
             </ul>
             <div class="d-grid gap-2">
               <a href="/bounty_detail/{{ bounty.id }}" class="btn btn-primary" type="button">Bounty Details</a>
-              {% if request.user == bounty.owner and bounty.status != 'Started' and bounty.status != 'Found' and bounty.status != 'Cancelled' %}
+              {% if request.user == bounty.owner or user.is_staff  %}
               <a href="/bounty_update/{{ bounty.id }}" class="btn btn-info" type="button">EDIT Bounty Details</a>
               {% endif %}
             </div>

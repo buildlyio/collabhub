@@ -2,7 +2,7 @@ from .models import BountyHunter, Bounty, Issue, BountySetter
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import *
 from crispy_forms.bootstrap import *
-from crispy_forms.layout import Layout, Submit, Reset, Div
+from crispy_forms.layout import Layout, Submit, Reset, Div, HTML, Fieldset, Field
 from functools import partial
 from django import forms
 from django.urls import reverse
@@ -64,7 +64,7 @@ class BountyForm(forms.ModelForm):
 
     class Meta:
         model = Bounty
-        fields = ('title', 'description','skills','level','brief','amount', 'tags', 'hosting', 'complexity_estimate', 'repo',)
+        fields = ('title', 'description','skills','level','brief','amount', 'tags', 'hosting', 'complexity_estimate', 'repo','owner')
         
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
@@ -88,7 +88,6 @@ class BountyForm(forms.ModelForm):
                     Field('repo'),
                 ),
                 Tab('GitHub Issue',
-                    Field('issue_search', css_class="form-control"),
                     Div('issue_title', 'issue_description', 'issue_language', 'issue_framework', 'issue_github_link', 'issue_screenshot')
                 ),
             ),

@@ -92,7 +92,12 @@ class PositionAdmin(admin.ModelAdmin):
 
 
 class Bounty(models.Model):
+    CATAGORY_CHOICES = (
+        ('Bug', 'Bug'),
+        ('Feature', 'Feature')
+    )
     title = models.CharField(max_length=255, blank=True, help_text="Name your bounty, i.e. Fix Registration Error")
+    catagory = models.CharField(choices=CATAGORY_CHOICES, max_length=255, blank=True, help_text="If it is new or it works but you want to change it somehow it's a feature, otherwise it's a bug")
     skills = models.CharField(max_length=255, blank=True, help_text="Skills Required to Fix your Issue")
     level = models.CharField(max_length=255, blank=True, choices=LEVEL_CHOICES, help_text="Skill level - Select One")
     description = models.TextField(blank=True, help_text="Describe in detail the issue of person you are looking for")
@@ -134,7 +139,7 @@ class BountyAdmin(admin.ModelAdmin):
 
 
 class BountySetter(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True)
     create_date = models.DateTimeField(null=True, blank=True)
     edit_date = models.DateTimeField(null=True, blank=True)
     
@@ -223,18 +228,14 @@ class PlanAdmin(admin.ModelAdmin):
     display = 'Payment Plans'
 
 
-import requests
-import json
-
-from django.db import models
 
 class Issue(models.Model):
-    title = models.CharField(max_length=200)
-    description = models.TextField()
+    title = models.CharField(default="None", max_length=200)
+    description = models.TextField(default="None")
     issue_number = models.CharField(null=True, blank=True, max_length=200)
     issue_url = models.CharField(null=True, blank=True, max_length=500)
-    priority = models.IntegerField()
-    complexity_estimate = models.IntegerField()
+    priority = models.IntegerField(default=1)
+    complexity_estimate = models.IntegerField(default=1)
     language = models.CharField(null=True, blank=True, max_length=50)
     framework = models.CharField(null=True, blank=True, max_length=50)
     hosting_environment = models.CharField(null=True, blank=True, max_length=100)
@@ -253,7 +254,7 @@ class Issue(models.Model):
         if self.create_date == None:
             self.create_date = timezone.now()
         self.edit_date = timezone.now()
-        super(Plan, self).save(*args, **kwargs)
+        super(Issue, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.title
