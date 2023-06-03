@@ -161,6 +161,7 @@ class BountySetterAdmin(admin.ModelAdmin):
 
 class BountyHunter(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True)
+    approved = models.BooleanField(default=False)
     github_profile = models.URLField(max_length=200, blank=True, null=True)
     status = models.CharField(max_length=255, blank=True)
     create_date = models.DateTimeField(null=True, blank=True)
@@ -200,7 +201,7 @@ class BountySubmission(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.hunter.username} - {self.bounty.title}'
+        return f'{self.user.username} - {self.bounty.title}'
 
 class Plan(models.Model):
     bounty = models.ForeignKey(Bounty, null=False, on_delete=models.CASCADE)

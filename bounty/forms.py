@@ -64,7 +64,7 @@ class BountyForm(forms.ModelForm):
 
     class Meta:
         model = Bounty
-        fields = ('title', 'description','skills','level','brief','amount', 'tags', 'hosting', 'complexity_estimate', 'repo','owner')
+        fields = ('catagory','title', 'description','skills','level','brief','amount', 'tags', 'hosting', 'complexity_estimate', 'repo','owner')
         
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
@@ -76,6 +76,7 @@ class BountyForm(forms.ModelForm):
         self.helper.layout = Layout(
             TabHolder(
                 Tab('Bounty',
+                    Field('catagory'),
                     Field('title'),
                     Field('description'),
                     Field('skills'),
