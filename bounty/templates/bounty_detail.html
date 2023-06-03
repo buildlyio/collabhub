@@ -31,22 +31,18 @@
     </div>
     <div class="col-md-4">
       <h3>Issue Details</h3>
-      <p><strong>Title:</strong> {{ bounty.issue.title }}</p>
-      <p><strong>Description:</strong> {{ bounty.issue.description }}</p>
-      <p><strong>Issue Number:</strong> {{ bounty.issue.issue_number }}</p>
-      <p><strong>Priority:</strong> {{ bounty.issue.priority }}</p>
-      <p><strong>Complexity Estimate:</strong> {{ bounty.issue.complexity_estimate }}</p>
-      <p><strong>Language:</strong> {{ bounty.issue.language }}</p>
-      <p><strong>Framework:</strong> {{ bounty.issue.framework }}</p>
-      <p><strong>Hosting Environment:</strong> {{ bounty.issue.hosting_environment }}</p>
+      <p><strong>Title:</strong> {{ issue.title }}</p>
+      <p><strong>Description:</strong> {{ issue.description }}</p>
+      <p><strong>Issue Number:</strong> {{ issue.issue_number }}</p>
+      <p><strong>Issue URL:</strong> <a href="{{ issue.issue_url }}">{{ issue.issue_url }}</a></p>
+      <p><strong>Priority:</strong> {{ issue.priority }}</p>
+      <p><strong>Complexity Estimate:</strong> {{ issue.complexity_estimate }}</p>
+      <p><strong>Language:</strong> {{ issue.language }}</p>
+      <p><strong>Framework:</strong> {{ issue.framework }}</p>
+      <p><strong>Hosting Environment:</strong> {{ issue.hosting_environment }}</p>
       {% if bounty.issue.screenshot %}
-        <p><strong>Screenshot:</strong> <img src="{{ bounty.issue.screenshot.url }}" class="img-thumbnail"></p>
+        <p><strong>Screenshot:</strong> <img src="{{ issue.screenshot.url }}" class="img-thumbnail"></p>
       {% endif %}
-      <p><strong>Tags:</strong>
-        {% for tag in bounty.issue.tags.all %}
-          <span class="badge badge-primary">{{ tag.name }}</span>
-        {% endfor %}
-      </p>
     </div>
   </div>
   <h2>Submitted Bounty Hunters</h2>
@@ -68,6 +64,7 @@
         <td>{{ submission.bounty_hunter.skills }}</td>
         <td>{{ submission.bounty_hunter.experience }}</td>
         <td>{{ submission.get_status_display }}</td>
+        {% if request.user is bounty.owner %}
         <td>
             <form method="POST" action="{% url 'bounty_detail' pk=bounty.id %}">
             {% csrf_token %}
@@ -75,6 +72,7 @@
             <button type="submit" class="btn btn-success">Accept</button>
             </form>
         </td>
+        {% endif %}
         </tr>
         {% endfor %}
     </tbody>

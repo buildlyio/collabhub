@@ -84,11 +84,12 @@ class RegistrationUpdateForm(UserChangeForm):
     email = forms.EmailField(required=True)
     first_name = forms.CharField(max_length=30)
     last_name = forms.CharField(max_length=30)
+    is_bounty_hunter = forms.BooleanField(required=False)
     github_profile = forms.URLField(required=False)
 
     class Meta:
         model = User
-        fields = ('email', 'first_name', 'last_name', 'username', 'github_profile')
+        fields = ('email', 'first_name', 'last_name', 'username', 'is_bounty_hunter', 'github_profile')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

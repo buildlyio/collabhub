@@ -143,11 +143,9 @@ class BountyCreate(CreateView,LoginRequiredMixin,):
 
     def form_valid(self, form):
 
-        form.owner = self.request.user
-        print("test")
-        print(form.owner)
-        print(self.request.user)
-        bounty = form.save()
+        bounty = form.save(commit=False)
+        bounty.owner = self.request.user
+        bounty.save()
 
          # Get or create the related object (RelatedObject)
         related_obj, _  = Issue.objects.get_or_create(bounty=bounty)
@@ -257,6 +255,8 @@ class BountyDetailView(LoginRequiredMixin, DetailView):
         context['form'] = BountyHunterSubmissionForm()
         context['num_submissions'] = self.get_num_submissions()
         context['submissions'] = self.get_submissions()
+        issue = self.object.issue_set.first()  # Get the related Issue object
+        context['issue'] = issue
         return context
 
     def get_num_submissions(self):

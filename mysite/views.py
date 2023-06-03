@@ -55,10 +55,25 @@ def register(request):
 def edit_profile(request):
     if request.method == 'POST':
         form = RegistrationUpdateForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            return redirect('/')
-        messages.info(request, "You have not Registered as Bounty Hunter or Setter, please contact support.")
+        try:
+            with transaction.atomic():
+                # Create a new user object
+                user = form.save()
+
+                # Create a new BountyHunter or BountySetter object for the user
+                if request.POST.get('is_bounty_hunter') == 'True':
+                    bounty_hunter, created = BountyHunter.objects.get_or_create(user=user)
+                else:
+                    bounty_setter, created = BountySetter.objects.get_or_create(user=user)
+                
+                messages.info(request, "Your Profile has been updated.")
+                redirect("/login")
+                
+                
+        except Exception as e:
+            error_message = str(e)
+            form.add_error(None, error_message)  # Add the error to non-field errors
+            messages.error(request, error_message)  # Optional: Add the error to messages framework
     else:
         form = RegistrationUpdateForm(instance=request.user)
 
