@@ -1,4 +1,4 @@
-from .models import BountyHunter, Bounty, Issue, BountySetter
+from .models import BountyHunter, Bounty, Issue, BountySetter, Bug
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import *
 from crispy_forms.bootstrap import *
@@ -144,3 +144,16 @@ class BountySetterForm(forms.ModelForm):
     class Meta:
         model = BountySetter
         fields = '__all__'
+
+
+
+class BugForm(forms.ModelForm):
+    class Meta:
+        model = Bug
+        fields = ['url', 'notes', 'error_message', 'severity', 'name', 'email', 'description', 'steps_to_reproduce', 'screenshots']
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.add_input(Submit('submit', 'Submit'))

@@ -36,6 +36,9 @@ urlpatterns = urlpatterns + [
     url(r'^bountyhunter_update/(?P<pk>\w+)/$', BountyHunterUpdate.as_view(), name='bountyhunter_update'),
     url(r'^bbountyhunter_delete/(?P<pk>\w+)/$', BountyHunterDelete.as_view(), name='bountyhunter_delete'),
     url(r'^bountyhunter_detail/(?P<pk>\w+)/$', BountyHunterDetailView.as_view(), name='bountyhunter_detail'),
+    
+    # UserSubmittedBug
+    url(r'^bug_add/$', BugCreateView.as_view(), name='bug_add'),
 ]
 
 if settings.DEBUG:

@@ -23,7 +23,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 
 
-from .models import BountyHunter, Bounty, Issue, BountySubmission, AcceptedBounty, Contract
+from .models import BountyHunter, Bounty, Issue, BountySubmission, AcceptedBounty, Contract, Bug
 from .forms import BountyHunterForm, BountyForm, BountyHunterSubmissionForm
 from .filters import BountyFilter, IssueFilter
 import requests
@@ -417,9 +417,11 @@ def accept_bounty(request, bounty_id, submission_id):
     messages.success(request, "Bounty accepted!")
     return redirect(reverse_lazy("accepted_bounty_detail", kwargs={"pk": accepted_bounty.pk}))
 
+
 class AcceptedBountyDetailView(LoginRequiredMixin, DetailView):
     model = AcceptedBounty
     template_name = "accepted_bounty_detail.html"
+
 
 class CreateContractView(LoginRequiredMixin, CreateView):
     model = Contract
@@ -436,3 +438,9 @@ class CreateContractView(LoginRequiredMixin, CreateView):
         contract = form.save(commit=False)
         contract.owner = self.request.user
         contract.bounty_hunter = accepted_bounty.bounty
+
+
+class BugCreateView(CreateView):
+    model = Bug
+    fields = ['url', 'notes', 'error_message', 'severity', 'name', 'email']
+    success_url = reverse_lazy('bug_submit_success')

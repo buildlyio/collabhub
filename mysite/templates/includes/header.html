@@ -45,7 +45,7 @@
             <li><i> &nbsp; Welcome, {% if request.user|has_bountyhunter %} Bounty Hunter {% endif %}{{user.username}} &nbsp;</i></li>
             <li><a class="dropdown-item" href="/logout">Logout</a></li>
             {% else %}
-          
+            <li><a class="nav-item nav-link" href="/bug_add">Submit a Bug</a></li>
             <li><a class="nav-item nav-link" href="/register">Register</a></li>
             <li><a class="nav-item nav-link" href="/login">Login</a></li>
             {% endif %}

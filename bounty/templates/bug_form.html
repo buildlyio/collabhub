@@ -1,0 +1,26 @@
+{% load crispy_forms_tags %}
+
+<form method="post" action="{% url 'bug_create' %}">
+    {% csrf_token %}
+    {{ form|crispy }}
+
+    <h3>Additional Information</h3>
+    <p>Please provide as much detail as possible about the bug you found:</p>
+
+    <div class="form-group">
+        <label>Description</label>
+        {{ form.description|as_crispy_field }}
+    </div>
+
+    <div class="form-group">
+        <label>Steps to Reproduce</label>
+        {{ form.steps_to_reproduce|as_crispy_field }}
+    </div>
+
+    <div class="form-group">
+        <label>Screenshots</label>
+        {{ form.screenshots|as_crispy_field }}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>

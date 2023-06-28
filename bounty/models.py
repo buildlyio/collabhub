@@ -91,6 +91,29 @@ class PositionAdmin(admin.ModelAdmin):
     display = 'Positions'
 
 
+class Bug(models.Model):
+    SEVERITY_CHOICES = [
+        ('Low', 'Low'),
+        ('Medium', 'Medium'),
+        ('High', 'High'),
+    ]
+
+    url = models.URLField()
+    notes = models.TextField()
+    error_message = models.TextField()
+    severity = models.CharField(max_length=10, choices=SEVERITY_CHOICES)
+    name = models.CharField(max_length=255)
+    email = models.EmailField()
+    description = models.TextField()
+    steps_to_reproduce = models.TextField()
+    screenshots = models.ImageField(upload_to='bug_screenshots', blank=True)
+    is_user_submitted = models.BooleanField(default=True)
+    is_approved = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.url
+
+
 class Bounty(models.Model):
     CATAGORY_CHOICES = (
         ('Bug', 'Bug'),
