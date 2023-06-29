@@ -13,7 +13,7 @@ DATABASES = {
     }
 }
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['bugbounty-gftbt.ondigitalocean.app', '127.0.0.1', '[::1]','bounty.buildly.io','www.bugbounty.io']
 
@@ -70,5 +70,3 @@ STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage'
 
 AWS_DEFAULT_ACL = 'public-read'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
