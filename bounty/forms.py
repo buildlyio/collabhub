@@ -1,4 +1,4 @@
-from .models import BountyHunter, Bounty, Issue, BountySetter, Bug
+from .models import BountyHunter, Bounty, Issue, BountySetter, Bug, DevelopmentAgency
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import *
 from crispy_forms.bootstrap import *
@@ -156,6 +156,21 @@ class BugForm(forms.ModelForm):
         model = Bug
         fields = ['url', 'notes', 'error_message', 'severity', 'name', 'email', 'description', 'steps_to_reproduce', 'screenshots']
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.add_input(Submit('submit', 'Submit'))
+        
+
+
+class DevelopmentAgencyForm(forms.ModelForm):
+    terms_and_conditions = forms.BooleanField(label='I accept the terms and conditions', required=True)
+
+    class Meta:
+        model = DevelopmentAgency
+        fields = ['agency_name', 'team_size', 'skills', 'background', 'hourly_rate', 'project_rate', 'industries_worked', 'github_repository', 'contact_name', 'contact_email', 'contact_phone', 'linkedin_url', 'how_they_found_us', 'terms_and_conditions']
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()

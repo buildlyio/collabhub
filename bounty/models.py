@@ -315,3 +315,29 @@ class Contract(models.Model):
 
     def __str__(self):
         return f"{self.bounty} - {self.accepted_bounty.owner.username} - {self.accepted_bounty.bounty_hunter.username}"
+
+
+class DevelopmentAgency(models.Model):
+    INDUSTRY_CHOICES = [
+        ('Technology', 'Technology'),
+        ('Finance', 'Finance'),
+        ('Healthcare', 'Healthcare'),
+        # Add more industry choices as needed
+    ]
+
+    agency_name = models.CharField(max_length=255, unique=True)
+    team_size = models.PositiveIntegerField()
+    skills = models.TextField()
+    background = models.TextField()
+    hourly_rate = models.DecimalField(max_digits=8, decimal_places=2)
+    project_rate = models.DecimalField(max_digits=10, decimal_places=2)
+    industries_worked = models.CharField(max_length=255, choices=INDUSTRY_CHOICES)
+    github_repository = models.URLField()
+    contact_name = models.CharField(max_length=255)
+    contact_email = models.EmailField()
+    contact_phone = models.CharField(max_length=20)
+    linkedin_url = models.URLField()
+    how_they_found_us = models.TextField()
+
+    def __str__(self):
+        return self.agency_name

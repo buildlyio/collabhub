@@ -39,6 +39,9 @@ urlpatterns = urlpatterns + [
     
     # UserSubmittedBug
     url(r'^bug_add/$', BugCreateView.as_view(), name='bug_add'),
+    
+    # Agency
+    url(r'^agency_add/$', DevelopmentAgencyCreateView.as_view(), name='agency_add'),
 ]
 
 if settings.DEBUG:

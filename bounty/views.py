@@ -478,3 +478,22 @@ class BugCreateView(CreateView):
         else:
             messages.error(self.request, 'Sorry, that bug or one similar was found in our system already or is invalid.', fail_silently=False)
             return render(self.request, self.template_name, {'form': form})
+
+
+from .forms import DevelopmentAgencyForm
+from .models import DevelopmentAgency
+
+class DevelopmentAgencyCreateView(CreateView):
+    model = DevelopmentAgency
+    form_class = DevelopmentAgencyForm
+    template_name = 'agency_form.html'
+    success_url = '/'  # Replace with the desired URL
+
+    def form_valid(self, form):
+        agency_name = form.cleaned_data['agency_name']
+
+        if DevelopmentAgency.objects.filter(agency_name=agency_name).exists():
+            error_message = "An agency with the same name already exists."
+            return render(self.request, self.template_name, {'form': form, 'error_message': error_message})
+        
+        return super().form_valid(form)
