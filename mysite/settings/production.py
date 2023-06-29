@@ -15,7 +15,7 @@ DATABASES = {
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['bugbounty-gftbt.ondigitalocean.app', '127.0.0.1', '[::1]','bounty.buildly.io','www.bugbounty.io']
+ALLOWED_HOSTS = ['bugbounty-gftbt.ondigitalocean.app', '127.0.0.1', '[::1]','bounty.buildly.io','www.bugbounty.io','market.buildly.io']
 
 try:
     from .local import *
