@@ -24,7 +24,7 @@ from django.template.loader import render_to_string
 
 
 from .models import BountyHunter, Bounty, Issue, BountySubmission, AcceptedBounty, Contract, Bug
-from .forms import BountyHunterForm, BountyForm, BountyHunterSubmissionForm
+from .forms import BountyHunterForm, BountyForm, BountyHunterSubmissionForm, BugForm
 from .filters import BountyFilter, IssueFilter
 import requests
 
@@ -466,6 +466,7 @@ def check_validity(url, description):
 
 class BugCreateView(CreateView):
     model = Bug
+    form_class = BugForm
     template_name = 'bug_form.html'
     fields = ['url', 'notes', 'error_message', 'severity', 'name', 'email']
     success_url = '/'  # Replace with the desired URL
@@ -479,7 +480,7 @@ class BugCreateView(CreateView):
         else:
             messages.error(self.request, 'Sorry, that bug or one similar was found in our system already or is invalid.', fail_silently=False)
             return render(self.request, self.template_name, {'form': form})
-
+        return super().form_valid(form)
 
 from .forms import DevelopmentAgencyForm
 from .models import DevelopmentAgency
