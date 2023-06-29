@@ -114,6 +114,12 @@ class Bug(models.Model):
         return self.url
 
 
+class BugAdmin(admin.ModelAdmin):
+    list_display = ('url','name')
+    search_fields = ('url','name')
+    list_filter = ('url','name')
+    display = 'User Submitted Bugs'
+
 class Bounty(models.Model):
     CATAGORY_CHOICES = (
         ('Bug', 'Bug'),
@@ -341,3 +347,9 @@ class DevelopmentAgency(models.Model):
 
     def __str__(self):
         return self.agency_name
+
+class DevelopmentAgencyAdmin(admin.ModelAdmin):
+    list_display = ('agency_name','contact_email')
+    search_fields = ('agency_name','contact_email')
+    list_filter = ('agency_name','contact_email')
+    display = 'Agencies'

@@ -9,8 +9,8 @@
     {% csrf_token %}
     {{ form|crispy }}
 
-    <h3>Additional Information</h3>
-    <p>Please provide as much detail as possible about the agency:</p>
+    <h3>Additional Contact Information</h3>
+    <p>Please provide a contact person for the agency:</p>
 
     <div class="form-group">
         <label for="{{ form.contact_name.id_for_label }}">Contact Name</label>
@@ -22,20 +22,12 @@
         {{ form.contact_email|as_crispy_field }}
     </div>
 
-    <div class="form-group">
-        <label for="{{ form.contact_phone.id_for_label }}">Contact Phone</label>
-        {{ form.contact_phone|as_crispy_field }}
-    </div>
 
     <div class="form-group">
         <label for="{{ form.linkedin_url.id_for_label }}">LinkedIn URL</label>
         {{ form.linkedin_url|as_crispy_field }}
     </div>
 
-    <div class="form-group">
-        <label for="{{ form.how_they_found_us.id_for_label }}">How did you find us?</label>
-        {{ form.how_they_found_us|as_crispy_field }}
-    </div>
 
     <div class="form-group">
         <label for="{{ form.terms_and_conditions.id_for_label }}">Terms and Conditions</label>

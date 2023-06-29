@@ -165,11 +165,10 @@ class BugForm(forms.ModelForm):
 
 
 class DevelopmentAgencyForm(forms.ModelForm):
-    terms_and_conditions = forms.BooleanField(label='I accept the terms and conditions', required=True)
 
     class Meta:
         model = DevelopmentAgency
-        fields = ['agency_name', 'team_size', 'skills', 'background', 'hourly_rate', 'project_rate', 'industries_worked', 'github_repository', 'contact_name', 'contact_email', 'contact_phone', 'linkedin_url', 'how_they_found_us', 'terms_and_conditions']
+        fields = ['agency_name', 'team_size', 'skills', 'background', 'hourly_rate', 'project_rate', 'industries_worked', 'github_repository', 'contact_name', 'contact_email', 'contact_phone', 'linkedin_url', 'how_they_found_us',]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
