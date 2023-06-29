@@ -148,6 +148,10 @@ class BountySetterForm(forms.ModelForm):
 
 
 class BugForm(forms.ModelForm):
+    description = forms.CharField(widget=forms.Textarea)
+    steps_to_reproduce = forms.CharField(widget=forms.Textarea)
+    screenshots = forms.ImageField(required=False)
+    
     class Meta:
         model = Bug
         fields = ['url', 'notes', 'error_message', 'severity', 'name', 'email', 'description', 'steps_to_reproduce', 'screenshots']

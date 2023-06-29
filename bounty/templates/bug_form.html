@@ -1,26 +1,32 @@
+{% extends "base.html" %}
 {% load crispy_forms_tags %}
 
-<form method="post" action="{% url 'bug_create' %}">
+{% block content %}
+<form method="post" action="{% url 'bug_add' %}">
+    <h3>Submit a bug to be Reviewed</h3>
+    <p>Submit a bug from one of our partner sites, or any site and we will help set up a bounty and give you credit for finding it, and inquire about a finders fee for you:</p>
     {% csrf_token %}
     {{ form|crispy }}
+
 
     <h3>Additional Information</h3>
     <p>Please provide as much detail as possible about the bug you found:</p>
 
     <div class="form-group">
-        <label>Description</label>
-        {{ form.description|as_crispy_field }}
+        <label for="id_description">Description</label>
+        <textarea id="id_description" name="description" class="form-control"></textarea>
     </div>
 
     <div class="form-group">
-        <label>Steps to Reproduce</label>
-        {{ form.steps_to_reproduce|as_crispy_field }}
+        <label for="id_steps_to_reproduce">Steps to Reproduce</label>
+        <textarea id="id_steps_to_reproduce" name="steps_to_reproduce" class="form-control"></textarea>
     </div>
 
     <div class="form-group">
-        <label>Screenshots</label>
-        {{ form.screenshots|as_crispy_field }}
+        <label for="id_screenshots">Screenshots</label>
+        <input type="file" id="id_screenshots" name="screenshots" class="form-control-file">
     </div>
 
     <button type="submit" class="btn btn-primary">Submit</button>
 </form>
+{% endblock %}

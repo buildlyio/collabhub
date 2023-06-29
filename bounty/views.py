@@ -439,8 +439,42 @@ class CreateContractView(LoginRequiredMixin, CreateView):
         contract.owner = self.request.user
         contract.bounty_hunter = accepted_bounty.bounty
 
+import re
+from difflib import SequenceMatcher
+
+def similar_text(a, b):
+    return SequenceMatcher(None, a, b).ratio()
+
+def check_validity(url, description):
+    # Check if URL is valid
+    url_pattern = r'^(http|https)://'
+    if not re.match(url_pattern, url):
+        return False
+
+    # Check if bug description is valid
+    if len(description.strip()) < 10:  # Example: Description should be at least 10 characters long
+        return False
+
+    # Compare with existing bugs to check for similarity
+    existing_bugs = Bug.objects.all()  # Assuming you have a Bug model defined
+    
+    for bug in existing_bugs:
+        if similar_text(bug.url, url) > 0.8 or similar_text(bug.description, description) > 0.8:
+            return False  # A similar bug already exists in the system
+    
+    return True
 
 class BugCreateView(CreateView):
     model = Bug
+    template_name = 'bug_form.html'
     fields = ['url', 'notes', 'error_message', 'severity', 'name', 'email']
-    success_url = reverse_lazy('bug_submit_success')
+    
+    def form_valid(self, form):
+        check = check_validity(form.instance.url, form.instance.notes)
+        if check is True:
+            form.save()
+            messages.success(self.request, 'Success, Your Bug has been Submitted!')
+            return render(self.request, self.template_name)
+        else:
+            messages.error(self.request, 'Sorry, that bug or one similar was found in our system already or is invalid.', fail_silently=False)
+            return render(self.request, self.template_name, {'form': form})
