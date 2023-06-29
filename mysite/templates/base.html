@@ -40,6 +40,14 @@
           {% include "includes/header.html" %}
 
           {% if request.path == '/' %}
+            <div class="col-lg-6">
+              <div class="alert">
+                {% if messages %}
+                  {% for x in messages %}
+                    {{ x }}
+                  {% endfor %}
+                {% endif %}
+            </div>
           <!-- ======= Hero Section ======= -->
 
           {% else %}
