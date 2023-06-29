@@ -468,13 +468,14 @@ class BugCreateView(CreateView):
     model = Bug
     template_name = 'bug_form.html'
     fields = ['url', 'notes', 'error_message', 'severity', 'name', 'email']
+    success_url = '/'  # Replace with the desired URL
     
     def form_valid(self, form):
         check = check_validity(form.instance.url, form.instance.notes)
         if check is True:
             form.save()
             messages.success(self.request, 'Success, Your Bug has been Submitted!')
-            return render(self.request, self.template_name)
+
         else:
             messages.error(self.request, 'Sorry, that bug or one similar was found in our system already or is invalid.', fail_silently=False)
             return render(self.request, self.template_name, {'form': form})
