@@ -466,7 +466,6 @@ def check_validity(url, description):
 
 class BugCreateView(CreateView):
     model = Bug
-    form_class = BugForm
     template_name = 'bug_form.html'
     fields = ['url', 'notes', 'error_message', 'severity', 'name', 'email']
     success_url = '/'  # Replace with the desired URL
