@@ -5,6 +5,13 @@
 
 {% block content %}
   <div class="container my-4">
+    <!-- Header Section -->
+  <header style="text-align: center; padding: 20px;">
+    <div style="display: flex; justify-content: center; align-items: center;">
+      <img src="{% static 'img/6.png' %}" alt="Centered Image" style="max-width: 400px;">
+      <h1 style="margin-left: 20px;">Find an <b>Open Bounty</b> to Participate</h1>
+    </div>
+  </header>
     <form method="get" action="{% url 'bountys_list' %}" class="mb-4">
       <div class="input-group">
         <input type="search" name="search_query" class="form-control" placeholder="Search for a bounty...">

@@ -1,13 +1,18 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
-
+{% load static %}
 {% block content %}
+
+<!-- Header Section -->
+<header style="background-color: #f0f0f0; text-align: center; padding: 8px;">
+    <img src="{% static 'img/5.png' %}" alt="Centered Image" style="max-height: 200px; width: 100%; object-fit: cover;">
+    <h1>Submit a <b>Bug</b> to be Reviewed</h1>
+</header>
 <form method="post" action="{% url 'bug_add' %}">
-    <h3>Submit a bug to be Reviewed</h3>
+    <br/>
     <p>Submit a bug from one of our partner sites, or any site and we will help set up a bounty and give you credit for finding it, and inquire about a finders fee for you:</p>
     {% csrf_token %}
     {{ form|crispy }}
-
 
     <h3>Additional Information</h3>
     <p>Please provide as much detail as possible about the bug you found:</p>

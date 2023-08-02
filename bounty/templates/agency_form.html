@@ -1,10 +1,16 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
-
+{% load static %}
 {% block content %}
 
+<!-- Header Section -->
+<header style="background-color: #f0f0f0; text-align: center; padding: 2px;">
+    <img src="{% static 'img/4.png' %}" alt="Centered Image" style="max-height: 200px; width: 100%; object-fit: cover;">
+    <h1>Buildly <b>Partner</b> Agency Program</h1>
+</header>
+
 <form method="post" action="{% url 'agency_add' %}">
-    <h3>Buildly Partner Agency Program</h3>
+    <br/>
     <p>If your interested in joing the Buildly Partner and Referral program, pleasae fill out the form below and a partner success represenattive will get back to you with more information on how to get started:</p>
     {% csrf_token %}
     {{ form|crispy }}
