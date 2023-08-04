@@ -38,7 +38,7 @@ class RegistrationForm(UserCreationForm):
     email = forms.EmailField(required=True)
     first_name = forms.CharField(max_length=30)
     last_name = forms.CharField(max_length=30)
-    is_bounty_hunter = forms.BooleanField(required=False)
+    is_bounty_hunter = forms.BooleanField(required=False,label="I am a bounty hunter")
     github_profile = forms.URLField(required=False)
     
     class Meta:
@@ -58,7 +58,7 @@ class RegistrationForm(UserCreationForm):
             Field('last_name', placeholder='Last Name'),
             Field('password1', placeholder='Password'),
             Field('password2', placeholder='Confirm Password'),
-            Field('is_bounty_hunter', placeholder='Are you a Bounty Hunter?'),
+            Field('is_bounty_hunter', placeholder='Are you a Bounty Hunter?', label="Are you a Bounty Hunter?" ),
             Field('github_profile', placeholder='Github Profile URL'),
             Submit('submit', 'Register')
         )
