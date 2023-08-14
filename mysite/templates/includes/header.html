@@ -36,10 +36,10 @@
           <ul>
             {% if user.is_authenticated %} 
             {% if request.user|has_bountyhunter %}
-                <li></li><a href="/bounties/" class="nav-item nav-link">Find a Bounty</a></li>
+                <li><a href="/bounties/" class="nav-item nav-link">Find a Bounty</a></li>
               {% else %}
-                <li></li><a href="/bounty_add/" class="nav-item nav-link">Set a Bounty</a></li>
-                <li></li><a href="/bounties/" class="nav-item nav-link">View Bounties</a></li>
+                <li><a href="/bounty_add/" class="nav-item nav-link">Set a Bounty</a></li>
+                <li><a href="/bounties/" class="nav-item nav-link">View Bounties</a></li>
               {% endif %}
             {% endif %}
 
