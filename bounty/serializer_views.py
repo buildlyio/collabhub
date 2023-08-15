@@ -1,6 +1,9 @@
 from rest_framework import generics
 from .models import *
 from .serializers import *
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+
 
 class PositionList(generics.ListCreateAPIView):
     queryset = Position.objects.all()
@@ -19,10 +22,16 @@ class BugDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = BugSerializer
 
 class BountySubmissionList(generics.ListCreateAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     queryset = BountySubmission.objects.all()
     serializer_class = BountySubmissionSerializer
 
 class BountySubmissionDetail(generics.RetrieveUpdateDestroyAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     queryset = BountySubmission.objects.all()
     serializer_class = BountySubmissionSerializer
 
@@ -35,10 +44,16 @@ class BountySetterDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = BountySetterSerializer
 
 class BountyHunterList(generics.ListCreateAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     queryset = BountyHunter.objects.all()
     serializer_class = BountyHunterSerializer
 
 class BountyHunterDetail(generics.RetrieveUpdateDestroyAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     queryset = BountyHunter.objects.all()
     serializer_class = BountyHunterSerializer
 
@@ -83,9 +98,15 @@ class ContractDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ContractSerializer
 
 class DevelopmentAgencyList(generics.ListCreateAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     queryset = DevelopmentAgency.objects.all()
     serializer_class = DevelopmentAgencySerializer
 
 class DevelopmentAgencyDetail(generics.RetrieveUpdateDestroyAPIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     queryset = DevelopmentAgency.objects.all()
     serializer_class = DevelopmentAgencySerializer

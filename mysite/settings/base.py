@@ -208,3 +208,12 @@ PAYPAL_TEST = True
 
 SITE_ID = 1
 
+# Rest Framework
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',  # Token Auth
+    ),
+}
+
+

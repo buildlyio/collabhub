@@ -9,13 +9,14 @@ from . import views
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from rest_framework.authtoken.views import obtain_auth_token
 
 schema_view = get_schema_view(
    openapi.Info(
       title="Buildly Marketplace",
       default_version='v1',
       description="Buildly Marketplace API",
-      terms_of_service="https://www.yourapp.com/terms/",
+      terms_of_service="https://www.buildly.io/terms/",
       contact=openapi.Contact(email="team@buildly.io"),
    ),
    public=True,
@@ -56,7 +57,7 @@ urlpatterns = urlpatterns + [
     # BountyHunterForms
     url(r'^bountyhunter_add/$', BountyHunterCreate.as_view(), name='bountyhunter_add'),
     url(r'^bountyhunter_update/(?P<pk>\w+)/$', BountyHunterUpdate.as_view(), name='bountyhunter_update'),
-    url(r'^bbountyhunter_delete/(?P<pk>\w+)/$', BountyHunterDelete.as_view(), name='bountyhunter_delete'),
+    url(r'^bountyhunter_delete/(?P<pk>\w+)/$', BountyHunterDelete.as_view(), name='bountyhunter_delete'),
     url(r'^bountyhunter_detail/(?P<pk>\w+)/$', BountyHunterDetailView.as_view(), name='bountyhunter_detail'),
     
     # UserSubmittedBug
@@ -64,6 +65,10 @@ urlpatterns = urlpatterns + [
     
     # Agency
     url(r'^agency_add/$', DevelopmentAgencyCreateView.as_view(), name='agency_add'),
+    
+    # Basic Token Auth
+    # Obtain authentication token
+    path('get-auth-token/', obtain_auth_token, name='get_auth_token'),
 ]
 
 
