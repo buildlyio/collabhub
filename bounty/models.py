@@ -328,22 +328,40 @@ class DevelopmentAgency(models.Model):
         ('Technology', 'Technology'),
         ('Finance', 'Finance'),
         ('Healthcare', 'Healthcare'),
+        ('Government', 'Government'),
+        ('Non/Profit-NGO', 'Non/Profit-NGO'),
+        ('Manufacturing', 'Manufacturing'),
+        ('Agriculture', 'Agriculture'),
+        ('Climate Tech', 'Climate Tech'),
+        # Add more industry choices as needed
+    ]
+    
+    AGENCY_TYPE = [
+        ('Marketing', 'Marketing'),
+        ('Software Development', 'Software Development'),
+        ('Finance', 'Finance'),
+        ('Investment Fund', 'Investment Fund'),
+        ('Legal', 'Legal'),
+        ('Accounting/Taxes', 'Accounting/Taxes'),
+        ('Accelerator/Incubator', 'Accelerator/Incubator'),
         # Add more industry choices as needed
     ]
 
     agency_name = models.CharField(max_length=255, unique=True)
-    team_size = models.PositiveIntegerField()
-    skills = models.TextField()
-    background = models.TextField()
+    agency_type = models.CharField(max_length=255, choices=AGENCY_TYPE)
+    team_size = models.PositiveIntegerField(help_text="How many employees in your organization")
+    skills = models.TextField(null=True, blank=True, help_text="If your a service, list the skills your team uses to complete the service")
+    background = models.TextField(help_text="How long have you been in business, where are you based details to help startups know who you are.")
     hourly_rate = models.DecimalField(max_digits=8, decimal_places=2)
     project_rate = models.DecimalField(max_digits=10, decimal_places=2)
-    industries_worked = models.CharField(max_length=255, choices=INDUSTRY_CHOICES)
-    github_repository = models.URLField()
+    industries_worked = models.CharField(max_length=255, choices=INDUSTRY_CHOICES, help_text="Primary Industries you serve or have worked with")
+    github_repository = models.URLField(null=True, blank=True)
     contact_name = models.CharField(max_length=255)
     contact_email = models.EmailField()
     contact_phone = models.CharField(max_length=20)
-    linkedin_url = models.URLField()
+    linkedin_url = models.URLField(null=True, blank=True)
     how_they_found_us = models.TextField()
+    logo = models.ImageField(upload_to='agency-logo', null=True, blank=True)
 
     def __str__(self):
         return self.agency_name
