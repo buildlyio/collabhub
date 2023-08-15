@@ -20,3 +20,7 @@ PyGithub
 Django-filter
 Pillow
 stripe
+djangorestframework==3.11.2
+pyswagger==0.8.39
+
+drf-yasg==1.10.2

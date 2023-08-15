@@ -41,7 +41,14 @@ INSTALLED_APPS = [
     'mysite.templatetags.custom_filters',
 
     'storages',
-
+    
+    # rest
+    'rest_framework',
+    'rest_framework.authtoken',
+    
+    # openapi
+    'drf_yasg',
+    
     # forms
     'colorful',
     'crispy_forms',

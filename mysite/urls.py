@@ -1,10 +1,26 @@
 from django.conf import settings
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.contrib import admin
 
 from django.conf.urls import url
 from bounty.views import *
 from . import views
+
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+schema_view = get_schema_view(
+   openapi.Info(
+      title="Buildly Marketplace",
+      default_version='v1',
+      description="Buildly Marketplace API",
+      terms_of_service="https://www.yourapp.com/terms/",
+      contact=openapi.Contact(email="team@buildly.io"),
+   ),
+   public=True,
+   permission_classes=(permissions.AllowAny,),
+)
 
 urlpatterns = [
     path('django-admin/', admin.site.urls),
@@ -16,6 +32,12 @@ urlpatterns = [
 
     path('accounts/', include('allauth.urls')),
     path('bounty/<int:bounty_id>/submit/', submit_user_for_bounty, name='submit_user_for_bounty'),
+    
+    # Include your API URLs
+    re_path(r'^docs/swagger(?P<format>\.json|\.yaml)$',
+            schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    path('docs/', schema_view.with_ui('swagger', cache_timeout=0),
+         name='schema-swagger-ui'),
 
 ]
 
@@ -43,6 +65,47 @@ urlpatterns = urlpatterns + [
     # Agency
     url(r'^agency_add/$', DevelopmentAgencyCreateView.as_view(), name='agency_add'),
 ]
+
+
+from django.urls import path
+from bounty import serializer_views
+
+urlpatterns = urlpatterns + [
+    path('positions/', serializer_views.PositionList.as_view(), name='position-list'),
+    path('positions/<int:pk>/', serializer_views.PositionDetail.as_view(), name='position-detail'),
+
+    path('bugs/', serializer_views.BugList.as_view(), name='bug-list'),
+    path('bugs/<int:pk>/', serializer_views.BugDetail.as_view(), name='bug-detail'),
+
+    path('bounty-submissions/', serializer_views.BountySubmissionList.as_view(), name='bounty-submission-list'),
+    path('bounty-submissions/<int:pk>/', serializer_views.BountySubmissionDetail.as_view(), name='bounty-submission-detail'),
+
+    path('bounty-setters/', serializer_views.BountySetterList.as_view(), name='bounty-setter-list'),
+    path('bounty-setters/<int:pk>/', serializer_views.BountySetterDetail.as_view(), name='bounty-setter-detail'),
+
+    path('bounty-hunters/', serializer_views.BountyHunterList.as_view(), name='bounty-hunter-list'),
+    path('bounty-hunters/<int:pk>/', serializer_views.BountyHunterDetail.as_view(), name='bounty-hunter-detail'),
+
+    path('bounties/', serializer_views.BountyList.as_view(), name='bounty-list'),
+    path('bounties/<int:pk>/', serializer_views.BountyDetail.as_view(), name='bounty-detail'),
+
+    path('issues/', serializer_views.IssueList.as_view(), name='issue-list'),
+    path('issues/<int:pk>/', serializer_views.IssueDetail.as_view(), name='issue-detail'),
+
+    path('plans/', serializer_views.PlanList.as_view(), name='plan-list'),
+    path('plans/<int:pk>/', serializer_views.PlanDetail.as_view(), name='plan-detail'),
+
+    path('accepted-bounties/', serializer_views.AcceptedBountyList.as_view(), name='accepted-bounty-list'),
+    path('accepted-bounties/<int:pk>/', serializer_views.AcceptedBountyDetail.as_view(), name='accepted-bounty-detail'),
+
+    path('contracts/', serializer_views.ContractList.as_view(), name='contract-list'),
+    path('contracts/<int:pk>/', serializer_views.ContractDetail.as_view(), name='contract-detail'),
+
+    path('development-agencies/', serializer_views.DevelopmentAgencyList.as_view(), name='development-agency-list'),
+    path('development-agencies/<int:pk>/', serializer_views.DevelopmentAgencyDetail.as_view(), name='development-agency-detail'),
+]
+
+
 
 if settings.DEBUG:
     from django.conf.urls.static import static
