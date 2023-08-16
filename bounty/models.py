@@ -348,7 +348,7 @@ class DevelopmentAgency(models.Model):
     ]
 
     agency_name = models.CharField(max_length=255, unique=True)
-    agency_type = models.CharField(max_length=255, choices=AGENCY_TYPE)
+    agency_type = models.CharField(max_length=255, choices=AGENCY_TYPE,null=True, blank=True)
     team_size = models.PositiveIntegerField(help_text="How many employees in your organization")
     skills = models.TextField(null=True, blank=True, help_text="If your a service, list the skills your team uses to complete the service")
     background = models.TextField(help_text="How long have you been in business, where are you based details to help startups know who you are.")
