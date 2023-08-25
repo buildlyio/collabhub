@@ -191,7 +191,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 # e.g. in notification emails. Don't include '/admin' or a trailing slash
-BASE_URL = 'https://bountyhunter.io'
+BASE_URL = 'https://market.buildly.io'
 
 LOGIN_REDIRECT_URL = '/'
 
@@ -217,3 +217,4 @@ REST_FRAMEWORK = {
 }
 
 
+SENDGRID_API_KEY = ''

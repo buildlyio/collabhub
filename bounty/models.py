@@ -356,6 +356,7 @@ class DevelopmentAgency(models.Model):
     project_rate = models.DecimalField(max_digits=10, decimal_places=2)
     industries_worked = models.CharField(max_length=255, choices=INDUSTRY_CHOICES, help_text="Primary Industries you serve or have worked with")
     github_repository = models.URLField(null=True, blank=True)
+    client_reviews = models.TextField(max_length=255, null=True, blank=True,help_text="Profile Links to Clutch, Capterra, G2 Crowd, and GoodFirms: Links to the company's profiles on these review platforms.")
     contact_name = models.CharField(max_length=255)
     contact_email = models.EmailField()
     contact_phone = models.CharField(max_length=20)

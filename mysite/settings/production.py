@@ -47,7 +47,7 @@ sentry_sdk.init(
 )
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"  # new
-DEFAULT_FROM_EMAIL = "help@bountyhunter.io"
+DEFAULT_FROM_EMAIL = "team@buildly.io"
 EMAIL_HOST = "smtp.sendgrid.net"  # new
 EMAIL_HOST_USER = "apikey"  # new
 EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_PASSWORD")  # new
@@ -70,3 +70,4 @@ STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage'
 
 AWS_DEFAULT_ACL = 'public-read'
 
+SENDGRID_API_KEY = os.environ.get("SENDGRID")

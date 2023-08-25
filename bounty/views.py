@@ -30,6 +30,25 @@ import requests
 
 from django.shortcuts import render, redirect
 
+import sendgrid
+from sendgrid.helpers.mail import Mail
+from django.conf import settings
+
+def send_notification_email(subject, message):
+    sg = sendgrid.SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
+    from_email = "team@buildly.io"  # Your "from" email address
+    to_email = "greg@buildly.io"      # Admin's email address
+
+    mail = Mail(
+        from_email=from_email,
+        to_emails=to_email,
+        subject=subject,
+        html_content=message
+    )
+
+    response = sg.send(mail)
+    return response.status_code
+
 
 @login_required
 def new_bounty(request):
@@ -48,6 +67,11 @@ def new_bounty(request):
             bounty.issue = issue
             bounty.save()
             messages.success(request, 'Bounty created successfully!')
+            
+            # Send Email
+            subject = "New Bug Bounty!" 
+            message = "A new form has been submitted"
+            send_notification_email(subject, message)
             return redirect('home')
     
     return render(request, 'new_bounty.html', {'bounty_form': bounty_form})
@@ -474,6 +498,12 @@ class BugCreateView(CreateView):
         check = check_validity(form.instance.url, form.instance.notes)
         if check is True:
             form.save()
+            
+            # Send Email
+            subject = "New Bug!" 
+            message = "A new bug form has been submitted"
+            send_notification_email(subject, message)
+            return redirect('home')
             messages.success(self.request, 'Success, Your Bug has been Submitted!')
 
         else:
@@ -492,6 +522,10 @@ class DevelopmentAgencyCreateView(CreateView):
 
     def form_valid(self, form):
         agency_name = form.cleaned_data['agency_name']
+        # Send Email
+        subject = "New Market Agency!" 
+        message = "A new form has been submitted by " + str(form.cleaned_data['email'])
+        send_notification_email(subject, message)
 
         if DevelopmentAgency.objects.filter(agency_name=agency_name).exists():
             error_message = "An agency with the same name already exists."
