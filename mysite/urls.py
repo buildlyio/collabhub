@@ -65,6 +65,7 @@ urlpatterns = urlpatterns + [
     
     # Agency
     url(r'^agency_add/$', DevelopmentAgencyCreateView.as_view(), name='agency_add'),
+    url(r'^partner/$', DevelopmentAgencyCreateView.as_view(), name='partner'),
     
     # Basic Token Auth
     # Obtain authentication token
