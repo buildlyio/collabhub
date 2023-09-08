@@ -524,7 +524,7 @@ class DevelopmentAgencyCreateView(CreateView):
         agency_name = form.cleaned_data['agency_name']
         # Send Email
         subject = "New Market Agency!" 
-        message = "A new form has been submitted by " + str(form.cleaned_data['email'])
+        message = "A new form has been submitted by " + str(form.cleaned_data['contact_email'])
         send_notification_email(subject, message)
 
         if DevelopmentAgency.objects.filter(agency_name=agency_name).exists():
