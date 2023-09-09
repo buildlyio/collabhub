@@ -24,3 +24,5 @@ djangorestframework==3.14.0
 pyswagger==0.8.39
 drf-yasg==1.21.7
 sendgrid
+
+django-cors-headers
