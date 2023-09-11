@@ -4,7 +4,6 @@ django-debug-toolbar
 django-crispy-forms
 colorful
 django_social_share
-django-allauth
 pyopenssl
 django-paypal
 sentry-sdk
@@ -24,5 +23,5 @@ djangorestframework==3.14.0
 pyswagger==0.8.39
 drf-yasg==1.21.7
 sendgrid
-
 django-cors-headers
+django-allauth
