@@ -161,7 +161,11 @@ class BugForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
         self.helper.add_input(Submit('submit', 'Submit'))
-        
+    
+    def clean(self):
+        cleaned_data = super().clean()
+
+        return cleaned_data    
 
 
 class DevelopmentAgencyForm(forms.ModelForm):
@@ -175,3 +179,8 @@ class DevelopmentAgencyForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
         self.helper.add_input(Submit('submit', 'Submit'))
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        return cleaned_data
