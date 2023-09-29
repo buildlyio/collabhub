@@ -12,10 +12,7 @@
           &nbsp;        
         </div>
         <div class="social-links d-none d-md-flex align-items-center">
-          <a href="https://twitter.com/buildly_io" class="twitter"><i class="bi bi-twitter"></i></a>
-          <a href="http://www.facebook.com/buildlyio" class="facebook"><i class="bi bi-facebook"></i></a>
-          <a href="http://www.instagram.com/buildly_io" class="instagram"><i class="bi bi-instagram"></i></a>
-          <a href="http://www.linkedin.com/company/buildlyio" class="linkedin"><i class="bi bi-linkedin"></i></i></a>
+
         </div>
       </div>
     </section>
@@ -35,6 +32,7 @@
         <nav id="navbar" class="navbar">
           <ul>
             {% if user.is_authenticated %} 
+            <li><a href="/marketplace/" class="nav-item nav-link">Product Marketplace</a></li>
             {% if request.user|has_bountyhunter %}
                 <li><a href="/bounties/" class="nav-item nav-link">Find a Bounty</a></li>
               {% else %}

@@ -372,3 +372,40 @@ class DevelopmentAgencyAdmin(admin.ModelAdmin):
     search_fields = ('agency_name','contact_email')
     list_filter = ('agency_name','contact_email')
     display = 'Agencies'
+    
+
+class Product(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    product_info = models.TextField()
+    product_uuid = models.UUIDField(unique=True)
+    organization_uuid = models.UUIDField()  # Add this field for organization UUID
+    product_team = models.UUIDField()  # Add this field for product team UUID
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    create_date = models.DateTimeField()
+    edit_date = models.DateTimeField()
+
+    def __str__(self):
+        return self.name
+
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ('name','product_uuid')
+    search_fields = ('name','product_uuid')
+    list_filter = ('name','product_uuid')
+    display = 'Products'
+
+class InsightsUser(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)  # Assuming you have a User model
+    insightsuser_id = models.CharField(null=True, blank=True,max_length=255,unique=True)
+    insightsorganization_id = models.CharField(null=True, blank=True,max_length=255, unique=True)  # Store organization ID for authentication sharing
+
+    def __str__(self):
+        return self.user.username
+
+
+class InsightsUserAdmin(admin.ModelAdmin):
+    list_display = ('user','insightsorganization_id')
+    search_fields = ('user','insightsorganization_id')
+    list_filter = ('user','insightsorganization_id')
+    display = 'Insights User'

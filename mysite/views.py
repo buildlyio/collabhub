@@ -104,7 +104,7 @@ def login_request(request):
 			user = authenticate(username=username, password=password)
 			if user is not None:
 				login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-				messages.info(request, "You are now logged in as {username}.")
+				messages.info(request, "You are now logged in.")
 				return redirect("/")
 			else:
 				messages.error(request,"Invalid username or password.")

@@ -23,7 +23,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 
 
-from .models import BountyHunter, Bounty, Issue, BountySubmission, AcceptedBounty, Contract, Bug
+from .models import BountyHunter, Bounty, Issue, BountySubmission, AcceptedBounty, Contract, Bug, InsightsUser, Product
 from .forms import BountyHunterForm, BountyForm, BountyHunterSubmissionForm, BugForm
 from .filters import BountyFilter, IssueFilter
 import requests
@@ -530,5 +530,140 @@ class DevelopmentAgencyCreateView(CreateView):
         if DevelopmentAgency.objects.filter(agency_name=agency_name).exists():
             error_message = "An agency with the same name already exists."
             return render(self.request, self.template_name, {'form': form, 'error_message': error_message})
-        
+        else:
+            messages.info("Thank you for Registering your Agency!")
         return super().form_valid(form)
+
+
+from django.shortcuts import render
+import requests  # Import the requests library for making API requests
+from .models import Product, InsightsUser
+
+def marketplace(request):
+    # Check if the user is authenticated
+    if not request.user.is_authenticated:
+        messages.info(request, 'Please register for an Insights account at https://insights.buildly.io to access the marketplace.')
+        return redirect('home')  # Redirect to the home page with a message
+
+    try:
+        # Try to retrieve the InsightsUser object for the authenticated user
+        insights_user = InsightsUser.objects.get(user=request.user)
+        organization_id = insights_user.insightsorganization_id
+    except InsightsUser.DoesNotExist:
+        # If the InsightsUser object doesn't exist for the user, redirect with a message
+        messages.info(request, 'Please register for an Insights account at https://insights.buildly.io to access the marketplace.')
+        return redirect('home')  # Redirect to the home page with a message
+    
+    # Fetch data from the Buildly Insights API
+    organization_id = insights_user.insightsorganization_id
+    api_url = f"https://insights-api.buildly.io/product/product?organization_id={organization_id}"
+    response = requests.get(api_url)
+
+    if response.status_code == 200:
+        product_data = response.json()
+
+        # Create or update Product objects with API data
+        for product_info in product_data:
+            product, created = Product.objects.get_or_create(product_uuid=product_info['product_uuid'])
+            product.name = product_info['name']
+            product.description = product_info['description']
+            product.product_info = product_info['product_info']
+            product.product_uuid = product_info['product_uuid']
+            product.organization_uuid = organization_id  # Set organization UUID
+            product.product_team = product_info['product_team']  # Set product team UUID
+            product.start_date = product_info['start_date']
+            product.end_date = product_info['end_date']
+            product.create_date = product_info['create_date']
+            product.edit_date = product_info['edit_date']
+            product.save()
+
+        products = Product.objects.all()
+    else:
+        products = []
+
+    context = {
+        'products': products
+    }
+
+    return render(request, 'marketplace_list.html', context)
+
+
+import requests
+
+def get_insights_user_id_from_api(username, api_url):
+    # Define the headers if needed, e.g., for authentication
+    headers = {
+        'Authorization': 'Bearer YOUR_ACCESS_TOKEN'  # Include any required headers
+    }
+
+    # Construct the URL for the CoreUser API endpoint based on the provided `username`
+    coreuser_api_url = f"{api_url}/coreuser?username={username}"
+
+    try:
+        # Make a GET request to the CoreUser API endpoint
+        response = requests.get(coreuser_api_url, headers=headers)
+
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            # Parse the JSON response
+            user_data = response.json()
+
+            # Extract and return the Insights user ID (core_user_uuid)
+            return user_data['core_user_uuid']
+
+        # If the request was not successful, handle the error here
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
+            return None
+
+    except requests.RequestException as e:
+        # Handle any exceptions that may occur during the request
+        print(f"Request Exception: {str(e)}")
+        return None
+
+# Example usage:
+# insights_user_id = get_insights_user_id_from_api('your_username', 'https://insights-api.buildly.io')
+# if insights_user_id:
+#     print(f"Insights User ID: {insights_user_id}")
+# else:
+#     print("Failed to fetch Insights User ID")
+
+
+@login_required
+def sour(request):
+    # Fetch products from Buildly Insights API
+    buildly_insights_api_url = 'https://insights-api.buildly.io/product/product'
+    response = requests.get(buildly_insights_api_url)
+
+    if response.status_code == 200:
+        product_data = response.json()
+
+        # Extract organization UUID from API response
+        organization_uuid = product_data.get('organization_uuid')
+
+        # Assuming you have a method to get Insights user ID, replace this with the actual method
+        insights_user_id = get_insights_user_id_from_api()
+
+        # Get or create InsightsUser associated with the Insights user ID
+        insights_user, created = InsightsUser.objects.get_or_create(
+            user_uuid=insights_user_id,
+            defaults={'organization_id': organization_uuid}
+        )
+
+        # Map the Insights user to the current user in the Marketplace
+        insights_user.user = request.user
+        insights_user.save()
+
+        # Create or update Product objects
+        product, created = Product.objects.get_or_create(
+            product_uuid=product_data['product_uuid'],
+            defaults={
+                'name': product_data['name'],
+                'description': product_data['description'],
+                # Set other fields as needed
+            }
+        )
+
+        return render(request, 'sync_success.html', {'message': 'Products synced successfully.'})
+    else:
+        return render(request, 'sync_error.html', {'message': 'Failed to sync products.'})

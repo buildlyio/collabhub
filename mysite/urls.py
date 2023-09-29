@@ -6,6 +6,7 @@ from django.conf.urls import url
 from bounty.views import *
 from . import views
 
+
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -25,7 +26,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('django-admin/', admin.site.urls),
-    path('', homepage),
+    path('', homepage, name="home"),
     path("register/", views.register, name="register"),
     path("login", views.login_request, name="login"),
     path("logout", views.logout_request, name= "logout"),
@@ -66,6 +67,9 @@ urlpatterns = urlpatterns + [
     # Agency
     url(r'^agency_add/$', DevelopmentAgencyCreateView.as_view(), name='agency_add'),
     url(r'^partner/$', DevelopmentAgencyCreateView.as_view(), name='partner'),
+    
+    # Marketplace
+    path('marketplace/', marketplace, name='marketplace'),
     
     # Basic Token Auth
     # Obtain authentication token
