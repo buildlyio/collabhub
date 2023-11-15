@@ -27,6 +27,7 @@ from .models import BountyHunter, Bounty, Issue, BountySubmission, AcceptedBount
 from .forms import BountyHunterForm, BountyForm, BountyHunterSubmissionForm, BugForm
 from .filters import BountyFilter, IssueFilter
 import requests
+import json
 
 from django.shortcuts import render, redirect
 
@@ -718,9 +719,73 @@ def showcase_agencies(request):
 def bug_list(request):
     # Fetch bugs from the database, sorted and grouped by app_name and version
     bugs = Bug.objects.order_by('app_name', 'version')
+    bounties = Bounty.objects.filter(status="open")
 
     context = {
         'bugs': bugs,
+        'bounties': bounties
     }
 
     return render(request, 'bugs/bug_list.html', context)
+
+
+@login_required
+def send_to_github(request, bug_id):
+    bug = get_object_or_404(Bug, id=bug_id)
+
+    if request.method == 'POST':
+        # Get the selected bounty ID from the form submission
+        bounty_id = request.POST.get('assign_to_bounty')
+
+        # Mark the bug as accepted
+        bug.is_accepted = True
+        bug.save()
+
+        if bounty_id:
+            # Get the selected bounty
+            bounty = get_object_or_404(Bounty, id=bounty_id)
+
+            # Create an issue associated with the bounty
+            issue = Issue.objects.create(
+                title=bug.title,
+                description=bug.description,
+                # Add other fields as needed
+                bounty=bounty,
+            )
+
+            # Update the bug with the created issue
+            bug.issue = issue
+            bug.save()
+
+        return HttpResponse("Bug accepted and sent to GitHub successfully.")
+
+@login_required
+def accept_bug(request, bug_id):
+    bug = get_object_or_404(Bug, id=bug_id)
+
+    # Create a new bounty
+    new_bounty = Bounty(
+        title=f"Bounty for Bug: {bug.title}",
+        catagory='Bug',
+        description=bug.description,
+        owner=request.user,
+        repo_owner='your_github_username',
+        repo='your_repo_name',
+        repo_access_token='your_github_access_token',
+        status='ACTIVE',  # Change as needed
+    )
+    new_bounty.save()
+
+    # Create a new issue associated with the bounty
+    new_issue = Issue(
+        title=bug.title,
+        description=bug.description,
+        bounty=new_bounty,
+    )
+    new_issue.save()
+
+    # Update bug status and issue_id
+    bug.is_approved = True
+    bug.save()
+
+    return HttpResponse("Bug accepted and sent to GitHub successfully.")

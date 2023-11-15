@@ -278,6 +278,7 @@ class Issue(models.Model):
     tags = models.CharField(null=True, blank=True, max_length=100)
     is_fixed = models.BooleanField(default=False)
     bounty = models.ForeignKey(Bounty, on_delete=models.CASCADE)
+    bug = models.ForeignKey(Bug,null=True, blank=True, on_delete=models.CASCADE)
     create_date = models.DateTimeField(null=True, blank=True)
     edit_date = models.DateTimeField(null=True, blank=True)
 
