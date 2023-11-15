@@ -740,8 +740,8 @@ def bug_list(request):
 
 
 @login_required
-def send_to_github(request, bug_id):
-    bug = get_object_or_404(Bug, id=bug_id)
+def send_to_github(request, pk):
+    bug = get_object_or_404(Bug, id=pk)
 
     if request.method == 'POST':
         # Get the selected bounty ID from the form submission
@@ -770,8 +770,8 @@ def send_to_github(request, bug_id):
         return HttpResponse("Bug accepted and sent to GitHub successfully.")
 
 @login_required
-def accept_bug(request, bug_id):
-    bug = get_object_or_404(Bug, id=bug_id)
+def accept_bug(request, pk):
+    bug = get_object_or_404(Bug, id=pk)
 
     # Create a new bounty
     new_bounty = Bounty(
