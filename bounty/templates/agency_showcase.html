@@ -1,0 +1,65 @@
+<!-- Updated showcase_agencies.html template -->
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Showcase of Agencies and Individuals</h1>
+    <h2>Based on Skills Matching</h2>
+
+    <form method="get">
+        <div class="filter-form">
+            <label for="agency_type">Agency Type:</label>
+            <input type="text" name="agency_type" value="{{ selected_agency_type }}">
+            <label for="skills">Skills:</label>
+            <input type="text" name="skills" value="{{ selected_skills }}">
+            <label for="background">Background:</label>
+            <input type="text" name="background" value="{{ selected_background }}">
+            <label for="industries_worked">Industries Worked:</label>
+            <input type="text" name="industries_worked" value="{{ selected_industries_worked }}">
+            <label for="product_id">Select a Product:</label>
+            <select name="product_id">
+                <option value="">-- No Product --</option>
+                {% for product in products %}
+                    <option value="{{ product.id }}" {% if selected_product and selected_product.id == product.id %}selected{% endif %}>{{ product.name }}</option>
+                {% endfor %}
+            </select>
+            <input type="submit" value="Filter">
+        </div>
+    </form>
+
+    <!-- Updated showcase_agencies.html template with 3 columns for details -->
+    <div class="matching-agencies">
+        <h2>Matching Agencies and Individuals</h2>
+        <ul class="agency-list">
+            {% for agency in agencies %}
+                <li class="agency-item">
+                    <h3>{{ agency.agency_name }}</h3>
+                    <div class="agency-details">
+                        <div class="column">
+                            <p>Agency Type: {{ agency.agency_type }}</p>
+                            <p>Team Size: {{ agency.team_size }}</p>
+                            <p>Hourly Rate: {{ agency.hourly_rate }}</p>
+                            <p>Industries Worked: {{ agency.get_industries_worked_display }}</p>
+                            <p>Contact Name: {{ agency.contact_name }}</p>
+                            <p>Contact Email: {{ agency.contact_email }}</p>
+                        </div>
+                        <div class="column">
+                            <p>Skills: {{ agency.skills }}</p>
+                            <!-- You can display additional details here -->
+                        </div>
+                        <div class="column">
+                            <p>Background: {{ agency.background }}</p>
+                            <p>Project Rate: {{ agency.project_rate }}</p>
+                            <p>GitHub Repository: {{ agency.github_repository }}</p>
+                            <p>Client Reviews: {{ agency.client_reviews }}</p>
+                            <p>Contact Phone: {{ agency.contact_phone }}</p>
+                            <p>LinkedIn URL: {{ agency.linkedin_url }}</p>
+                            <p>How They Found Us: {{ agency.how_they_found_us }}</p>
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+</div>
+{% endblock %}

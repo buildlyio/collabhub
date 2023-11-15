@@ -667,3 +667,60 @@ def sour(request):
         return render(request, 'sync_success.html', {'message': 'Products synced successfully.'})
     else:
         return render(request, 'sync_error.html', {'message': 'Failed to sync products.'})
+    
+
+from django.shortcuts import render
+from .models import DevelopmentAgency, Product
+
+@login_required
+def showcase_agencies(request):
+    agencies = DevelopmentAgency.objects.all()
+    products = Product.objects.all()
+
+    # Fetch selected product based on user choice
+    selected_product_id = request.GET.get('product_id')
+    selected_product = None
+    if selected_product_id:
+        try:
+            selected_product = Product.objects.get(pk=selected_product_id)
+        except Product.DoesNotExist:
+            selected_product = None
+
+    # Apply filtering based on user input
+    agency_type = request.GET.get('agency_type')
+    skills = request.GET.get('skills')
+    background = request.GET.get('background')
+    industries_worked = request.GET.get('industries_worked')
+
+    filtered_agencies = agencies
+    if agency_type:
+        filtered_agencies = filtered_agencies.filter(agency_type=agency_type)
+    if skills:
+        filtered_agencies = filtered_agencies.filter(skills__icontains=skills)
+    if background:
+        filtered_agencies = filtered_agencies.filter(background__icontains=background)
+    if industries_worked:
+        filtered_agencies = filtered_agencies.filter(industries_worked=industries_worked)
+
+    context = {
+        'agencies': filtered_agencies,
+        'products': products,
+        'selected_product': selected_product,
+        'selected_agency_type': agency_type,
+        'selected_skills': skills,
+        'selected_background': background,
+        'selected_industries_worked': industries_worked,
+    }
+
+    return render(request, 'showcase_agencies.html', context)
+
+
+def bug_list(request):
+    # Fetch bugs from the database, sorted and grouped by app_name and version
+    bugs = Bug.objects.order_by('app_name', 'version')
+
+    context = {
+        'bugs': bugs,
+    }
+
+    return render(request, 'bugs/bug_list.html', context)

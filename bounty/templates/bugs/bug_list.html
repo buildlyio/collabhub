@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="bug-list">
+    <h2>Bug List</h2>
+    {% for bug in bugs %}
+      <div class="bug-item">
+        <h3>{{ bug.title }}</h3>
+        <p>App Name: {{ bug.app_name }}</p>
+        <p>Version: {{ bug.version }}</p>
+        <p>Severity: {{ bug.get_severity_display }}</p>
+        <p>Submitted by: {{ bug.name }} ({{ bug.email }})</p>
+        <p>Description: {{ bug.description }}</p>
+        <p>Expected Behaviour: {{ bug.expected_behaviour }}</p>
+        <p>Steps to Reproduce: {{ bug.steps_to_reproduce }}</p>
+        {% if bug.screenshots %}
+          <img src="{{ bug.screenshots.url }}" alt="Screenshot">
+        {% endif %}
+        {% if user.is_staff %}
+          <form action="{% url 'bug_accept' bug.id %}" method="post">
+            {% csrf_token %}
+            <input type="submit" value="Accept Bug">
+          </form>
+          <form action="{% url 'bug_send_to_github' bug.id %}" method="post">
+            {% csrf_token %}
+            <input type="submit" value="Send to GitHub">
+          </form>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

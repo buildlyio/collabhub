@@ -99,16 +99,21 @@ class Bug(models.Model):
     ]
 
     url = models.URLField()
-    notes = models.TextField()
-    error_message = models.TextField()
+    notes = models.TextField(blank=True)
+    error_message = models.TextField(blank=True)
     severity = models.CharField(max_length=10, choices=SEVERITY_CHOICES)
+    title = models.CharField(max_length=255)
+    app_name = models.CharField(max_length=255)
+    version = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
     email = models.EmailField()
     description = models.TextField()
+    expected_behaviour = models.TextField()
     steps_to_reproduce = models.TextField()
     screenshots = models.ImageField(upload_to='bug_screenshots', blank=True)
     is_user_submitted = models.BooleanField(default=True)
     is_approved = models.BooleanField(default=False)
+    is_public = models.BooleanField(default=False)
 
     def __str__(self):
         return self.url

@@ -63,6 +63,7 @@ urlpatterns = urlpatterns + [
     
     # UserSubmittedBug
     url(r'^bug_add/$', BugCreateView.as_view(), name='bug_add'),
+    path('bug_list/', bug_list, name='bug_list'),
     
     # Agency
     url(r'^agency_add/$', DevelopmentAgencyCreateView.as_view(), name='agency_add'),
