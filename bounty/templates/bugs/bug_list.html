@@ -2,6 +2,25 @@
 {% block content %}
   <div class="bug-list">
     <h2>Bug List</h2>
+
+    <!-- Filter Form -->
+    <form method="get" class="mb-3">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label for="app_name_filter" class="form-label">App Name:</label>
+          <input type="text" name="app_name" class="form-control" id="app_name_filter" value="{{ request.GET.app_name }}">
+        </div>
+        <div class="col-md-3">
+          <label for="version_filter" class="form-label">Version:</label>
+          <input type="text" name="version" class="form-control" id="version_filter" value="{{ request.GET.version }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label invisible">Filter:</label>
+          <button type="submit" class="btn btn-primary">Apply Filters</button>
+        </div>
+      </div>
+    </form>
+
     <div class="table-responsive">
       <table class="table table-striped table-bordered" id="bugTable">
         <thead>
@@ -11,9 +30,6 @@
             <th>Title</th>
             <th>Severity</th>
             <th>Submitted by</th>
-            <th>Description</th>
-            <th>Expected Behaviour</th>
-            <th>Steps to Reproduce</th>
             <th>Screenshots</th>
             <th>Action</th>
             <th>Assign to Bounty</th>
@@ -24,12 +40,13 @@
             <tr>
               <td>{{ bug.app_name }}</td>
               <td>{{ bug.version }}</td>
-              <td>{{ bug.title }}</td>
+              <td>
+                <a href="#" data-bs-toggle="popover" title="{{ bug.title }}" data-bs-content="{{ bug.description|default:'' }} {{ bug.expected_behaviour|default:'' }} {{ bug.steps_to_reproduce|default:'' }}">
+                  {{ bug.title }}
+                </a>
+              </td>
               <td>{{ bug.get_severity_display }}</td>
               <td>{{ bug.name }} ({{ bug.email }})</td>
-              <td>{{ bug.description }}</td>
-              <td>{{ bug.expected_behaviour }}</td>
-              <td>{{ bug.steps_to_reproduce }}</td>
               <td>
                 {% if bug.screenshots %}
                   <a href="{{ bug.screenshots.url }}" target="_blank">
@@ -66,9 +83,13 @@
     </div>
   </div>
 
+<!-- Bootstrap JS from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+
   <script>
-    $(document).ready(function () {
-      $('#bugTable').DataTable();
-    });
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+      return new bootstrap.Popover(popoverTriggerEl)
+    })
   </script>
 {% endblock %}

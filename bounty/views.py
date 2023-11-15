@@ -720,6 +720,16 @@ def bug_list(request):
     # Fetch bugs from the database, sorted and grouped by app_name and version
     bugs = Bug.objects.order_by('app_name', 'version')
     bounties = Bounty.objects.filter(status="open")
+    
+        # Filter by app_name
+    app_name_filter = request.GET.get('app_name')
+    if app_name_filter:
+        bugs = bugs.filter(app_name=app_name_filter)
+
+    # Filter by version
+    version_filter = request.GET.get('version')
+    if version_filter:
+        bugs = bugs.filter(version=version_filter)
 
     context = {
         'bugs': bugs,

@@ -154,7 +154,7 @@ class BugForm(forms.ModelForm):
     
     class Meta:
         model = Bug
-        fields = ['url', 'notes', 'error_message', 'severity', 'name', 'email', 'description', 'steps_to_reproduce', 'screenshots']
+        fields = ['url', 'notes', 'error_message', 'severity', 'name', 'email','app_name','version', 'description', 'steps_to_reproduce', 'screenshots']
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
