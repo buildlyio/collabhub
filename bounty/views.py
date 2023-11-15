@@ -713,7 +713,7 @@ def showcase_agencies(request):
         'selected_industries_worked': industries_worked,
     }
 
-    return render(request, 'showcase_agencies.html', context)
+    return render(request, 'agency_showcase.html', context)
 
 
 def bug_list(request):

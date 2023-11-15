@@ -67,6 +67,7 @@ urlpatterns = urlpatterns + [
     
     # Agency
     url(r'^agency_add/$', DevelopmentAgencyCreateView.as_view(), name='agency_add'),
+    url(r'^agency_list/$', showcase_agencies, name='agency_list'),
     url(r'^partner/$', DevelopmentAgencyCreateView.as_view(), name='partner'),
     
     # Marketplace
