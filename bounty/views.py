@@ -719,7 +719,7 @@ def showcase_agencies(request):
 def bug_list(request):
     # Fetch bugs from the database, sorted and grouped by app_name and version
     bugs = Bug.objects.order_by('app_name', 'version')
-    bounties = Bounty.objects.filter(status="open")
+    bounties = Bounty.objects.all()
     
         # Filter by app_name
     app_name_filter = request.GET.get('app_name')
@@ -767,7 +767,7 @@ def send_to_github(request, pk):
             bug.issue = issue
             bug.save()
 
-        return HttpResponse("Bug accepted and sent to GitHub successfully.")
+        return redirect(reverse_lazy("bug_list"))
 
 @login_required
 def accept_bug(request, pk):
@@ -798,4 +798,4 @@ def accept_bug(request, pk):
     bug.is_approved = True
     bug.save()
 
-    return HttpResponse("Bug accepted and sent to GitHub successfully.")
+    return redirect(reverse_lazy("bug_list"))
