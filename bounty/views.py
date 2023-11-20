@@ -742,7 +742,7 @@ def bug_list(request):
 @login_required
 def send_to_github(request, pk):
     bug = get_object_or_404(Bug, id=pk)
-
+    message = "Bug Send to GitHub!"
     if request.method == 'POST':
         # Get the selected bounty ID from the form submission
         bounty_id = request.POST.get('assign_to_bounty')
@@ -761,41 +761,49 @@ def send_to_github(request, pk):
                 description=bug.description,
                 # Add other fields as needed
                 bounty=bounty,
+                bug=bug
             )
 
             # Update the bug with the created issue
             bug.issue = issue
             bug.save()
+            message ="Bug Assigned to Bounty"
+        else:
+            # Create a new bounty
+            new_bounty = Bounty(
+                title=f"Bounty for Bug: {bug.title}",
+                catagory='Bug',
+                description=bug.description,
+                owner=request.user,
+                repo_owner='your_github_username',
+                repo='your_repo_name',
+                repo_access_token='your_github_access_token',
+                status='ACTIVE',  # Change as needed
+            )
+            new_bounty.save()
 
+            # Create a new issue associated with the bounty
+            new_issue = Issue(
+                title=bug.title,
+                description=bug.description,
+                bounty=new_bounty,
+                bug=bug
+            )
+            new_issue.save()
+            
+            # Update the bug with the created issue
+            bug.issue = issue
+            bug.save()
+            message ="Bug Assigned to a New Bounty"
+        messages.info(request, message)
         return redirect(reverse_lazy("bug_list"))
 
 @login_required
 def accept_bug(request, pk):
     bug = get_object_or_404(Bug, id=pk)
-
-    # Create a new bounty
-    new_bounty = Bounty(
-        title=f"Bounty for Bug: {bug.title}",
-        catagory='Bug',
-        description=bug.description,
-        owner=request.user,
-        repo_owner='your_github_username',
-        repo='your_repo_name',
-        repo_access_token='your_github_access_token',
-        status='ACTIVE',  # Change as needed
-    )
-    new_bounty.save()
-
-    # Create a new issue associated with the bounty
-    new_issue = Issue(
-        title=bug.title,
-        description=bug.description,
-        bounty=new_bounty,
-    )
-    new_issue.save()
-
+    message ="Bug Accepted! Please assign to a Bounty in the form below"
     # Update bug status and issue_id
     bug.is_approved = True
     bug.save()
-
+    messages.info(request, message)
     return redirect(reverse_lazy("bug_list"))

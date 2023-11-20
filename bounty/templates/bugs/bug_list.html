@@ -56,24 +56,37 @@
               </td>
               <td>
                 {% if user.is_staff %}
-                  <form action="{% url 'bug_accept' bug.id %}" method="post">
-                    {% csrf_token %}
-                    <input type="submit" value="Accept Bug">
-                  </form>
-                  <form action="{% url 'bug_send_to_github' bug.id %}" method="post">
-                    {% csrf_token %}
-                    <input type="submit" value="Send to GitHub">
-                  </form>
+                  {% if bug.is_approved %}
+                    <button type="button" class="button"> Approved</button>
+                  {% else %}
+                    <form action="{% url 'bug_accept' bug.id %}" method="post">
+                      {% csrf_token %}
+                      <input type="submit" value="Accept Bug">
+                    </form>
+                  {% endif %}
                 {% endif %}
               </td>
               <td>
                 {% if user.is_staff %}
-                  <select id="assignToBounty" name="assign_to_bounty" class="form-select" disabled>
-                    <!-- Populate options dynamically from open bounties -->
-                    {% for bounty in bounties %}
-                      <option value="{{ bounty.id }}">{{ bounty.title }}</option>
-                    {% endfor %}
-                  </select>
+                  {% if bug.issue %}
+                    <a href="{% url 'bounty_detail' bug.issue.bounty.pk %}">{{ bug.issue.bounty.pk }}</a>
+                  {% else %}
+                    <form action="{% url 'bug_send_to_github' bug.id %}" method="post">
+                        {% csrf_token %}
+                      {% if bug.is_approved %}
+                        <select id="assignToBounty" name="assign_to_bounty" class="form-select">
+                      {% else %}
+                        <select id="assignToBounty" name="assign_to_bounty" class="form-select" disabled>
+                      {% endif %}
+                        <!-- Populate options dynamically from open bounties -->
+                        <option value="">Create a New Bounty</option>
+                        {% for bounty in bounties %}
+                          <option value="{{ bounty.id }}">{{ bounty.title }}</option>
+                        {% endfor %}
+                      </select>
+                      <input type="submit" value="submit">
+                    </form>
+                  {% endif %}
                 {% endif %}
               </td>
             </tr>

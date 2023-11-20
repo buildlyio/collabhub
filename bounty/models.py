@@ -114,6 +114,7 @@ class Bug(models.Model):
     is_user_submitted = models.BooleanField(default=True)
     is_approved = models.BooleanField(default=False)
     is_public = models.BooleanField(default=False)
+    issue = models.ForeignKey("Issue", blank=True, on_delete=models.CASCADE, related_name="bug_issue", null=True)
 
     def __str__(self):
         return self.url
@@ -278,7 +279,7 @@ class Issue(models.Model):
     tags = models.CharField(null=True, blank=True, max_length=100)
     is_fixed = models.BooleanField(default=False)
     bounty = models.ForeignKey(Bounty, on_delete=models.CASCADE)
-    bug = models.ForeignKey(Bug,null=True, blank=True, on_delete=models.CASCADE)
+    bug = models.ForeignKey(Bug,null=True, blank=True, on_delete=models.CASCADE, related_name="issue_bug")
     create_date = models.DateTimeField(null=True, blank=True)
     edit_date = models.DateTimeField(null=True, blank=True)
 
