@@ -57,7 +57,7 @@
               <td>
                 {% if user.is_staff %}
                   {% if bug.is_approved %}
-                    <button type="button" class="button"> Approved</button>
+                    Approved
                   {% else %}
                     <form action="{% url 'bug_accept' bug.id %}" method="post">
                       {% csrf_token %}
