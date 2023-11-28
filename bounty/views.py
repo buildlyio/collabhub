@@ -744,7 +744,7 @@ def bug_list(request):
 @login_required
 def send_to_github(request, pk):
     bug = get_object_or_404(Bug, id=pk)
-    message = "Bug Send to GitHub!"
+    message = "Bug Sent to GitHub!"
     if request.method == 'POST':
         # Get the selected bounty ID from the form submission
         bounty_id = request.POST.get('assign_to_bounty')
@@ -757,17 +757,8 @@ def send_to_github(request, pk):
             # Get the selected bounty
             bounty = get_object_or_404(Bounty, id=bounty_id)
 
-            # Create an issue associated with the bounty
-            issue = Issue.objects.create(
-                title=bug.title,
-                description=bug.description,
-                # Add other fields as needed
-                bounty=bounty,
-                bug=bug
-            )
-
             # Update the bug with the created issue
-            bug.issue = issue
+            bug.bounty = bounty
             bug.save()
             message ="Bug Assigned to Bounty"
         else:
@@ -783,18 +774,9 @@ def send_to_github(request, pk):
                 status='ACTIVE',  # Change as needed
             )
             new_bounty.save()
-
-            # Create a new issue associated with the bounty
-            new_issue = Issue(
-                title=bug.title,
-                description=bug.description,
-                bounty=new_bounty,
-                bug=bug
-            )
-            new_issue.save()
             
-            # Update the bug with the created issue
-            bug.issue = issue
+            # Update the bug with the created bounty
+            bug.bounty = bounty
             bug.save()
             message ="Bug Assigned to a New Bounty"
         messages.info(request, message)
