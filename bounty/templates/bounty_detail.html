@@ -29,6 +29,7 @@
     
 
     </div>
+    {% for issue in issues.all %}
     <div class="col-md-4">
       <h3>Issue Details</h3>
       <p><strong>Title:</strong> {{ issue.title }}</p>
@@ -40,10 +41,26 @@
       <p><strong>Language:</strong> {{ issue.language }}</p>
       <p><strong>Framework:</strong> {{ issue.framework }}</p>
       <p><strong>Hosting Environment:</strong> {{ issue.hosting_environment }}</p>
-      {% if bounty.issue.screenshot %}
+      {% if issue.screenshot %}
         <p><strong>Screenshot:</strong> <img src="{{ issue.screenshot.url }}" class="img-thumbnail"></p>
       {% endif %}
     </div>
+    {% endfor %}
+    {% for bug in bugs.all %}
+    <div class="col-md-4">
+      <h3>Bug Details</h3>
+      <p><strong>Title:</strong> {{ bug.title }}</p>
+      <p><strong>Description:</strong> {{ bug.description }}</p>
+      <p><strong>Issue Number:</strong> {{ bug.steps_to_recreate }}</p>
+      <p><strong>Issue URL:</strong> <a href="{{ bug.issue_url }}">{{ bug.issue_url }}</a></p>
+      <p><strong>Priority:</strong> {{ bug.priority }}</p>
+      <p><strong>Application:</strong> {{ bug.application_name }}</p>
+      <p><strong>Version:</strong> {{ bug.version }}</p>
+      {% if bug.screenshot %}
+        <p><strong>Screenshot:</strong> <img src="{{ bug.screenshot.url }}" class="img-thumbnail"></p>
+      {% endif %}
+    </div>
+    {% endfor %}
   </div>
   <h2>Submitted Bounty Hunters</h2>
     {% if submissions %}

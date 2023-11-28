@@ -280,8 +280,10 @@ class BountyDetailView(LoginRequiredMixin, DetailView):
         context['form'] = BountyHunterSubmissionForm()
         context['num_submissions'] = self.get_num_submissions()
         context['submissions'] = self.object.bountysubmission_set.all()  # Get the related Submission object
-        issue = self.object.issue_set.first()  # Get the related Issue object
-        context['issue'] = issue
+        issue = self.object.issue_set  # Get the related Issue object
+        context['issues'] = issue
+        bug = self.object.bug_set  # Get the related Bug object
+        context['bugs'] = bug
         return context
 
     def get_num_submissions(self):

@@ -114,7 +114,7 @@ class Bug(models.Model):
     is_user_submitted = models.BooleanField(default=True)
     is_approved = models.BooleanField(default=False)
     is_public = models.BooleanField(default=False)
-    issue = models.ForeignKey("Issue", blank=True, on_delete=models.CASCADE, related_name="bug_issue", null=True)
+    bounty = models.ForeignKey("Bounty", blank=True, on_delete=models.CASCADE, related_name="bug_bounty", null=True)
 
     def __str__(self):
         return self.url
