@@ -282,7 +282,7 @@ class BountyDetailView(LoginRequiredMixin, DetailView):
         context['submissions'] = self.object.bountysubmission_set.all()  # Get the related Submission object
         issue = self.object.issue_set  # Get the related Issue object
         context['issues'] = issue
-        bug = self.object.bug_set  # Get the related Bug object
+        bug = self.object.bug  # Get the related Bug object
         context['bugs'] = bug
         return context
 

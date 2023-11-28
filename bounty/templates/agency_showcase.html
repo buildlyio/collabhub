@@ -54,7 +54,20 @@
                         <p class="card-text">{{ agency.team_size }} Employees</p>
                         <p class="card-text">{{ agency.hourly_rate }} per Hour</p>
                         <p class="card-text">{{ agency.get_industries_worked_display }}</p>
-                        <a href="#" class="btn btn-primary">View Details</a>
+                        <hr/>
+
+                        <p class="card-text">SKILSS: {{ agency.skills  }}</p>
+                        <p class="card-text">BACKGROUND: {{ agency.background  }}</p>
+                        <p class="card-text">HOURLY RATE: {{ agency.hourly_rate  }}</p>
+                        <p class="card-text">PROEJCT RATE: {{ agency.project_rate  }}</p>
+                        <p class="card-text">INDUSTRIES WORKED IN: {{ agency.industries_worked }}</p>
+                        <p class="card-text">{{ agency.github_repository }}</p>
+                        <p class="card-text">REVIEWS: {{ agency.client_reviews }}</p>
+                        <p class="card-text">CONTACT NAME: {{ agency.contact_name }}</p>
+                        <p class="card-text">CONTACT EMAIL: {{ agency.contact_email }}</p>
+                        <p class="card-text">CONTACT PHONE: {{ agency.contact_phone }}</p>
+                        <p class="card-text">LINKEDIN: {{ agency.linkedin_url }}</p>
+                        
                     </div>
                 </div>
             </div>
