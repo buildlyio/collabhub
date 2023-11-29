@@ -68,8 +68,8 @@
               </td>
               <td>
                 {% if user.is_staff %}
-                  {% if bug.issue %}
-                    <a href="{% url 'bounty_detail' bug.issue.bounty.pk %}">{{ bug.issue.bounty.title }}</a>
+                  {% if bug.bounty %}
+                    <a href="{% url 'bounty_detail' bug.bounty.pk %}">{{ bug.bounty.title }}</a>
                   {% else %}
                     <form action="{% url 'bug_send_to_github' bug.id %}" method="post">
                         {% csrf_token %}
