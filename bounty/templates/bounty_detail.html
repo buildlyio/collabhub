@@ -5,160 +5,226 @@
   <div class="row">
     <div class="col-md-8">
       <h1>{{ bounty.title }}</h1>
-      <p><strong>Skills:</strong> {{ bounty.skills }}</p>
-      <p><strong>Level:</strong> {{ bounty.get_level_display }}</p>
-      <p><strong>Description:</strong> {{ bounty.description }}</p>
-      <p><strong>Certification:</strong> {{ bounty.certification }}</p>
-      <p><strong>Amount:</strong> {{ bounty.get_amount_display }}</p>
-      <p><strong>Issue ID:</strong> {{ bounty.issue_id }}</p>
-      <p><strong>Complexity Estimate:</strong> {{ bounty.get_complexity_estimate_display }}</p>
-      <p><strong>URL:</strong> <a href="{{ bounty.url }}">{{ bounty.url }}</a></p>
-      <p><strong>Status:</strong> {{ bounty.get_status_display }}</p>
-      <p><strong>Tags:</strong>
-        {% for tag in bounty.tags.all %}
-          <span class="badge badge-primary">{{ tag.name }}</span>
-        {% endfor %}
-      </p>
+      <table class="table">
+        <tr>
+          <td><strong>Skills:</strong></td>
+          <td>{{ bounty.skills }}</td>
+        </tr>
+        <tr>
+          <td><strong>Level:</strong></td>
+          <td>{{ bounty.get_level_display }}</td>
+        </tr>
+        <tr>
+          <td><strong>Description:</strong></td>
+          <td>{{ bounty.description }}</td>
+        </tr>
+        <tr>
+          <td><strong>Certification:</strong></td>
+          <td>{{ bounty.certification }}</td>
+        </tr>
+        <tr>
+          <td><strong>Amount:</strong></td>
+          <td>{{ bounty.get_amount_display }}</td>
+        </tr>
+        <tr>
+          <td><strong>Issue ID:</strong></td>
+          <td>{{ bounty.issue_id }}</td>
+        </tr>
+        <tr>
+          <td><strong>Complexity Estimate:</strong></td>
+          <td>{{ bounty.get_complexity_estimate_display }}</td>
+        </tr>
+        <tr>
+          <td><strong>URL:</strong></td>
+          <td><a href="{{ bounty.url }}">{{ bounty.url }}</a></td>
+        </tr>
+        <tr>
+          <td><strong>Status:</strong></td>
+          <td>{{ bounty.get_status_display }}</td>
+        </tr>
+        <tr>
+          <td><strong>Tags:</strong></td>
+          <td>
+            {% for tag in bounty.tags.all %}
+            <span class="badge badge-primary">{{ tag.name }}</span>
+            {% endfor %}
+          </td>
+        </tr>
+      </table>
       {% if request.user.is_authenticated and request.user.bountyhunter %}
-        <form method="post" action="{% url 'submit_user_for_bounty' bounty.pk %}">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-secondary">Submit Your Profile for this Bug Bounty</button>
-        </form>
-        <br/>
-    {% endif %}
-    
-
-    </div>
-    {% for issue in issues.all %}
-    <div class="col-md-4">
-      <h3>Issue Details</h3>
-      <p><strong>Title:</strong> {{ issue.title }}</p>
-      <p><strong>Description:</strong> {{ issue.description }}</p>
-      <p><strong>Issue Number:</strong> {{ issue.issue_number }}</p>
-      <p><strong>Issue URL:</strong> <a href="{{ issue.issue_url }}">{{ issue.issue_url }}</a></p>
-      <p><strong>Priority:</strong> {{ issue.priority }}</p>
-      <p><strong>Complexity Estimate:</strong> {{ issue.complexity_estimate }}</p>
-      <p><strong>Language:</strong> {{ issue.language }}</p>
-      <p><strong>Framework:</strong> {{ issue.framework }}</p>
-      <p><strong>Hosting Environment:</strong> {{ issue.hosting_environment }}</p>
-      {% if issue.screenshot %}
-        <p><strong>Screenshot:</strong> <img src="{{ issue.screenshot.url }}" class="img-thumbnail"></p>
+      <form method="post" action="{% url 'submit_user_for_bounty' bounty.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary">Submit Your Profile for this Bounty</button>
+      </form>
+      <br />
       {% endif %}
     </div>
-    {% endfor %}
-    {% for bug in bugs.all %}
     <div class="col-md-4">
-      <h3>Bug Details</h3>
-      <p><strong>Title:</strong> {{ bug.title }}</p>
-      <p><strong>Description:</strong> {{ bug.description }}</p>
-      <p><strong>Issue Number:</strong> {{ bug.steps_to_recreate }}</p>
-      <p><strong>Issue URL:</strong> <a href="{{ bug.issue_url }}">{{ bug.issue_url }}</a></p>
-      <p><strong>Priority:</strong> {{ bug.priority }}</p>
-      <p><strong>Application:</strong> {{ bug.application_name }}</p>
-      <p><strong>Version:</strong> {{ bug.version }}</p>
-      {% if bug.screenshot %}
-        <p><strong>Screenshot:</strong> <img src="{{ bug.screenshot.url }}" class="img-thumbnail"></p>
-      {% endif %}
-    </div>
-    {% endfor %}
-  </div>
-  <h2>Submitted Bounty Hunters</h2>
-    {% if submissions %}
-    <table class="table">
-    <thead>
-        <tr>
-        <th>Name</th>
-        <th>Skills</th>
-        <th>Experience</th>
-        <th>Status</th>
-        <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for submission in submissions %}
-        <tr>
-        <td>{{ submission.bounty_hunter.user.username }}</td>
-        <td>{{ submission.bounty_hunter.skills }}</td>
-        <td>{{ submission.bounty_hunter.experience }}</td>
-        <td>{{ submission.get_status_display }}</td>
-        {% if request.user is bounty.owner %}
-        <td>
-            <form method="POST" action="{% url 'bounty_detail' pk=bounty.id %}">
-            {% csrf_token %}
-            <input type="hidden" name="selected_submission" value="{{ submission.bounty_hunter.id }}">
-            <button type="submit" class="btn btn-success">Accept</button>
-            </form>
-        </td>
+      <h2>Submitted Bounty Hunters</h2>
+      {% if submissions %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Skills</th>
+            <th>Experience</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for submission in submissions %}
+          <tr>
+            <td>{{ submission.bounty_hunter.user.username }}</td>
+            <td>{{ submission.bounty_hunter.skills }}</td>
+            <td>{{ submission.bounty_hunter.experience }}</td>
+            <td>{{ submission.get_status_display }}</td>
+            {% if request.user is bounty.owner %}
+            <td>
+              <form method="POST" action="{% url 'bounty_detail' pk=bounty.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="selected_submission" value="{{ submission.bounty_hunter.id }}">
+                <button type="submit" class="btn btn-success">Accept</button>
+              </form>
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if request.user is bounty.owner %}
+      <div>
+        {% if bounty.amount == "Small" %}
+        <!-- Stripe Buy Button for Small Bounty -->
         {% endif %}
-        </tr>
-        {% endfor %}
-    </tbody>
-    </table>
-
-    {% if request.user is bounty.owner %}Hello!
-      {% if bounty.amount is "Small"%}
-      <script async
-        src="https://js.stripe.com/v3/buy-button.js">
-      </script>
-      
-      <stripe-buy-button
-        buy-button-id="buy_btn_1NCAGpDbhtSYlwrCtGIO9x9L"
-        publishable-key="pk_live_LLLY0VOLdioitv9tINPOFts200Wjjb8WUn"
-      >
-      </stripe-buy-button>
-
+        {% if bounty.amount == "Medium" %}
+        <!-- Stripe Buy Button for Medium Bounty -->
+        {% endif %}
+        {% if bounty.amount == "Large" %}
+        <!-- Stripe Buy Button for Large Bounty -->
+        {% endif %}
+        {% if bounty.amount == "XL" %}
+        <!-- Stripe Buy Button for XL Bounty -->
+        {% endif %}
+        {% if bounty.amount == "XXL" %}
+        <!-- Stripe Buy Button for XXL Bounty -->
+        {% endif %}
+      </div>
       {% endif %}
-
-      {% if bounty.amount is "Medium"%}
-      <script async
-        src="https://js.stripe.com/v3/buy-button.js">
-      </script>
-      
-      <stripe-buy-button
-        buy-button-id="buy_btn_1NCAGpDbhtSYlwrCtGIO9x9L"
-        publishable-key="pk_live_LLLY0VOLdioitv9tINPOFts200Wjjb8WUn"
-      >
-      </stripe-buy-button>
-
+      {% else %}
+      <p>No submissions yet.</p>
       {% endif %}
-      {% if bounty.amount is "Large"%}
-        <script async
-          src="https://js.stripe.com/v3/buy-button.js">
-        </script>
+      <a type="submit" class="btn btn-primary" href="/bounties">Back to Bounty List</a>
+    </div>
+  </div>
 
-        <stripe-buy-button
-          buy-button-id="buy_btn_1NCAInDbhtSYlwrC2eBM65qo"
-          publishable-key="pk_live_LLLY0VOLdioitv9tINPOFts200Wjjb8WUn"
-        >
-        </stripe-buy-button>
-        {% endif %} 
-        {% if bounty.amount is "XL"%}
-        <script async
-          src="https://js.stripe.com/v3/buy-button.js">
-        </script>
-        
-        <stripe-buy-button
-          buy-button-id="buy_btn_1NCALVDbhtSYlwrCncDl3WXl"
-          publishable-key="pk_live_LLLY0VOLdioitv9tINPOFts200Wjjb8WUn"
-        >
-        </stripe-buy-button>
-        {% endif %} 
-        {% if bounty.amount is "XXL"%}
-         <script async
-            src="https://js.stripe.com/v3/buy-button.js">
-          </script>
-          
-          <stripe-buy-button
-            buy-button-id="buy_btn_1NCAMEDbhtSYlwrCzVdm0nh8"
-            publishable-key="pk_live_LLLY0VOLdioitv9tINPOFts200Wjjb8WUn"
-          >
-          </stripe-buy-button>
-        {% endif %} 
-    {% endif %}
-    {% else %}
-    <p>No submissions yet.</p>
-    {% endif %}
-  <a type="submit" class="btn btn-primary" href="/bounties">Back to Bounty List</a>
-
+  <div class="row">
+    <div class="col-md-12">
+      <h3>Issue Details</h3>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Issue Number</th>
+            <th>Issue URL</th>
+            <th>Priority</th>
+            <th>Complexity Estimate</th>
+            <th>Language</th>
+            <th>Framework</th>
+            <th>Hosting Environment</th>
+            <th>Screenshot</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Add rows for issue details -->
+          {% for issue in issues.all %}
+          <tr>
+            <td>{{ issue.title }}</td>
+            <td>{{ issue.description }}</td>
+            <td>{{ issue.issue_number }}</td>
+            <td><a href="{{ issue.issue_url }}">{{ issue.issue_url }}</a></td>
+            <td>{{ issue.priority }}</td>
+            <td>{{ issue.complexity_estimate }}</td>
+            <td>{{ issue.language }}</td>
+            <td>{{ issue.framework }}</td>
+            <td>{{ issue.hosting_environment }}</td>
+            <td>
+              {% if issue.screenshot %}
+              <img src="{{ issue.screenshot.url }}" class="img-thumbnail">
+              {% endif %}
+            </td>
+            <td>
+              <!-- Add GitHub submission form for each row -->
+              <form method="post" action="{% url 'submit_issue_to_github' issue.pk %}">
+                {% csrf_token %}
+                <label for="github_repo">GitHub Repo:</label>
+                <select name="github_repo" id="github_repo">
+                  <option value="repo1">Repository 1</option>
+                  <option value="repo2">Repository 2</option>
+                  <!-- Add more options as needed -->
+                </select>
+                <button type="submit" class="btn btn-primary">Submit to GitHub</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <h3>Bug Details</h3>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Issue Number</th>
+            <th>Issue URL</th>
+            <th>Priority</th>
+            <th>Application</th>
+            <th>Version</th>
+            <th>Screenshot</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Add rows for bug details -->
+          {% for bug in bugs.all %}
+          <tr>
+            <td>{{ bug.title }}</td>
+            <td>{{ bug.description }}</td>
+            <td>{{ bug.steps_to_recreate }}</td>
+            <td><a href="{{ bug.issue_url }}">{{ bug.issue_url }}</a></td>
+            <td>{{ bug.priority }}</td>
+            <td>{{ bug.application_name }}</td>
+            <td>{{ bug.version }}</td>
+            <td>
+              {% if bug.screenshot %}
+              <img src="{{ bug.screenshot.url }}" class="img-thumbnail">
+              {% endif %}
+            </td>
+            <td>
+              <!-- Add GitHub submission form for each row -->
+              <form method="post" action="{% url 'submit_bug_to_github' bug.pk %}">
+                {% csrf_token %}
+                <label for="github_repo">GitHub Repo:</label>
+                <select name="github_repo" id="github_repo">
+                  <option value="repo1">Repository 1</option>
+                  <option value="repo2">Repository 2</option>
+                  <!-- Add more options as needed -->
+                </select>
+                <button type="submit" class="btn btn-primary">Submit to GitHub</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 {% endblock %}

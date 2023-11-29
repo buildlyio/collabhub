@@ -282,7 +282,7 @@ class BountyDetailView(LoginRequiredMixin, DetailView):
         context['submissions'] = self.object.bountysubmission_set.all()  # Get the related Submission object
         issue = self.object.issue_set  # Get the related Issue object
         context['issues'] = issue
-        bug = Bug.objects.all().filter(bounty=self.bounty)  # Get the related Bug object
+        bug = Bug.objects.all().filter(bounty=self.object)  # Get the related Bug object
         context['bugs'] = bug
         return context
 
@@ -791,3 +791,70 @@ def accept_bug(request, pk):
     bug.save()
     messages.info(request, message)
     return redirect(reverse_lazy("bug_list"))
+
+@login_required
+def submit_to_github(request, object_id, object_type):
+    # Determine the model based on object_type (issue or bug)
+    if object_type == "issue":
+        model_class = Issue
+    elif object_type == "bug":
+        model_class = Bug
+    else:
+        return redirect("bounty_list")  # Handle invalid object_type
+
+    try:
+        # Get the object (issue or bug) by its ID
+        obj = model_class.objects.get(pk=object_id)
+
+        if request.method == "POST":
+            # Retrieve GitHub Token from the associated Bounty
+            bounty = Bounty.objects.get(issue_id=obj.issue_id)
+            github_token = bounty.github_token
+
+            github_repo = request.POST.get("github_repo")  # Get the selected GitHub repo from the form
+
+            # Determine the title based on the object type
+            title = obj.title if object_type == "issue" else obj.name
+
+            # Construct the GitHub API endpoint for creating an issue
+            api_url = f"https://api.github.com/repos/{github_repo}/issues"
+
+            # Define the issue payload
+            issue_payload = {
+                "title": title,
+                "body": obj.description,
+                # You can add other fields as needed
+            }
+
+            headers = {
+                "Authorization": f"Bearer {github_token}",
+                "Accept": "application/vnd.github.v3+json",
+            }
+
+            try:
+                # Send a POST request to create the issue on GitHub
+                response = requests.post(api_url, json=issue_payload, headers=headers)
+
+                if response.status_code == 201:
+                    # Issue created successfully
+                    messages.success(request, "Issue submitted to GitHub successfully.")
+                else:
+                    # Handle GitHub API error
+                    messages.error(
+                        request, f"Failed to submit issue to GitHub. Status code: {response.status_code}"
+                    )
+            except Exception as e:
+                # Handle exceptions
+                messages.error(request, f"An error occurred: {str(e)}")
+
+            return redirect("bounty_detail", pk=obj.bounty.id)
+
+        context = {
+            "object": obj,
+            "object_type": object_type,
+        }
+
+        return render(request, "submit_to_github.html", context)
+
+    except model_class.DoesNotExist:
+        return redirect("bounty_list")  # Handle non-existing object
