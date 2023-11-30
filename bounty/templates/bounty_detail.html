@@ -43,6 +43,10 @@
           <td>{{ bounty.get_status_display }}</td>
         </tr>
         <tr>
+          <td><strong>GitHub Repository:</strong></td>
+          <td>{{ bounty.repo }}</td>
+        </tr>
+        <tr>
           <td><strong>Tags:</strong></td>
           <td>
             {% for tag in bounty.tags.all %}
@@ -161,8 +165,7 @@
                 {% csrf_token %}
                 <label for="github_repo">GitHub Repo:</label>
                 <select name="github_repo" id="github_repo">
-                  <option value="repo1">Repository 1</option>
-                  <option value="repo2">Repository 2</option>
+                  <option value="{{ issue.bounty.repo }}">{{ issue.bounty.repo }}</option>
                   <!-- Add more options as needed -->
                 </select>
                 <button type="submit" class="btn btn-primary">Submit to GitHub</button>
@@ -213,8 +216,7 @@
                 {% csrf_token %}
                 <label for="github_repo">GitHub Repo:</label>
                 <select name="github_repo" id="github_repo">
-                  <option value="repo1">Repository 1</option>
-                  <option value="repo2">Repository 2</option>
+                  <option value="{{ bug.bounty.repo }}">{{ bug.bounty.repo }}</option>
                   <!-- Add more options as needed -->
                 </select>
                 <button type="submit" class="btn btn-primary">Submit to GitHub</button>
