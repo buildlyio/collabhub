@@ -793,7 +793,7 @@ def accept_bug(request, pk):
     return redirect(reverse_lazy("bug_list"))
 
 @login_required
-def submit_to_github(request, object_id, object_type):
+def submit_to_github(request, pk, object_type):
     # Determine the model based on object_type (issue or bug)
     if object_type == "issue":
         model_class = Issue
@@ -804,7 +804,7 @@ def submit_to_github(request, object_id, object_type):
 
     try:
         # Get the object (issue or bug) by its ID
-        obj = model_class.objects.get(pk=object_id)
+        obj = model_class.objects.get(pk=pk)
 
         if request.method == "POST":
             # Retrieve GitHub Token from the associated Bounty

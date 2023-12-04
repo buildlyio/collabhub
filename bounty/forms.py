@@ -87,6 +87,7 @@ class BountyForm(forms.ModelForm):
                     Field('hosting'),
                     Field('complexity_estimate'),
                     Field('repo'),
+                    Field('repo_access_token'),
                 ),
                 Tab('GitHub Issue',
                     Div('issue_title', 'issue_description', 'issue_language', 'issue_framework', 'issue_github_link', 'issue_screenshot')

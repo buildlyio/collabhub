@@ -129,10 +129,12 @@ class BugAdmin(admin.ModelAdmin):
 class Bounty(models.Model):
     CATAGORY_CHOICES = (
         ('Bug', 'Bug'),
-        ('Feature', 'Feature')
+        ('Feature', 'Feature'),
+        ('Puchlist', 'Punchlist'),
+        ('Release', 'Release'),
     )
     title = models.CharField(max_length=255, blank=True, help_text="Name your bounty, i.e. Fix Registration Error")
-    catagory = models.CharField(choices=CATAGORY_CHOICES, max_length=255, blank=True, help_text="If it is new or it works but you want to change it somehow it's a feature, otherwise it's a bug")
+    catagory = models.CharField(choices=CATAGORY_CHOICES, max_length=255, blank=True, help_text="If it is new or it works but you want to change it somehow it's a feature, otherwise it's a bug.  A Punchlist is a list of bug in a release, and a release is collection of bugs and features")
     skills = models.CharField(max_length=255, blank=True, help_text="Skills Required to Fix your Issue")
     level = models.CharField(max_length=255, blank=True, choices=LEVEL_CHOICES, help_text="Skill level - Select One")
     description = models.TextField(blank=True, help_text="Describe in detail the issue of person you are looking for")
@@ -146,7 +148,7 @@ class Bounty(models.Model):
     status = models.CharField(max_length=255, blank=True, choices=STATUS_CHOICES, help_text="Acitivate the Hunt", default="DRAFT")
     repo_owner = models.CharField(max_length=100, help_text="Github Organization Name")
     repo = models.CharField(max_length=100, help_text="GitHub Repository i.e. github.com/myorg/myrepo")
-    repo_access_token = models.CharField(max_length=100)
+    repo_access_token = models.CharField(max_length=100,help_text="Learn how to get your GitHub Token here https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens")
     tags = models.CharField(max_length=255, blank=True, help_text="Comma Seperated Tags")
     hosting = models.CharField(max_length=255, blank=True, help_text="Hosting provider if known")
     create_date = models.DateTimeField(null=True, blank=True)
