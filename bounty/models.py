@@ -147,7 +147,7 @@ class Bounty(models.Model):
     url = models.CharField(max_length=255, null=True, blank=True, help_text="Your GitHub Repository URL")
     status = models.CharField(max_length=255, blank=True, choices=STATUS_CHOICES, help_text="Acitivate the Hunt", default="DRAFT")
     repo_owner = models.CharField(max_length=100, help_text="Github Organization Name")
-    repo = models.CharField(max_length=100, help_text="GitHub Repository i.e. github.com/myorg/myrepo")
+    repo = models.CharField(max_length=100, help_text="GitHub Repository i.e. myorg/myrepo")
     repo_access_token = models.CharField(max_length=100,help_text="Learn how to get your GitHub Token here https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens")
     tags = models.CharField(max_length=255, blank=True, help_text="Comma Seperated Tags")
     hosting = models.CharField(max_length=255, blank=True, help_text="Hosting provider if known")
