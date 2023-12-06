@@ -793,7 +793,17 @@ def accept_bug(request, pk):
     return redirect(reverse_lazy("bug_list"))
 
 @login_required
-def submit_to_github(request, pk, object_type):
+def submit_issue_to_github(request, pk):
+    submit_to_github(request=request, object_type="issue", pk=pk)
+    return None
+
+@login_required
+def submit_bug_to_github(request, pk):
+    submit_to_github(request=request, object_type="bug", pk=pk)
+    return None
+
+@login_required
+def submit_to_github(request, object_type, pk):
     # Determine the model based on object_type (issue or bug)
     if object_type == "issue":
         model_class = Issue
