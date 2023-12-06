@@ -21,6 +21,32 @@ from bounty.models import BountyHunter, BountySetter
 
 from django.contrib import messages
 
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
+
+User = get_user_model()
+
+def send_password_reset_email(request, email):
+    user = User.objects.filter(email=email).first()
+
+    if user:
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+        reset_url = reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+        reset_url = request.build_absolute_uri(reset_url)
+
+        subject = 'Reset Your Password'
+        message = f'Click the following link to reset your password:\n\n{reset_url}'
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient_list = [email]
+
+        send_mail(subject, message, from_email, recipient_list)
+        return True
+    return False
+
+
 
 def register(request):
     form = RegistrationForm(request.POST)

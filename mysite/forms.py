@@ -15,6 +15,18 @@ from paypal.standard.forms import PayPalPaymentsForm
 from bootstrap_modal_forms.forms import BSModalModelForm
 
 
+
+
+class PasswordResetForm(forms.Form):
+    email = forms.EmailField()
+
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if not User.objects.filter(email=email).exists():
+            raise forms.ValidationError('No user with this email address.')
+        return email
+
+
 # User Forms
 class NewUserForm(UserCreationForm):
 	email = forms.EmailField(required=True)
