@@ -818,7 +818,7 @@ def submit_to_github(request, object_type, pk):
 
         if request.method == "POST":
             # Retrieve GitHub Token from the associated Bounty
-            bounty = Bounty.objects.get(id=obj.id)
+            bounty = Bounty.objects.get(id=obj.bounty.id)
             github_token = bounty.github_token
 
             github_repo = request.POST.get("github_repo")  # Get the selected GitHub repo from the form
