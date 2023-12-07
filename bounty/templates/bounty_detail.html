@@ -211,6 +211,9 @@
               {% endif %}
             </td>
             <td>
+              {% if bug.is_tracked %}
+                <p>Issue Submitted to Tracker</p>
+              {% else %}
               <!-- Add GitHub submission form for each row -->
               <form method="post" action="{% url 'submit_bug_to_github' bug.pk %}">
                 {% csrf_token %}
@@ -221,6 +224,7 @@
                 </select>
                 <button type="submit" class="btn btn-primary">Submit to GitHub</button>
               </form>
+              {% endif %}
             </td>
           </tr>
           {% endfor %}
