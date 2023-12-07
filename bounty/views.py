@@ -795,12 +795,12 @@ def accept_bug(request, pk):
 @login_required
 def submit_issue_to_github(request, pk):
     submit_to_github(request=request, object_type="issue", pk=pk)
-    return None
+    return redirect("bounty_detail", pk=pk)
 
 @login_required
 def submit_bug_to_github(request, pk):
     submit_to_github(request=request, object_type="bug", pk=pk)
-    return None
+    return redirect("bounty_detail", pk=pk)
 
 @login_required
 def submit_to_github(request, object_type, pk):
