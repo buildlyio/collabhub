@@ -838,12 +838,11 @@ def submit_to_github(request, object_type, pk):
                 }
             else:
                 # Define the bug payload
-                description = obj.description  + "<br>" + obj.error_message + "<br>" +  obj.expected_behaviour + "<br>" + obj.steps_to_reproduce
+                description = obj.description  + obj.error_message +  obj.expected_behaviour + obj.steps_to_reproduce
                 issue_payload = {
                     "title": obj.title,
                     "body": description,
                     "label": "bug",
-                    "milestone": obj.version
                     # You can add other fields as needed
                 }
 
