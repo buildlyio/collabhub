@@ -24,7 +24,7 @@ except ImportError:
 
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"  # new
-DEFAULT_FROM_EMAIL = "team@buildly.io"
+DEFAULT_FROM_EMAIL = "admin@buildly.io"
 EMAIL_HOST = "smtp.sendgrid.net"  # new
 EMAIL_HOST_USER = "apikey"  # new
 EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_PASSWORD")  # new
