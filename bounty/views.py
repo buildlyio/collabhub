@@ -823,18 +823,27 @@ def submit_to_github(request, object_type, pk):
 
             github_repo = request.POST.get("github_repo")  # Get the selected GitHub repo from the form
 
-            # Determine the title based on the object type
-            title = obj.title if object_type == "issue" else obj.name
 
             # Construct the GitHub API endpoint for creating an issue
             api_url = f"https://api.github.com/repos/{github_repo}/issues"
 
-            # Define the issue payload
-            issue_payload = {
-                "title": title,
-                "body": obj.description,
-                # You can add other fields as needed
-            }
+            if object_type == "issue":
+                # Define the issue payload
+                issue_payload = {
+                    "title": obj.title,
+                    "body": obj.description,
+                    # You can add other fields as needed
+                }
+            else:
+                # Define the bug payload
+                description = obj.description  + "<br>" + obj.error_message + "<br>" +  obj.expected_behaviour + "<br>" + obj.steps_to_reproduce
+                issue_payload = {
+                    "title": obj.title,
+                    "body": description,
+                    "label": "bug",
+                    "milestone": obj.version
+                    # You can add other fields as needed
+                }
 
             headers = {
                 "Authorization": f"Bearer {github_token}",
@@ -848,6 +857,10 @@ def submit_to_github(request, object_type, pk):
                 if response.status_code == 201:
                     # Issue created successfully
                     messages.success(request, "Issue submitted to GitHub successfully.")
+                    
+                    # update status works for both issue and bug
+                    obj.is_tracked = True
+                    obj.save()
                 else:
                     # Handle GitHub API error
                     messages.error(

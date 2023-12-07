@@ -114,6 +114,7 @@ class Bug(models.Model):
     is_user_submitted = models.BooleanField(default=True)
     is_approved = models.BooleanField(default=False)
     is_public = models.BooleanField(default=False)
+    is_tracked = models.BooleanField(default=False)
     bounty = models.ForeignKey("Bounty", blank=True, on_delete=models.CASCADE, related_name="bug_bounty", null=True)
 
     def __str__(self):
@@ -280,6 +281,7 @@ class Issue(models.Model):
     screenshot = models.ImageField(null=True, blank=True, upload_to='bug_screenshots')
     tags = models.CharField(null=True, blank=True, max_length=100)
     is_fixed = models.BooleanField(default=False)
+    is_tracked = models.BooleanField(default=False)
     bounty = models.ForeignKey(Bounty, on_delete=models.CASCADE)
     create_date = models.DateTimeField(null=True, blank=True)
     edit_date = models.DateTimeField(null=True, blank=True)
