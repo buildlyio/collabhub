@@ -4,7 +4,7 @@ Welcome to the Buildly Marketplace and Bug Reporting application! This robust, f
 
 **Key Features:**
 
-* **Streamlined Marketplace Management:** Facilitate seamless operations for your marketplace with features tailored for both vendors and customers. (Provide more specifics here if possible)
+* **Streamlined Marketplace Management:** Facilitate seamless operations for your marketplace with features tailored for both vendors and customers. 
 * **Efficient Bug Reporting:** Empower users to effortlessly submit bug reports, allowing you to prioritize and resolve issues swiftly. (Highlight specific functionalities, e.g., screenshots, detailed descriptions)
 
 **Mono-Repo with Micro-Applications:**
