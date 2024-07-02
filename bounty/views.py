@@ -534,7 +534,7 @@ class DevelopmentAgencyCreateView(CreateView):
             error_message = "An agency with the same name already exists."
             return render(self.request, self.template_name, {'form': form, 'error_message': error_message})
         else:
-            messages.info("Thank you for Registering your Agency!")
+            messages.info(self.request, "Thank you for Registering your Agency!")
         return super().form_valid(form)
 
 
