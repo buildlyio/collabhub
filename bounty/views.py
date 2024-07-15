@@ -542,10 +542,10 @@ from django.shortcuts import render
 import requests  # Import the requests library for making API requests
 from .models import Product, InsightsUser
 
-def marketplace(request):
+def collabhub(request):
     # Check if the user is authenticated
     if not request.user.is_authenticated:
-        messages.info(request, 'Please register for an Insights account at https://insights.buildly.io to access the marketplace.')
+        messages.info(request, 'Please register for an Insights account at https://insights.buildly.io to access the collabhub.')
         return redirect('home')  # Redirect to the home page with a message
 
     try:
@@ -554,7 +554,7 @@ def marketplace(request):
         organization_id = insights_user.insightsorganization_id
     except InsightsUser.DoesNotExist:
         # If the InsightsUser object doesn't exist for the user, redirect with a message
-        messages.info(request, 'Please register for an Insights account at https://insights.buildly.io to access the marketplace.')
+        messages.info(request, 'Please register for an Insights account at https://insights.buildly.io to access the collabhub.')
         return redirect('home')  # Redirect to the home page with a message
     
     # Fetch data from the Buildly Insights API
@@ -588,7 +588,7 @@ def marketplace(request):
         'products': products
     }
 
-    return render(request, 'marketplace_list.html', context)
+    return render(request, 'collabhub_list.html', context)
 
 
 import requests
@@ -653,7 +653,7 @@ def sour(request):
             defaults={'organization_id': organization_uuid}
         )
 
-        # Map the Insights user to the current user in the Marketplace
+        # Map the Insights user to the current user in the CollabHub
         insights_user.user = request.user
         insights_user.save()
 

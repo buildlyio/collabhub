@@ -16,9 +16,9 @@ from django.contrib.auth import views as auth_views
 
 schema_view = get_schema_view(
    openapi.Info(
-      title="Buildly Marketplace",
+      title="Buildly CollabHub",
       default_version='v1',
-      description="Buildly Marketplace API",
+      description="Buildly CollabHub API",
       terms_of_service="https://www.buildly.io/terms/",
       contact=openapi.Contact(email="team@buildly.io"),
    ),
@@ -82,8 +82,8 @@ urlpatterns = urlpatterns + [
     url(r'^agency_list/$', showcase_agencies, name='agency_list'),
     url(r'^partner/$', DevelopmentAgencyCreateView.as_view(), name='partner'),
     
-    # Marketplace
-    path('marketplace/', marketplace, name='marketplace'),
+    # CollabHub
+    path('collabhub/', collabhub, name='collabhub'),
     
     # Basic Token Auth
     # Obtain authentication token

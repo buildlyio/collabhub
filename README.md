@@ -1,10 +1,10 @@
 **Introduction**
 
-Welcome to the Buildly Marketplace and Bug Reporting application! This robust, full-stack micro-application is meticulously crafted using the Django framework. It empowers you to manage a thriving marketplace and effectively track and address bugs reported by your users.
+Welcome to the Buildly CollabHub and Bug Reporting application! This robust, full-stack micro-application is meticulously crafted using the Django framework. It empowers you to manage a thriving collabhub and effectively track and address bugs reported by your users.
 
 **Key Features:**
 
-* **Streamlined Marketplace Management:** Facilitate seamless operations for your marketplace with features tailored for both vendors and customers. 
+* **Streamlined CollabHub Management:** Facilitate seamless operations for your collabhub with features tailored for both vendors and customers. 
 * **Efficient Bug Reporting:** Empower users to effortlessly submit bug reports, allowing you to prioritize and resolve issues swiftly. (Highlight specific functionalities, e.g., screenshots, detailed descriptions)
 
 **Mono-Repo with Micro-Applications:**
@@ -44,12 +44,12 @@ This project is licensed under the (Specify your chosen license).
 
 2. **Clone the Repository:**
    ```bash
-   git clone https://github.com/buildlyio/marketplace.git
+   git clone https://github.com/buildlyio/collabhub.git
    ```
 
 3. **Build and Run the Application:**
    ```bash
-   cd marketplace
+   cd collabhub
    docker-compose up -d  # Detached mode (background)
    docker-compose ps  # View running containers
    ```
