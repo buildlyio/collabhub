@@ -830,8 +830,8 @@ def submit_to_github(request, object_type, pk):
             api_url = f"https://api.github.com/repos/{github_repo}/issues"
             if object_type == "issue":
                 # Define the issue payload
-                description = obj.description  + "\n COLLAB ISSUE URL: " + str(obj.issue_number) + " : " + obj.issue_url +  "\n Compexity: " + str(obj.complexity_estimate) 
-                "\n ENVRIONMENT: " + obj.hosting_environment
+                description = obj.description  + "\n COLLAB ISSUE URL: " + str(obj.issue_number) + " : " + str(obj.issue_url) +  "\n Compexity: " + str(obj.complexity_estimate) 
+                "\n ENVRIONMENT: " + str(obj.hosting_environment)
                 issue_payload = {
                     "title": obj.title,
                     "body": obj.description,
@@ -839,9 +839,9 @@ def submit_to_github(request, object_type, pk):
                 }
             else:
                 # Define the bug payload
-                description = obj.description  + "\n ERROR MESSAGE" + obj.error_message +  "\n EXPECTED BEHAVIOUR: " + obj.expected_behaviour 
-                + "\n STEP TO REPRODUCE: " + obj.steps_to_reproduce + "\n SEVERITY: " + str(obj.severity) + "\n APP NAME: " + obj.app_name + "\n VERSION: " + str(obj.version)
-                + "\n NAME: " + obj.name + "\n EMAIL: " + obj.email + "\n COLLAB BUG URL" + obj.url  + "\n IS USER SUBMITTED: " + str(obj.is_user_submitted)
+                description = obj.description  + "\n ERROR MESSAGE: " + str(obj.error_message) +  "\n EXPECTED BEHAVIOUR: " + str(obj.expected_behaviour) 
+                + "\n STEP TO REPRODUCE: " + str(obj.steps_to_reproduce) + "\n SEVERITY: " + str(obj.severity) + "\n APP NAME: " + str(obj.app_name) + "\n VERSION: " + str(obj.version)
+                + "\n NAME: " + str(obj.name) + "\n EMAIL: " + str(obj.email) + "\n COLLAB BUG URL" + str(obj.url)  + "\n IS USER SUBMITTED: " + str(obj.is_user_submitted)
                 + "\n IS APPROVED: " + str(obj.is_approved)
                 issue_payload = {
                     "title": obj.title,
