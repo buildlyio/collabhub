@@ -17,6 +17,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['squid-app-sejn2.ondigitalocean.app', '127.0.0.1', '[::1]','bounty.buildly.io','collab.buildly.io','market.buildly.io']
 
+CORS_ORIGIN_ALLOW_ALL = False
+
+CORS_ORIGIN_WHITELIST = ALLOWED_HOSTS
+
 try:
     from .local import *
 except ImportError:

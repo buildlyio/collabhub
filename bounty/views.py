@@ -828,9 +828,9 @@ def submit_to_github(request, object_type, pk):
 
             # Construct the GitHub API endpoint for creating an issue
             api_url = f"https://api.github.com/repos/{github_repo}/issues"
-
             if object_type == "issue":
                 # Define the issue payload
+                description = obj.description  + "COLLAB ISSUE URL" + obj.issue_number + " : " + obj.issue_url +  "PRIOORITY:" + obj.complexity_estimate + obj.hosting_environment
                 issue_payload = {
                     "title": obj.title,
                     "body": obj.description,
@@ -838,7 +838,10 @@ def submit_to_github(request, object_type, pk):
                 }
             else:
                 # Define the bug payload
-                description = obj.description  + obj.error_message +  obj.expected_behaviour + obj.steps_to_reproduce
+                description = obj.description  + "ERROR MESSAGE" + obj.error_message +  "EXPECTED BEHAVIOUR: " + obj.expected_behaviour 
+                + "STEP TO REPRODUCE: " + obj.steps_to_reproduce + "SEVERITY: " + obj.severity + "APP NAME: " + obj.app_name + "VERSION: " + obj.version
+                + "NAME: " + obj.name + "EMAIL: " + obj.email + "COLLAB BUG URL" + obj.url + "SCREENSHOTS: " + obj.screenshots + "IS USER SUBMITTED: " + obj.is_user_submitted
+                + "IS APPROVED: " + obj.is_approved
                 issue_payload = {
                     "title": obj.title,
                     "body": description,
