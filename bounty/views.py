@@ -830,7 +830,8 @@ def submit_to_github(request, object_type, pk):
             api_url = f"https://api.github.com/repos/{github_repo}/issues"
             if object_type == "issue":
                 # Define the issue payload
-                description = obj.description  + "COLLAB ISSUE URL" + obj.issue_number + " : " + obj.issue_url +  "PRIOORITY:" + obj.complexity_estimate + obj.hosting_environment
+                description = obj.description  + "\n COLLAB ISSUE URL: " + str(obj.issue_number) + " : " + obj.issue_url +  "\n Compexity: " + str(obj.complexity_estimate) 
+                "\n ENVRIONMENT: " + obj.hosting_environment
                 issue_payload = {
                     "title": obj.title,
                     "body": obj.description,
@@ -838,10 +839,10 @@ def submit_to_github(request, object_type, pk):
                 }
             else:
                 # Define the bug payload
-                description = obj.description  + "ERROR MESSAGE" + obj.error_message +  "EXPECTED BEHAVIOUR: " + obj.expected_behaviour 
-                + "STEP TO REPRODUCE: " + obj.steps_to_reproduce + "SEVERITY: " + obj.severity + "APP NAME: " + obj.app_name + "VERSION: " + obj.version
-                + "NAME: " + obj.name + "EMAIL: " + obj.email + "COLLAB BUG URL" + obj.url + "SCREENSHOTS: " + obj.screenshots + "IS USER SUBMITTED: " + obj.is_user_submitted
-                + "IS APPROVED: " + obj.is_approved
+                description = obj.description  + "\n ERROR MESSAGE" + obj.error_message +  "\n EXPECTED BEHAVIOUR: " + obj.expected_behaviour 
+                + "\n STEP TO REPRODUCE: " + obj.steps_to_reproduce + "\n SEVERITY: " + str(obj.severity) + "\n APP NAME: " + obj.app_name + "\n VERSION: " + str(obj.version)
+                + "\n NAME: " + obj.name + "\n EMAIL: " + obj.email + "\n COLLAB BUG URL" + obj.url  + "\n IS USER SUBMITTED: " + str(obj.is_user_submitted)
+                + "\n IS APPROVED: " + str(obj.is_approved)
                 issue_payload = {
                     "title": obj.title,
                     "body": description,
