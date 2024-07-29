@@ -839,10 +839,10 @@ def submit_to_github(request, object_type, pk):
                 }
             else:
                 # Define the bug payload
-                description = obj.description  + "\n ERROR MESSAGE: " + str(obj.error_message) +  "\n EXPECTED BEHAVIOUR: " + str(obj.expected_behaviour) 
-                + "\n STEP TO REPRODUCE: " + str(obj.steps_to_reproduce) + "\n SEVERITY: " + str(obj.severity) + "\n APP NAME: " + str(obj.app_name) + "\n VERSION: " + str(obj.version)
-                + "\n NAME: " + str(obj.name) + "\n EMAIL: " + str(obj.email) + "\n COLLAB BUG URL" + str(obj.url)  + "\n IS USER SUBMITTED: " + str(obj.is_user_submitted)
-                + "\n IS APPROVED: " + str(obj.is_approved)
+                description = f"{obj.description} \n ERROR MESSAGE: {obj.error_message} \n EXPECTED BEHAVIOUR: {obj.expected_behaviour} 
+                \n STEPS TO REPRODUCE: {obj.steps_to_reproduce} \n SEVERITY: {obj.severity} \n APP NAME: {obj.app_name} 
+                \n VERSION: {obj.version} \n COLLAB BUG URL {obj.url}  \n IS USER SUBMITTED: {str(obj.is_user_submitted)} 
+                \n IS APPROVED: {str(obj.is_approved)}"
                 issue_payload = {
                     "title": obj.title,
                     "body": description,
