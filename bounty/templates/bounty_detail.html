@@ -212,7 +212,9 @@
             </td>
             <td>
               {% if bug.is_tracked %}
-                <p>Issue Submitted to Tracker</p>
+                <p>Issue Submitted to Tracker:<br/>
+                {{ bug.tracked_url }}
+                </p>
               {% else %}
               <!-- Add GitHub submission form for each row -->
               <form method="post" action="{% url 'submit_bug_to_github' bug.pk %}">

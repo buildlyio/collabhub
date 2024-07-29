@@ -830,12 +830,11 @@ def submit_to_github(request, object_type, pk):
             api_url = f"https://api.github.com/repos/{github_repo}/issues"
             if object_type == "issue":
                 # Define the issue payload
-                description = obj.description  + "\n COLLAB ISSUE URL: " + str(obj.issue_number) + " : " + str(obj.issue_url) +  "\n Compexity: " + str(obj.complexity_estimate) 
-                "\n ENVRIONMENT: " + str(obj.hosting_environment)
+                description = f"DESCRIPTION: {obj.description} \n COLLAB ISSUE URL: {obj.issue_number} : {obj.issue_url} \n Compexity: {obj.complexity_estimate} \n ENVRIONMENT: {obj.hosting_environment}"
                 issue_payload = {
                     "title": obj.title,
                     "body": obj.description,
-                    # You can add other fields as needed
+                    # add other fields as needed
                 }
             else:
                 # Define the bug payload
@@ -843,8 +842,8 @@ def submit_to_github(request, object_type, pk):
                 issue_payload = {
                     "title": obj.title,
                     "body": description,
-                    "label": "bug",
-                    # You can add other fields as needed
+                    "labels": ["bug"],
+                    # add other fields as needed
                 }
 
             headers = {
@@ -862,6 +861,7 @@ def submit_to_github(request, object_type, pk):
                     
                     # update status works for both issue and bug
                     obj.is_tracked = True
+                    obj.url = response.json().get("url")
                     obj.save()
                 else:
                     # Handle GitHub API error
