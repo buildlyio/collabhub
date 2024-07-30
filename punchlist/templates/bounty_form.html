@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static %}
+{% block page_title %}Punchlist{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<header style="text-align: center; padding: 8px;">
+    <img src="{% static 'img/4.png' %}" alt="Centered Image" style="max-height: 200px; width: 100%; object-fit: cover;">
+    <h3>Submit a <b>Punchlist</b> to be Reviewed by an Individual Developer or a Development Agency.</h3>
+</header>
+<br/>
+<div class="container">
+    <div class="card">
+        {% if form.errors %}
+            <div class="help-block">
+            {% for field in form %}
+                {% for error in field.errors %}
+                        <strong><i>{{ field.label }}</i> - {{ error|escape }}</strong>&nbsp;
+                {% endfor %}
+            {% endfor %}
+            </div>
+            {% for error in form.non_field_errors %}
+                <div class="alert alert-error">
+                    <strong>{{ error|escape }}</strong>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% csrf_token %}
+        <div id="indicator_form">
+            {% load crispy_forms_tags %}
+            {% crispy form %}
+        </div>
+        <br/>
+
+    </div>    
+</div>
+{% endblock content %}

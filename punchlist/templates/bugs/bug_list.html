@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="bug-list">
+    <h2>Bug List</h2>
+
+    <!-- Filter Form -->
+    <form method="get" class="mb-3">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label for="app_name_filter" class="form-label">App Name:</label>
+          <input type="text" name="app_name" class="form-control" id="app_name_filter" value="{{ request.GET.app_name }}">
+        </div>
+        <div class="col-md-3">
+          <label for="version_filter" class="form-label">Version:</label>
+          <input type="text" name="version" class="form-control" id="version_filter" value="{{ request.GET.version }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label invisible">Filter:</label>
+          <button type="submit" class="btn btn-primary">Apply Filters</button>
+        </div>
+      </div>
+    </form>
+
+    <div class="table-responsive">
+      <table class="table table-striped table-bordered" id="bugTable">
+        <thead>
+          <tr>
+            <th>App Name</th>
+            <th>Version</th>
+            <th>Title</th>
+            <th>Severity</th>
+            <th>Submitted by</th>
+            <th>Screenshots</th>
+            <th>Action</th>
+            <th>Assign to Punchlist</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for bug in bugs %}
+            <tr>
+              <td>{{ bug.app_name }}</td>
+              <td>{{ bug.version }}</td>
+              <td>
+                <a href="#" data-bs-toggle="popover" title="{{ bug.title }}" data-bs-content="{{ bug.description|default:'' }}, {{ bug.expected_behaviour|default:'' }}, {{ bug.steps_to_reproduce|default:'' }}">
+                  {{ bug.title }}
+                </a>
+              </td>
+              <td>{{ bug.get_severity_display }}</td>
+              <td>{{ bug.name }} ({{ bug.email }})</td>
+              <td>
+                {% if bug.screenshots %}
+                  <a href="{{ bug.screenshots.url }}" target="_blank">
+                    <img src="{{ bug.screenshots.url }}" alt="Screenshot" class="img-thumbnail" style="max-height: 50px; max-width: 50px;">
+                  </a>
+                {% endif %}
+              </td>
+              <td>
+                {% if user.is_staff %}
+                  {% if bug.is_approved %}
+                    Approved
+                  {% else %}
+                    <form action="{% url 'bug_accept' bug.id %}" method="post">
+                      {% csrf_token %}
+                      <input type="submit" value="Accept Bug">
+                    </form>
+                  {% endif %}
+                {% endif %}
+              </td>
+              <td>
+                {% if user.is_staff %}
+                  {% if bug.punchlist %}
+                    <a href="{% url 'punchlist_detail' bug.punchlist.pk %}">{{ bug.punchlist.title }}</a>
+                  {% else %}
+                    <form action="{% url 'bug_send_to_github' bug.id %}" method="post">
+                        {% csrf_token %}
+                      {% if bug.is_approved %}
+                        <select id="assignToPunchlist" name="assign_to_punchlist" class="form-select">
+                      {% else %}
+                        <select id="assignToPunchlist" name="assign_to_punchlist" class="form-select" disabled>
+                      {% endif %}
+                        <!-- Populate options dynamically from open bounties -->
+                        <option value="">Create a New Punchlist</option>
+                        {% for punchlist in bounties %}
+                          <option value="{{ punchlist.id }}">{{ punchlist.title }}</option>
+                        {% endfor %}
+                      </select>
+                      <input type="submit" value="submit">
+                    </form>
+                  {% endif %}
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <script>
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+      return new bootstrap.Popover(popoverTriggerEl)
+    })
+    var popover = new bootstrap.Popover(document.querySelector('.popover-dismiss'), {
+      trigger: 'focus'
+    })
+  </script>
+{% endblock %}

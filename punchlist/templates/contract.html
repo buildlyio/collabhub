@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1>Contract</h1>
+
+<p>This contract is entered into between {{ owner }} and {{ punchlisthunter }} for the resolution of the following issue:</p>
+
+<p>{{ issue.description }}</p>
+
+<p>The contract period shall be 30 days from the date of signing. If the issue is not resolved within 30 days, this contract shall be considered void.</p>
+
+<form method="post">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="agreed_price">Agreed Price:</label>
+    <input type="text" class="form-control" id="agreed_price" name="agreed_price">
+  </div>
+  <div class="form-group">
+    <label for="terms">Terms:</label>
+    <textarea class="form-control" id="terms" name="terms" rows="4"></textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Sign Contract</button>
+</form>
+
+{% endblock %}

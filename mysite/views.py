@@ -15,9 +15,9 @@ from django.contrib.auth.models import User
 from django.shortcuts import render, redirect
 from django.db import transaction
 
-from bounty.forms import BountyHunterForm, BountySetterForm
+from punchlist.forms import PunchlistHunterForm, PunchlistSetterForm
 
-from bounty.models import BountyHunter, BountySetter
+from punchlist.models import PunchlistHunter, PunchlistSetter
 
 from django.contrib import messages
 
@@ -56,11 +56,11 @@ def register(request):
                 # Create a new user object
                 user = form.save()
 
-                # Create a new BountyHunter or BountySetter object for the user
-                if request.POST.get('is_bounty_hunter') == 'True':
-                    bounty_hunter = BountyHunter.objects.create(user=user)
+                # Create a new PunchlistHunter or PunchlistSetter object for the user
+                if request.POST.get('is_punchlist_hunter') == 'True':
+                    punchlist_hunter = PunchlistHunter.objects.create(user=user)
                 else:
-                    bounty_setter = BountySetter.objects.create(user=user)
+                    punchlist_setter = PunchlistSetter.objects.create(user=user)
                 
                 messages.info(request, "You are now Registered, please login.")
                 redirect("/login")
@@ -86,11 +86,11 @@ def edit_profile(request):
                 # Create a new user object
                 user = form.save()
 
-                # Create a new BountyHunter or BountySetter object for the user
-                if request.POST.get('is_bounty_hunter') == 'True':
-                    bounty_hunter, created = BountyHunter.objects.get_or_create(user=user)
+                # Create a new PunchlistHunter or PunchlistSetter object for the user
+                if request.POST.get('is_punchlist_hunter') == 'True':
+                    punchlist_hunter, created = PunchlistHunter.objects.get_or_create(user=user)
                 else:
-                    bounty_setter, created = BountySetter.objects.get_or_create(user=user)
+                    punchlist_setter, created = PunchlistSetter.objects.get_or_create(user=user)
                 
                 messages.info(request, "Your Profile has been updated.")
                 redirect("/login")
@@ -103,16 +103,16 @@ def edit_profile(request):
     else:
         form = RegistrationUpdateForm(instance=request.user)
 
-        # Get the related BountyHunter or BountySetter object
-        if hasattr(request.user, 'bountyhunter'):
-            profile = request.user.bountyhunter
-            profile_form = BountyHunterForm(instance=profile)
-        elif hasattr(request.user, 'bountysetter'):
-            profile = request.user.bountysetter
-            profile_form = BountySetterForm(instance=profile)
+        # Get the related PunchlistHunter or PunchlistSetter object
+        if hasattr(request.user, 'punchlisthunter'):
+            profile = request.user.punchlisthunter
+            profile_form = PunchlistHunterForm(instance=profile)
+        elif hasattr(request.user, 'punchlistsetter'):
+            profile = request.user.punchlistsetter
+            profile_form = PunchlistSetterForm(instance=profile)
         else:
             # If the user doesn't have a related object, redirect to homepage
-            messages.info(request, "You have not Registered as Bounty Hunter or Setter, please contact support.")
+            messages.info(request, "You have not Registered as Punchlist Hunter or Setter, please contact support.")
             return redirect('/')
 
     context = {

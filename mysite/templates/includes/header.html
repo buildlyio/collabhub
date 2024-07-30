@@ -41,8 +41,8 @@
         <li class="nav-item dropdown">
           <a href="#" class="nav-link dropdown-toggle" id="productsDropdown" role="button" aria-expanded="false">Products</a>
           <ul class="dropdown-menu" aria-labelledby="productsDropdown">
-            <li><a class="dropdown-item" href="/bounty_add/">Set a Bounty</a></li>
-            <li><a class="dropdown-item" href="/bounties/">View Bounties</a></li>
+            <li><a class="dropdown-item" href="/punchlist_add/">Set a Punchlist</a></li>
+            <li><a class="dropdown-item" href="/bounties/">View Punchlist</a></li>
             <li><a class="dropdown-item" href="/bug_add">Submit a Bug</a></li>
             <li><a class="dropdown-item" href="/bug_list">Bug List</a></li>
           </ul>
@@ -61,7 +61,7 @@
             <li><a class="dropdown-item" href="/logout">Logout</a></li>
           </ul>
         </li>
-        <li class="nav-item"><i class="nav-item">&nbsp; Welcome, {% if request.user|has_bountyhunter %} Bounty Hunter {% endif %}{{user.username}} &nbsp;</i></li>
+        <li class="nav-item"><i class="nav-item">&nbsp; Welcome, {% if request.user|has_punchlisthunter %} Punchlist Hunter {% endif %}{{user.username}} &nbsp;</i></li>
         {% else %}
         <li><a class="dropdown-item" href="/partner">Partner</a></li>
         <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>

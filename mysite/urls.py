@@ -3,7 +3,7 @@ from django.urls import include, path, re_path
 from django.contrib import admin
 
 from django.conf.urls import url
-from bounty.views import *
+from punchlist.views import *
 from . import views
 
 
@@ -41,7 +41,7 @@ urlpatterns = [
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
 
     path('accounts/', include('allauth.urls')),
-    path('bounty/<int:bounty_id>/submit/', submit_user_for_bounty, name='submit_user_for_bounty'),
+    path('punchlist/<int:punchlist_id>/submit/', submit_user_for_punchlist, name='submit_user_for_punchlist'),
     
     # Include your API URLs
     re_path(r'^docs/swagger(?P<format>\.json|\.yaml)$',
@@ -53,21 +53,21 @@ urlpatterns = [
 
 
 urlpatterns = urlpatterns + [
-    # Bountys
-    url(r'^bounty/dashboard/(?P<pk>\w+)/$', dashboard),
-    url(r'^bounty/report/(?P<pk>\w+)/$', report),
-    url(r'^bounties/$', BountyList.as_view(), name='bountys_list'),
+    # Punchlists
+    url(r'^punchlist/dashboard/(?P<pk>\w+)/$', dashboard),
+    url(r'^punchlist/report/(?P<pk>\w+)/$', report),
+    url(r'^bounties/$', PunchlistList.as_view(), name='punchlists_list'),
     # Forms
-    url(r'^bounty_add/$', BountyCreate.as_view(), name='bountys_add'),
-    url(r'^bounty_update/(?P<pk>\w+)/$', BountyUpdate.as_view(), name='bountys_update'),
-    url(r'^bounty_delete/(?P<pk>\w+)/$', BountyDelete.as_view(), name='bountys_delete'),
-    url(r'^bounty_detail/(?P<pk>\w+)/$', BountyDetailView.as_view(), name='bounty_detail'),
+    url(r'^punchlist_add/$', PunchlistCreate.as_view(), name='punchlists_add'),
+    url(r'^punchlist_update/(?P<pk>\w+)/$', PunchlistUpdate.as_view(), name='punchlists_update'),
+    url(r'^punchlist_delete/(?P<pk>\w+)/$', PunchlistDelete.as_view(), name='punchlists_delete'),
+    url(r'^punchlist_detail/(?P<pk>\w+)/$', PunchlistDetailView.as_view(), name='punchlist_detail'),
     
-    # BountyHunterForms
-    url(r'^bountyhunter_add/$', BountyHunterCreate.as_view(), name='bountyhunter_add'),
-    url(r'^bountyhunter_update/(?P<pk>\w+)/$', BountyHunterUpdate.as_view(), name='bountyhunter_update'),
-    url(r'^bountyhunter_delete/(?P<pk>\w+)/$', BountyHunterDelete.as_view(), name='bountyhunter_delete'),
-    url(r'^bountyhunter_detail/(?P<pk>\w+)/$', BountyHunterDetailView.as_view(), name='bountyhunter_detail'),
+    # PunchlistHunterForms
+    url(r'^punchlisthunter_add/$', PunchlistHunterCreate.as_view(), name='punchlisthunter_add'),
+    url(r'^punchlisthunter_update/(?P<pk>\w+)/$', PunchlistHunterUpdate.as_view(), name='punchlisthunter_update'),
+    url(r'^punchlisthunter_delete/(?P<pk>\w+)/$', PunchlistHunterDelete.as_view(), name='punchlisthunter_delete'),
+    url(r'^punchlisthunter_detail/(?P<pk>\w+)/$', PunchlistHunterDetailView.as_view(), name='punchlisthunter_detail'),
     
     # UserSubmittedBug
     url(r'^bug_add/$', BugCreateView.as_view(), name='bug_add'),
@@ -92,7 +92,7 @@ urlpatterns = urlpatterns + [
 
 
 from django.urls import path
-from bounty import serializer_views
+from punchlist import serializer_views
 
 urlpatterns = urlpatterns + [
     path('positions/', serializer_views.PositionList.as_view(), name='position-list'),
@@ -101,17 +101,17 @@ urlpatterns = urlpatterns + [
     path('bugs/', serializer_views.BugList.as_view(), name='bug-list'),
     path('bugs/<int:pk>/', serializer_views.BugDetail.as_view(), name='bug-detail'),
 
-    path('bounty-submissions/', serializer_views.BountySubmissionList.as_view(), name='bounty-submission-list'),
-    path('bounty-submissions/<int:pk>/', serializer_views.BountySubmissionDetail.as_view(), name='bounty-submission-detail'),
+    path('punchlist-submissions/', serializer_views.PunchlistSubmissionList.as_view(), name='punchlist-submission-list'),
+    path('punchlist-submissions/<int:pk>/', serializer_views.PunchlistSubmissionDetail.as_view(), name='punchlist-submission-detail'),
 
-    path('bounty-setters/', serializer_views.BountySetterList.as_view(), name='bounty-setter-list'),
-    path('bounty-setters/<int:pk>/', serializer_views.BountySetterDetail.as_view(), name='bounty-setter-detail'),
+    path('punchlist-setters/', serializer_views.PunchlistSetterList.as_view(), name='punchlist-setter-list'),
+    path('punchlist-setters/<int:pk>/', serializer_views.PunchlistSetterDetail.as_view(), name='punchlist-setter-detail'),
 
-    path('bounty-hunters/', serializer_views.BountyHunterList.as_view(), name='bounty-hunter-list'),
-    path('bounty-hunters/<int:pk>/', serializer_views.BountyHunterDetail.as_view(), name='bounty-hunter-detail'),
+    path('punchlist-hunters/', serializer_views.PunchlistHunterList.as_view(), name='punchlist-hunter-list'),
+    path('punchlist-hunters/<int:pk>/', serializer_views.PunchlistHunterDetail.as_view(), name='punchlist-hunter-detail'),
 
-    path('bounties/', serializer_views.BountyList.as_view(), name='bounty-list'),
-    path('bounties/<int:pk>/', serializer_views.BountyDetail.as_view(), name='bounty-detail'),
+    path('bounties/', serializer_views.PunchlistList.as_view(), name='punchlist-list'),
+    path('bounties/<int:pk>/', serializer_views.PunchlistDetail.as_view(), name='punchlist-detail'),
 
     path('issues/', serializer_views.IssueList.as_view(), name='issue-list'),
     path('issues/<int:pk>/', serializer_views.IssueDetail.as_view(), name='issue-detail'),
@@ -119,8 +119,8 @@ urlpatterns = urlpatterns + [
     path('plans/', serializer_views.PlanList.as_view(), name='plan-list'),
     path('plans/<int:pk>/', serializer_views.PlanDetail.as_view(), name='plan-detail'),
 
-    path('accepted-bounties/', serializer_views.AcceptedBountyList.as_view(), name='accepted-bounty-list'),
-    path('accepted-bounties/<int:pk>/', serializer_views.AcceptedBountyDetail.as_view(), name='accepted-bounty-detail'),
+    path('accepted-bounties/', serializer_views.AcceptedPunchlistList.as_view(), name='accepted-punchlist-list'),
+    path('accepted-bounties/<int:pk>/', serializer_views.AcceptedPunchlistDetail.as_view(), name='accepted-punchlist-detail'),
 
     path('contracts/', serializer_views.ContractList.as_view(), name='contract-list'),
     path('contracts/<int:pk>/', serializer_views.ContractDetail.as_view(), name='contract-detail'),

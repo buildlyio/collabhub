@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+{% block page_title %}Punchlist Hunter List{% endblock %}
+
+{% block content %}
+
+<!--Register-->
+<div class="container">
+  <!-- Default panel contents -->
+  <h3>A list of Punchlist Hunters </h3>
+  {% if getHunts %}
+
+          <div class='panel panel-default'>
+            <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Status</th>
+                <th scope="col">Report</th>
+              </tr>
+            </thead>
+            {% for hunt in getHunts %}
+              <tr>
+                <th scope="row"><a href="/hunter_update/{{ hunt.id }}">{{ hunt.name|truncatechars:85 }}</a></th>
+                <td>{{ hunt.status|truncatechars:85 }}</td>
+                <td><a href="/hunters/report/{{ hunt.id }}" class="btn btn-xs btn-success"> HUNT REPORT </a></td>
+              </tr>
+            {% endfor %}
+            </table>
+          </div>
+
+  {% else %}
+      <p>No Active Hunts. <br/> If you haven't set one up yet... <a href="/hunter_add/">what are you waiting for?</a></p>
+  {% endif %}
+    <a href="/hunter_add/" class="btn btn-xs btn-success">New Hunt</a>
+</div>
+
+
+{% endblock content %}

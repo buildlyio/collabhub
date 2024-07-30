@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'paypal.standard.ipn',
     'django_celery_beat',
     'django_filters',
-    'bounty',
+    'punchlist',
     'mysite.templatetags.custom_filters',
 
     'storages',
@@ -207,7 +207,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-PAYPAL_RECEIVER_EMAIL = "bounty@buildly.io"
+PAYPAL_RECEIVER_EMAIL = "punchlist@buildly.io"
 PAYPAL_TEST = True
 
 SITE_ID = 1

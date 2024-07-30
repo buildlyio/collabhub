@@ -44,18 +44,18 @@ class NewUserForm(UserCreationForm):
 
 
 from django.contrib.auth.forms import UserCreationForm
-from bounty.models import BountyHunter, BountySetter
+from punchlist.models import PunchlistHunter, PunchlistSetter
 
 class RegistrationForm(UserCreationForm):
     email = forms.EmailField(required=True)
     first_name = forms.CharField(max_length=30)
     last_name = forms.CharField(max_length=30)
-    is_bounty_hunter = forms.BooleanField(required=False,label="I am a bounty hunter")
+    is_punchlist_hunter = forms.BooleanField(required=False,label="I am a punchlist hunter")
     github_profile = forms.URLField(required=False)
     
     class Meta:
         model = User
-        fields = ('email', 'first_name', 'last_name', 'username', 'password1', 'password2', 'is_bounty_hunter', 'github_profile')
+        fields = ('email', 'first_name', 'last_name', 'username', 'password1', 'password2', 'is_punchlist_hunter', 'github_profile')
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -70,7 +70,7 @@ class RegistrationForm(UserCreationForm):
             Field('last_name', placeholder='Last Name'),
             Field('password1', placeholder='Password'),
             Field('password2', placeholder='Confirm Password'),
-            Field('is_bounty_hunter', placeholder='Are you a Bounty Hunter?', label="Are you a Bounty Hunter?" ),
+            Field('is_punchlist_hunter', placeholder='Are you a Punchlist Hunter?', label="Are you a Punchlist Hunter?" ),
             Field('github_profile', placeholder='Github Profile URL'),
             Submit('submit', 'Register')
         )
@@ -86,7 +86,7 @@ class RegistrationForm(UserCreationForm):
         user.email = self.cleaned_data['email']
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
-        user.is_bounty_hunter = self.cleaned_data['is_bounty_hunter']
+        user.is_punchlist_hunter = self.cleaned_data['is_punchlist_hunter']
         user.save()
 
         return user
@@ -96,12 +96,12 @@ class RegistrationUpdateForm(UserChangeForm):
     email = forms.EmailField(required=True)
     first_name = forms.CharField(max_length=30)
     last_name = forms.CharField(max_length=30)
-    is_bounty_hunter = forms.BooleanField(required=False)
+    is_punchlist_hunter = forms.BooleanField(required=False)
     github_profile = forms.URLField(required=False)
 
     class Meta:
         model = User
-        fields = ('email', 'first_name', 'last_name', 'username', 'is_bounty_hunter', 'github_profile')
+        fields = ('email', 'first_name', 'last_name', 'username', 'is_punchlist_hunter', 'github_profile')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -118,14 +118,14 @@ class RegistrationUpdateForm(UserChangeForm):
             Submit('submit', 'Update')
         )
 
-        # Set initial values for is_bounty_hunter and github_profile fields
+        # Set initial values for is_punchlist_hunter and github_profile fields
         user = self.instance
-        if hasattr(user, 'bountyhunter'):
-            bounty_hunter = user.bountyhunter
-            self.initial['is_bounty_hunter'] = True
-            self.initial['github_profile'] = bounty_hunter.github_profile
+        if hasattr(user, 'punchlisthunter'):
+            punchlist_hunter = user.punchlisthunter
+            self.initial['is_punchlist_hunter'] = True
+            self.initial['github_profile'] = punchlist_hunter.github_profile
         else:
-            self.initial['is_bounty_hunter'] = False
+            self.initial['is_punchlist_hunter'] = False
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -134,13 +134,13 @@ class RegistrationUpdateForm(UserChangeForm):
         user.last_name = self.cleaned_data['last_name']
         user.save()
 
-        is_bounty_hunter = self.cleaned_data['is_bounty_hunter']
-        if is_bounty_hunter:
-            bounty_hunter, _ = BountyHunter.objects.get_or_create(user=user)
-            bounty_hunter.github_profile = self.cleaned_data['github_profile']
-            bounty_hunter.save()
+        is_punchlist_hunter = self.cleaned_data['is_punchlist_hunter']
+        if is_punchlist_hunter:
+            punchlist_hunter, _ = PunchlistHunter.objects.get_or_create(user=user)
+            punchlist_hunter.github_profile = self.cleaned_data['github_profile']
+            punchlist_hunter.save()
         else:
-            BountyHunter.objects.filter(user=user).delete()
-            BountySetter.objects.get_or_create(user=user)
+            PunchlistHunter.objects.filter(user=user).delete()
+            PunchlistSetter.objects.get_or_create(user=user)
 
         return user
