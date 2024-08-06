@@ -1,78 +1,109 @@
-<!-- Updated showcase_agencies.html template -->
 {% extends "base.html" %}
 
 {% block content %}
-    <h1 class="mt-5">Showcase of Agencies and Individuals</h1>
-    <h2>Based on Skills Matching</h2>
+<h1 class="mt-5">Showcase of Agencies and Individuals</h1>
+<h2>Based on Skills Matching</h2>
 
-    <form class="mt-4 mb-4" method="get">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label for="agency_type" class="form-label">Agency Type</label>
-                <input type="text" class="form-control" name="agency_type" value="{{ selected_agency_type }}">
+<form class="mt-4 mb-4" method="get">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label for="agency_type" class="form-label">Agency Type</label>
+            <input type="text" class="form-control" name="agency_type" value="{{ selected_agency_type }}">
+        </div>
+        <div class="col-md-3">
+            <label for="skills" class="form-label">Skills</label>
+            <input type="text" class="form-control" name="skills" value="{{ selected_skills }}">
+        </div>
+        <div class="col-md-3">
+            <label for="background" class="form-label">Background</label>
+            <input type="text" class="form-control" name="background" value="{{ selected_background }}">
+        </div>
+        <div class="col-md-3">
+            <label for="industries_worked" class="form-label">Industries Worked</label>
+            <input type="text" class="form-control" name="industries_worked" value="{{ selected_industries_worked }}">
+        </div>
+        <div class="col-md-3">
+            <label for="product_id" class="form-label">Select a Product</label>
+            <select class="form-select" name="product_id">
+                <option value="">-- No Product --</option>
+                {% for product in products %}
+                <option value="{{ product.id }}" {% if selected_product and selected_product.id == product.id %}selected{% endif %}>{{ product.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary">Filter</button>
+        </div>
+    </div>
+</form>
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for agency in agencies %}
+    <div class="col">
+        <div class="card h-100">
+            {% if agency.logo %}
+            <img src="{{ agency.logo.url }}" class="card-img-top" alt="{{ agency.agency_name }} Logo">
+            {% else %}
+            <div class="agency-generic-logo d-flex justify-content-center align-items-center">
+                <i class="bi bi-building fs-1"></i>
             </div>
-            <div class="col-md-3">
-                <label for="skills" class="form-label">Skills</label>
-                <input type="text" class="form-control" name="skills" value="{{ selected_skills }}">
-            </div>
-            <div class="col-md-3">
-                <label for="background" class="form-label">Background</label>
-                <input type="text" class="form-control" name="background" value="{{ selected_background }}">
-            </div>
-            <div class="col-md-3">
-                <label for="industries_worked" class="form-label">Industries Worked</label>
-                <input type="text" class="form-control" name="industries_worked" value="{{ selected_industries_worked }}">
-            </div>
-            <div class="col-md-3">
-                <label for="product_id" class="form-label">Select a Product</label>
-                <select class="form-select" name="product_id">
-                    <option value="">-- No Product --</option>
-                    {% for product in products %}
-                        <option value="{{ product.id }}" {% if selected_product and selected_product.id == product.id %}selected{% endif %}>{{ product.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <button type="submit" class="btn btn-primary">Filter</button>
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">
+                    {{ agency.agency_name }}
+                    {% if agency.certified %}
+                    <i class="bi bi-patch-check-fill text-success" title="Certified Agency"></i>
+                    {% endif %}
+                </h5>
+                <p class="card-text">
+                    <i class="bi bi-briefcase"></i> {{ agency.agency_type }}
+                </p>
+                <p class="card-text">
+                    <i class="bi bi-people"></i> {{ agency.team_size }} Employees
+                </p>
+                <p class="card-text">
+                    <i class="bi bi-currency-dollar"></i> {{ agency.hourly_rate }} per Hour
+                </p>
+                <p class="card-text">
+                    <i class="bi bi-graph-up"></i> {{ agency.get_industries_worked_display }}
+                </p>
+                <hr/>
+                <p class="card-text">
+                    <strong>SKILLS:</strong> {{ agency.skills }}
+                </p>
+                <p class="card-text">
+                    <strong>BACKGROUND:</strong> {{ agency.background }}
+                </p>
+                <p class="card-text">
+                    <strong>HOURLY RATE:</strong> {{ agency.hourly_rate }}
+                </p>
+                <p class="card-text">
+                    <strong>PROJECT RATE:</strong> {{ agency.project_rate }}
+                </p>
+                <p class="card-text">
+                    <strong>INDUSTRIES WORKED IN:</strong> {{ agency.industries_worked }}
+                </p>
+                <p class="card-text">
+                    <i class="bi bi-github"></i> {{ agency.github_repository }}
+                </p>
+                <p class="card-text">
+                    <strong>REVIEWS:</strong> {{ agency.client_reviews }}
+                </p>
+                <p class="card-text">
+                    <strong>CONTACT NAME:</strong> {{ agency.contact_name }}
+                </p>
+                <p class="card-text">
+                    <strong>CONTACT EMAIL:</strong> {{ agency.contact_email }}
+                </p>
+                <p class="card-text">
+                    <strong>CONTACT PHONE:</strong> {{ agency.contact_phone }}
+                </p>
+                <p class="card-text">
+                    <i class="bi bi-linkedin"></i> {{ agency.linkedin_url }}
+                </p>
             </div>
         </div>
-    </form>
-
-    <!-- Updated showcase_agencies.html template with 3 columns for details -->
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-        {% for agency in agencies %}
-            <div class="col">
-                <div class="card h-100">
-                    {% if agency.logo %}
-                        <img src="{{ agency.logo.url }}" class="card-img-top" alt="{{ agency.agency_name }} Logo">
-                    {% else %}
-                        <div class="agency-generic-logo"></div>
-                    {% endif %}
-                    <div class="card-body">
-                        <h5 class="card-title">{{ agency.agency_name }}</h5>
-                        <p class="card-text">{{ agency.agency_type }}</p>
-                        <p class="card-text">{{ agency.team_size }} Employees</p>
-                        <p class="card-text">{{ agency.hourly_rate }} per Hour</p>
-                        <p class="card-text">{{ agency.get_industries_worked_display }}</p>
-                        <hr/>
-
-                        <p class="card-text">SKILLS: {{ agency.skills  }}</p>
-                        <p class="card-text">BACKGROUND: {{ agency.background  }}</p>
-                        <p class="card-text">HOURLY RATE: {{ agency.hourly_rate  }}</p>
-                        <p class="card-text">PROEJCT RATE: {{ agency.project_rate  }}</p>
-                        <p class="card-text">INDUSTRIES WORKED IN: {{ agency.industries_worked }}</p>
-                        <p class="card-text">{{ agency.github_repository }}</p>
-                        <p class="card-text">REVIEWS: {{ agency.client_reviews }}</p>
-                        <p class="card-text">CONTACT NAME: {{ agency.contact_name }}</p>
-                        <p class="card-text">CONTACT EMAIL: {{ agency.contact_email }}</p>
-                        <p class="card-text">CONTACT PHONE: {{ agency.contact_phone }}</p>
-                        <p class="card-text">LINKEDIN: {{ agency.linkedin_url }}</p>
-                        
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
     </div>
-
+    {% endfor %}
 </div>
 {% endblock %}

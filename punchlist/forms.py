@@ -64,7 +64,7 @@ class PunchlistForm(forms.ModelForm):
 
     class Meta:
         model = Punchlist
-        fields = ('catagory','title', 'description','skills','level','brief','amount', 'tags', 'hosting', 'complexity_estimate', 'repo','owner')
+        fields = ('catagory','title', 'description','skills','level','brief','amount', 'tags', 'hosting', 'complexity_estimate', 'repo', 'repo_access_token', 'owner')
         
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')

@@ -153,6 +153,10 @@ class Punchlist(models.Model):
     repo_access_token = models.CharField(max_length=100,help_text="Learn how to get your GitHub Token here https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens")
     tags = models.CharField(max_length=255, blank=True, help_text="Comma Seperated Tags")
     hosting = models.CharField(max_length=255, blank=True, help_text="Hosting provider if known")
+    labs_organization_uuid = models.UUIDField(unique=True, default=uuid.uuid4, help_text="Organization UUID from Buildly Insights API")
+    labs_product_name = models.CharField(max_length=255, blank=True, null=True, help_text="Product Name from Buildly Insights API")
+    labs_product_id = models.CharField(max_length=255, blank=True, null=True, help_text="Product ID from Buildly Insights API")
+    labs_release_id = models.JSONField(max_length=255, blank=True, null=True, help_text="Release IDs from Buildly Insights API for Product") 
     create_date = models.DateTimeField(null=True, blank=True)
     edit_date = models.DateTimeField(null=True, blank=True)
 

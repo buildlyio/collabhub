@@ -21,7 +21,7 @@ from .models import Punchlist
 from .forms import PunchlistHunterSubmissionForm
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
-
+from .labs import get_labs_data
 
 from .models import PunchlistHunter, Punchlist, Issue, PunchlistSubmission, AcceptedPunchlist, Contract, Bug, InsightsUser, Product
 from .forms import PunchlistHunterForm, PunchlistForm, PunchlistHunterSubmissionForm, BugForm
@@ -141,6 +141,9 @@ class PunchlistList(ListView,LoginRequiredMixin):
     """
     Monitored Sites
     """
+    # call get labs data to import data from Labs/Insights API
+    get_labs_data()
+    print("Data Imported")
     model = Punchlist
     template_name = 'punchlist_list.html'
     paginate_by = 16  # Display 16 items per page
