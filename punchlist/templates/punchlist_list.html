@@ -50,6 +50,9 @@
 
           </div>
           <div class="card-body">
+            <p class="card-text">Category: {{ punchlist.category }}</p>
+            <p class="card-text">Public List: {{ punchlist.is_public }}</p>
+            <p class="card-text">{{ punchlist.description }}</p>
             <a href="/punchlist_detail/{{ punchlist.id }}"><h5 class="card-title">{{ punchlist.title }}</h5></a>
             <p class="card-text">{{ punchlist.description }}</p>
             <p class="card-text">Tags: <span class="btn btn-outline-info btn-sm">{{ punchlist.tags }}</span></p>

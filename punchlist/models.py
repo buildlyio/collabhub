@@ -137,6 +137,7 @@ class Punchlist(models.Model):
     )
     title = models.CharField(max_length=255, blank=True, help_text="Name your punchlist, i.e. Fix Registration Error")
     catagory = models.CharField(choices=CATAGORY_CHOICES, max_length=255, blank=True, help_text="If it is new or it works but you want to change it somehow it's a feature, otherwise it's a bug.  A Punchlist is a list of bug in a release, and a release is collection of bugs and features")
+    is_public = models.BooleanField(default=False, help_text="Make this public for anyone to work on")
     skills = models.CharField(max_length=255, blank=True, help_text="Skills Required to Fix your Issue")
     level = models.CharField(max_length=255, blank=True, choices=LEVEL_CHOICES, help_text="Skill level - Select One")
     description = models.TextField(blank=True, help_text="Describe in detail the issue of person you are looking for")
