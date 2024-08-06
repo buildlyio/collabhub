@@ -2,7 +2,6 @@ from django.conf import settings
 from django.urls import include, path, re_path
 from django.contrib import admin
 
-from django.conf.urls import url
 from punchlist.views import *
 from . import views
 
@@ -54,23 +53,24 @@ urlpatterns = [
 
 urlpatterns = urlpatterns + [
     # Punchlists
-    url(r'^punchlist/dashboard/(?P<pk>\w+)/$', dashboard),
-    url(r'^punchlist/report/(?P<pk>\w+)/$', report),
-    url(r'^bounties/$', PunchlistList.as_view(), name='punchlists_list'),
+    path('punchlist/dashboard/<str:pk>/', dashboard, name='dashboard'),
+    path('punchlist/report/<str:pk>/', report, name='report'),
+    path('bounties/', PunchlistList.as_view(), name='punchlists_list'),
+    
     # Forms
-    url(r'^punchlist_add/$', PunchlistCreate.as_view(), name='punchlists_add'),
-    url(r'^punchlist_update/(?P<pk>\w+)/$', PunchlistUpdate.as_view(), name='punchlists_update'),
-    url(r'^punchlist_delete/(?P<pk>\w+)/$', PunchlistDelete.as_view(), name='punchlists_delete'),
-    url(r'^punchlist_detail/(?P<pk>\w+)/$', PunchlistDetailView.as_view(), name='punchlist_detail'),
+    path('punchlist_add/', PunchlistCreate.as_view(), name='punchlists_add'),
+    path('punchlist_update/<str:pk>/', PunchlistUpdate.as_view(), name='punchlists_update'),
+    path('punchlist_delete/<str:pk>/', PunchlistDelete.as_view(), name='punchlists_delete'),
+    path('punchlist_detail/<str:pk>/', PunchlistDetailView.as_view(), name='punchlist_detail'),
     
     # PunchlistHunterForms
-    url(r'^punchlisthunter_add/$', PunchlistHunterCreate.as_view(), name='punchlisthunter_add'),
-    url(r'^punchlisthunter_update/(?P<pk>\w+)/$', PunchlistHunterUpdate.as_view(), name='punchlisthunter_update'),
-    url(r'^punchlisthunter_delete/(?P<pk>\w+)/$', PunchlistHunterDelete.as_view(), name='punchlisthunter_delete'),
-    url(r'^punchlisthunter_detail/(?P<pk>\w+)/$', PunchlistHunterDetailView.as_view(), name='punchlisthunter_detail'),
+    path('punchlisthunter_add/', PunchlistHunterCreate.as_view(), name='punchlisthunter_add'),
+    path('punchlisthunter_update/<str:pk>/', PunchlistHunterUpdate.as_view(), name='punchlisthunter_update'),
+    path('punchlisthunter_delete/<str:pk>/', PunchlistHunterDelete.as_view(), name='punchlisthunter_delete'),
+    path('punchlisthunter_detail/<str:pk>/', PunchlistHunterDetailView.as_view(), name='punchlisthunter_detail'),
     
     # UserSubmittedBug
-    url(r'^bug_add/$', BugCreateView.as_view(), name='bug_add'),
+    path('bug_add/', BugCreateView.as_view(), name='bug_add'),
     path('bug_list/', bug_list, name='bug_list'),
     path('bug_accept/<str:pk>/', accept_bug, name='bug_accept'),
     path('bug_send_to_github/<str:pk>/', send_to_github, name='bug_send_to_github'),
@@ -78,9 +78,9 @@ urlpatterns = urlpatterns + [
     path('submit_issue_to_github/<str:pk>/', submit_issue_to_github, name='submit_issue_to_github'),
     
     # Agency
-    url(r'^agency_add/$', DevelopmentAgencyCreateView.as_view(), name='agency_add'),
-    url(r'^agency_list/$', showcase_agencies, name='agency_list'),
-    url(r'^partner/$', DevelopmentAgencyCreateView.as_view(), name='partner'),
+    path('agency_add/', DevelopmentAgencyCreateView.as_view(), name='agency_add'),
+    path('agency_list/', showcase_agencies, name='agency_list'),
+    path('partner/', DevelopmentAgencyCreateView.as_view(), name='partner'),
     
     # CollabHub
     path('collabhub/', collabhub, name='collabhub'),
