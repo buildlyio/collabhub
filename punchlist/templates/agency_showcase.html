@@ -4,8 +4,8 @@
 <h1 class="mt-5">Showcase of Agencies and Individuals</h1>
 <p>Below is a showcase of agencies and individuals that have been matched based on the skills you have entered. You can filter the results by selecting a product from the dropdown below.</p>
 <ul>
-    <li><a href="https://github.com/buildlyio">Checkout the Open Source Buildly Core that Certified Agencies use to build reuseable code rapidly</a></li>
-    <li><a href="https://labs.buildly.io">Start Buildling your Product Faster with Buildly Labs and collaborate with a dev team or technical founder here</a></li>
+    <li><a href="https://github.com/buildlyio">Checkout the Open Source Buildly Core that Certified Agencies use to build reusable code rapidly</a></li>
+    <li><a href="https://labs.buildly.io">Start Building your Product Faster with Buildly Labs and collaborate with a dev team or technical founder here</a></li>
 </ul>
 
 <h2>Based on Skills Matching</h2>
@@ -46,11 +46,13 @@
 <div class="row row-cols-1 row-cols-md-3 g-4">
     {% for agency in agencies %}
     <div class="col">
-        <div class="card h-100" style="max-width: 500px; max-height: 500px;">
+        <div class="card h-100" style="max-width: 500px; max-height: 500px; overflow-y: auto;">
             {% if agency.logo %}
-            <img src="{{ agency.logo.url }}" class="card-img-top" alt="{{ agency.agency_name }} Logo" data-bs-toggle="popover" title="{{ agency.agency_name }}" data-bs-content="{{ agency.full_details }}">
+            <div class="agency-generic-logo d-flex justify-content-center align-items-center">
+                <img src="{{ agency.logo.url }}" class="card-img-top" alt="{{ agency.agency_name }} Logo">
+            </div>
             {% else %}
-            <div class="agency-generic-logo d-flex justify-content-center align-items-center" data-bs-toggle="popover" title="{{ agency.agency_name }}" data-bs-content="{{ agency.full_details }}">
+            <div class="agency-generic-logo d-flex justify-content-center align-items-center">
                 <i class="bi bi-building fs-1"></i>
             </div>
             {% endif %}
@@ -107,7 +109,9 @@
                 <p class="card-text">
                     <i class="bi bi-linkedin"></i> {{ agency.linkedin_url|truncatechars:200 }}
                 </p>
-                <button type="button" class="btn btn-primary mt-2" data-bs-toggle="popover" title="{{ agency.agency_name }}" data-bs-content="{{ agency.full_details }}">Full Profile</button>
+                <div class="scroll-hint">
+                    <i class="bi bi-arrow-down-circle"></i> Scroll for more
+                </div>
             </div>
         </div>
     </div>
@@ -115,16 +119,18 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-        return new bootstrap.Popover(popoverTriggerEl, {
-            html: true,
-            sanitize: false
-        });
-    });
-});
-</script>
+{% block styles %}
+<style>
+    .card-body {
+        overflow-y: auto;
+    }
+    .scroll-hint {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+</style>
 {% endblock %}
