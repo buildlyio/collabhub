@@ -49,7 +49,7 @@
         <div class="card h-100" style="max-width: 500px; max-height: 500px; overflow-y: auto;">
             {% if agency.logo %}
             <div class="agency-generic-logo d-flex justify-content-center align-items-center">
-                <img src="{{ agency.logo.url }}" class="card-img-top" alt="{{ agency.agency_name }} Logo">
+                <img src="{{ agency.logo.url }}" class="rounded mx-auto d-block" alt="{{ agency.agency_name }} Logo">
             </div>
             {% else %}
             <div class="agency-generic-logo d-flex justify-content-center align-items-center">
@@ -75,6 +75,9 @@
                 <p class="card-text">
                     <i class="bi bi-graph-up"></i> {{ agency.get_industries_worked_display }}
                 </p>
+                <div class="scroll-hint">
+                    <i class="bi bi-arrow-down-circle"></i> Scroll for more
+                </div>
                 <hr/>
                 <p class="card-text">
                     <strong>SKILLS:</strong> {{ agency.skills|truncatechars:200 }}
@@ -109,9 +112,6 @@
                 <p class="card-text">
                     <i class="bi bi-linkedin"></i> {{ agency.linkedin_url|truncatechars:200 }}
                 </p>
-                <div class="scroll-hint">
-                    <i class="bi bi-arrow-down-circle"></i> Scroll for more
-                </div>
             </div>
         </div>
     </div>

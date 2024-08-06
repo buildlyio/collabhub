@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django_filters',
     'punchlist',
     'mysite.templatetags.custom_filters',
-
+    'import_export',
     'storages',
     
     # rest
