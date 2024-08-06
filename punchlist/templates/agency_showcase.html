@@ -2,6 +2,15 @@
 
 {% block content %}
 <h1 class="mt-5">Showcase of Agencies and Individuals</h1>
+<p>Below is a showcase of agencies and individuals that have been matched based on the skills you have entered. You can filter the results by selecting a product from the dropdown below.</p>
+<ul>
+    <li><a href="https://github.com/buildlyio">Checkout the Open Source Buildly Core that Certified Agencies use to build reuseable code rapidly</a></li>
+    <li><a href="https://labs.buildly.io">Start Buildling your Product Faster with Buildly Labs and collaborate with a dev team or technical founder here</a></li>
+</ul>
+
+{% if not agencies %}
+
+{% if agencies %}
 <h2>Based on Skills Matching</h2>
 
 <form class="mt-4 mb-4" method="get">
@@ -40,11 +49,11 @@
 <div class="row row-cols-1 row-cols-md-3 g-4">
     {% for agency in agencies %}
     <div class="col">
-        <div class="card h-100">
+        <div class="card h-100" style="max-width: 500px; max-height: 500px;">
             {% if agency.logo %}
-            <img src="{{ agency.logo.url }}" class="card-img-top" alt="{{ agency.agency_name }} Logo">
+            <img src="{{ agency.logo.url }}" class="card-img-top" alt="{{ agency.agency_name }} Logo" data-bs-toggle="popover" title="{{ agency.agency_name }}" data-bs-content="{{ agency.full_details }}">
             {% else %}
-            <div class="agency-generic-logo d-flex justify-content-center align-items-center">
+            <div class="agency-generic-logo d-flex justify-content-center align-items-center" data-bs-toggle="popover" title="{{ agency.agency_name }}" data-bs-content="{{ agency.full_details }}">
                 <i class="bi bi-building fs-1"></i>
             </div>
             {% endif %}
@@ -69,41 +78,56 @@
                 </p>
                 <hr/>
                 <p class="card-text">
-                    <strong>SKILLS:</strong> {{ agency.skills }}
+                    <strong>SKILLS:</strong> {{ agency.skills|truncatechars:200 }}
                 </p>
                 <p class="card-text">
-                    <strong>BACKGROUND:</strong> {{ agency.background }}
+                    <strong>BACKGROUND:</strong> {{ agency.background|truncatechars:200 }}
                 </p>
                 <p class="card-text">
-                    <strong>HOURLY RATE:</strong> {{ agency.hourly_rate }}
+                    <strong>HOURLY RATE:</strong> {{ agency.hourly_rate|truncatechars:200 }}
                 </p>
                 <p class="card-text">
-                    <strong>PROJECT RATE:</strong> {{ agency.project_rate }}
+                    <strong>PROJECT RATE:</strong> {{ agency.project_rate|truncatechars:200 }}
                 </p>
                 <p class="card-text">
-                    <strong>INDUSTRIES WORKED IN:</strong> {{ agency.industries_worked }}
+                    <strong>INDUSTRIES WORKED IN:</strong> {{ agency.industries_worked|truncatechars:200 }}
                 </p>
                 <p class="card-text">
-                    <i class="bi bi-github"></i> {{ agency.github_repository }}
+                    <i class="bi bi-github"></i> {{ agency.github_repository|truncatechars:200 }}
                 </p>
                 <p class="card-text">
-                    <strong>REVIEWS:</strong> {{ agency.client_reviews }}
+                    <strong>REVIEWS:</strong> {{ agency.client_reviews|truncatechars:200 }}
                 </p>
                 <p class="card-text">
-                    <strong>CONTACT NAME:</strong> {{ agency.contact_name }}
+                    <strong>CONTACT NAME:</strong> {{ agency.contact_name|truncatechars:200 }}
                 </p>
                 <p class="card-text">
-                    <strong>CONTACT EMAIL:</strong> {{ agency.contact_email }}
+                    <strong>CONTACT EMAIL:</strong> {{ agency.contact_email|truncatechars:200 }}
                 </p>
                 <p class="card-text">
-                    <strong>CONTACT PHONE:</strong> {{ agency.contact_phone }}
+                    <strong>CONTACT PHONE:</strong> {{ agency.contact_phone|truncatechars:200 }}
                 </p>
                 <p class="card-text">
-                    <i class="bi bi-linkedin"></i> {{ agency.linkedin_url }}
+                    <i class="bi bi-linkedin"></i> {{ agency.linkedin_url|truncatechars:200 }}
                 </p>
+                <button type="button" class="btn btn-primary mt-2" data-bs-toggle="popover" title="{{ agency.agency_name }}" data-bs-content="{{ agency.full_details }}">Full Profile</button>
             </div>
         </div>
     </div>
     {% endfor %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl, {
+            html: true,
+            sanitize: false
+        });
+    });
+});
+</script>
 {% endblock %}
