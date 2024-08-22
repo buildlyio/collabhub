@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- onboarding/templates/dashboard.html -->
+
+<h2>Your Dashboard</h2>
+
+{% if resources %}
+    <h3>Resources</h3>
+    <ul>
+        {% for resource in resources %}
+        <li>
+            {{ resource.title }}
+            {% if resource.link %}
+                - <a href="{{ resource.link }}">Link</a>
+            {% endif %}
+            {% if resource.document %}
+                - <a href="{{ resource.document.url }}">Download</a>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No resources available.</p>
+{% endif %}
+
+{% if calendar_embed_code %}
+    <h3>Your Calendar</h3>
+    <div>
+        {{ calendar_embed_code|safe }}
+    </div>
+{% endif %}
+
+
+
+{% endblock %}

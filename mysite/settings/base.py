@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django_filters',
     'punchlist',
     'submission',
+    'onboarding',
     'mysite.templatetags.custom_filters',
     'import_export',
     'storages',

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- onboarding/templates/resource_list.html -->
+
+<h2>Resource List</h2>
+<ul>
+    {% for resource in resources %}
+    <li>{{ resource.title }} - <a href="{{ resource.link }}">Link</a> 
+    {% if resource.document %}
+        - <a href="{{ resource.document.url }}">Download</a>
+    {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+
+
+{% endblock %}  <!-- End of block content -->
