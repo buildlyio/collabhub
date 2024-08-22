@@ -26,3 +26,4 @@ sendgrid
 django-cors-headers
 django-allauth
 django-import-export
+qrcode

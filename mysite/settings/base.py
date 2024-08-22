@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_filters',
     'punchlist',
+    'submission',
     'mysite.templatetags.custom_filters',
     'import_export',
     'storages',

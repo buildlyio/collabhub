@@ -12,8 +12,6 @@ from .models import Punchlist
 def get_products():
     url = "https://insights-api.buildly.io/product/product/"
     headers = { "Authorization  ": f"Token {os.environ.get('INSIGHTS_API_KEY')}" } 
-    # headers = { "Authorization  ": "Token qiqMN09rftSmuTEhiuviA1tdHWlCe2" }    
-    # headers = { "Authorization  ": "Token 6y2lTVWR8EXMRwTAg6lnzOLhPrmHBo"}  
     print(url)
     print(headers)
     response = requests.get(url, headers=headers)   
@@ -30,7 +28,6 @@ def get_products():
 def get_releases(product_id):
     url = f"https://insights-api.buildly.io/release/release/?product_uuid={product_id}"
     headers = { "Authorization  ": f"Token {os.environ.get('INSIGHTS_API_KEY')}" }     
-    # headers = {"Authorization  : Token qiqMN09rftSmuTEhiuviA1tdHWlCe2"}  
     response = requests.get(url, headers=headers)   
     
     if response.status_code == 200:
