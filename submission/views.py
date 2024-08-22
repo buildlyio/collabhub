@@ -4,6 +4,7 @@ from django.http import HttpResponse
 from .models import SubmissionLink, Submission
 from .forms import SubmissionForm
 import qrcode
+from django.conf import settings
 
 @login_required
 def generate_link(request):
@@ -20,7 +21,7 @@ def generate_link(request):
     qr.make(fit=True)
 
     img = qr.make_image(fill='black', back_color='white')
-    img_path = f'media/qr_codes/{submission_link.unique_url}.png'
+    img_path = settings.MEDIA_URL + f'media/qr_codes/{submission_link.unique_url}.png'
     img.save(img_path)
 
     submission_link.qr_code = img_path
