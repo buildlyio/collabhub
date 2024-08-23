@@ -6,6 +6,8 @@ from .forms import SubmissionForm
 import qrcode
 from django.conf import settings
 
+import os
+
 @login_required
 def generate_link(request):
     submission_link = SubmissionLink.objects.create(admin_user=request.user)
@@ -21,7 +23,11 @@ def generate_link(request):
     qr.make(fit=True)
 
     img = qr.make_image(fill='black', back_color='white')
-    img_path = settings.MEDIA_URL + f'media/qr_codes/{submission_link.unique_url}.png'
+    # Define the directory path for QR codes
+    qr_code_dir = os.path.join(settings.MEDIA_ROOT, 'qr_codes')
+    # Ensure the directory exists
+    os.makedirs(qr_code_dir, exist_ok=True)
+    img_path = settings.MEDIA_URL + f'qr_codes/{submission_link.unique_url}.png'
     img.save(img_path)
 
     submission_link.qr_code = img_path
