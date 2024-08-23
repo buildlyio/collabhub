@@ -12,7 +12,7 @@ from django.utils import timezone
 class SubmissionLink(models.Model):
     admin_user = models.ForeignKey(User, on_delete=models.CASCADE)
     unique_url = models.URLField(max_length=255, unique=True)
-    qr_code = models.ImageField(upload_to='qr_codes/', blank=True)
+    qr_code = models.CharField(max_length=1000, blank=True)
     create_date = models.DateTimeField(null=True, blank=True)
     edit_date = models.DateTimeField(null=True, blank=True)
     
