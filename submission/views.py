@@ -6,10 +6,16 @@ from .forms import SubmissionForm
 import qrcode
 from django.conf import settings
 
+
+import io
 import os
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+
 
 @login_required
 def generate_link(request):
+    # Create the submission link
     submission_link = SubmissionLink.objects.create(admin_user=request.user)
     
     # Generate QR code
@@ -23,14 +29,21 @@ def generate_link(request):
     qr.make(fit=True)
 
     img = qr.make_image(fill='black', back_color='white')
-    # Define the directory path for QR codes
-    qr_code_dir = os.path.join(settings.MEDIA_ROOT, 'qr_codes')
-    # Ensure the directory exists
-    os.makedirs(qr_code_dir, exist_ok=True)
-    img_path = settings.MEDIA_URL + f'qr_codes/{submission_link.unique_url}.png'
-    img.save(img_path)
 
-    submission_link.qr_code = img_path
+    # Use in-memory file to store the QR code
+    image_io = io.BytesIO()
+    img.save(image_io, format='PNG')
+    image_io.seek(0)  # Go to the start of the BytesIO object
+
+    # Define the path within the S3 bucket
+    filename = f'qr_codes/{submission_link.unique_url}.png'
+    
+    # Save the image to S3
+    file_content = ContentFile(image_io.getvalue())
+    file_url = default_storage.save(filename, file_content)
+
+    # Store the S3 URL in the database
+    submission_link.qr_code = default_storage.url(filename)
     submission_link.save()
 
     return render(request, 'submission/link_generated.html', {'submission_link': submission_link})
