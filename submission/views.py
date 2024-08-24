@@ -46,7 +46,7 @@ def generate_link(request):
     submission_link.qr_code = default_storage.url(filename)
     submission_link.save()
 
-    return render(request, 'submission/link_generated.html', {'submission_link': submission_link})
+    return render(request, 'link_generated.html', {'submission_link': submission_link})
 
 def submission_form(request, unique_url):
     submission_link = get_object_or_404(SubmissionLink, unique_url=unique_url)
@@ -60,4 +60,4 @@ def submission_form(request, unique_url):
     else:
         form = SubmissionForm()
 
-    return render(request, 'submission/submission_form.html', {'form': form})
+    return render(request, 'submission_form.html', {'form': form})
