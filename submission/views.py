@@ -25,7 +25,7 @@ def generate_link(request):
         box_size=10,
         border=4,
     )
-    qr.add_data(submission_link.unique_url)
+    qr.add_data(f'{settings.BASE_URL}/submission/submit/{submission_link.unique_url}')
     qr.make(fit=True)
 
     img = qr.make_image(fill='black', back_color='white')
