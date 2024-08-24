@@ -1,8 +1,9 @@
 {% extends "base.html" %}
-
+{% load static %}
 {% block content %}
 
-<h2>Submit Your Information</h2>
+<h2>Thank you for your Interest in <a href="https://labs.buildly.io">Buildly Labs</a> and the <a href="https://www.buildly.io/foundry">Buildly Foundry</a></h2>
+<p>Please fill out the form below to submit your application, and representative will get back to you with more information.</p>
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
