@@ -197,7 +197,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 # e.g. in notification emails. Don't include '/admin' or a trailing slash
-BASE_URL = 'https://collabhub.buildly.io'
+BASE_URL = 'https://collab.buildly.io'
 
 LOGIN_REDIRECT_URL = '/'
 
