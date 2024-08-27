@@ -32,6 +32,32 @@
     </div>
 {% endif %}
 
+{% if submissions %}
+    <h3>Submissions</h3>
+    <div>
+        {% for submission in submissions %}
+        <li>
+            {{ submission.name }}
+            {% if submission.email %}
+                - <a href="{{ submission.email }}">{{ submission.email }}</a>
+            {% endif %}
+            {% if submission.description %}
+                - {{ submission.description }}
+            {% endif %}
+        </li>
+        {% endfor %}
+    </div>
+{% endif %}
 
+{% if qr_codes %}
+    <h3>QR Codes</h3>
+    <div>
+        {% for qr_code in qr_codes %}
+        <li>
+            {{ qr_code.unique_url }}
+        <li>
+            <img src="{% static 'media/qr_codes/' %}{{ qr_code.qr_code }}" alt="QR Code">
+        </li>
+        {% endfor %}
 
 {% endblock %}

@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login, authenticate
 from .forms import TeamMemberRegistrationForm, ResourceForm
 from .models import TeamMember, Resource
+from submission.models import SubmissionLink, Submission
 
 def register(request):
     if request.method == 'POST':
@@ -38,11 +39,16 @@ def dashboard(request):
     if not team_member.approved:
         return render(request, 'not_approved.html')
 
-    resources = Resource.objects.filter(team_member_type=team_member.team_member_type and team_member.team_member_type == 'all')
+    resources = Resource.objects.filter(team_member_type=team_member.team_member_type or team_member.team_member_type == 'all')
     calendar_embed_code = team_member.google_calendar_embed_code
+    
+    qr_codes = SubmissionLink.objects.filter(submission_link__admin_user=request.user)
+    submissions = Submission.objects.filter(qr_code__submission_link__=request.user)
 
     return render(request, 'dashboard.html', {
         'resources': resources,
+        'qr_codes': qr_codes,
+        'submissions': submissions,
         'calendar_embed_code': calendar_embed_code
     })
 
