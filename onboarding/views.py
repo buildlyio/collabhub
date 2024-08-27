@@ -42,8 +42,8 @@ def dashboard(request):
     resources = Resource.objects.filter(team_member_type=team_member.team_member_type or team_member.team_member_type == 'all')
     calendar_embed_code = team_member.google_calendar_embed_code
     
-    qr_codes = SubmissionLink.objects.filter(submission_link__admin_user=request.user)
-    submissions = Submission.objects.filter(qr_code__submission_link__=request.user)
+    qr_codes = SubmissionLink.objects.filter(admin_user=request.user)
+    submissions = Submission.objects.filter(submission_link__admin_user=request.user)
 
     return render(request, 'dashboard.html', {
         'resources': resources,
