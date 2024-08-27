@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib import admin
 
 TEAM_MEMBER_TYPES = [
+    ('all', 'Everyone'),
     ('buildly-hire-frontend', 'Buildly Hire Frontend'),
     ('buildly-hire-backend', 'Buildly Hire Backend'),
     ('buildly-hire-ai', 'Buildly Hire AI'),
