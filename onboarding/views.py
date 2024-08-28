@@ -39,7 +39,7 @@ def dashboard(request):
     if not team_member.approved:
         return render(request, 'not_approved.html')
 
-    resources = Resource.objects.filter(team_member_type=team_member.team_member_type or team_member.team_member_type is 'all')
+    resources = Resource.objects.filter(team_member_type=team_member.team_member_type or team_member_type == 'all')
     calendar_embed_code = team_member.google_calendar_embed_code
     
     qr_codes = SubmissionLink.objects.filter(admin_user=request.user)
