@@ -13,27 +13,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='product',
-            name='dev_url',
-            field=models.CharField(blank=True, max_length=255, null=True),
-        ),
-        migrations.AddField(
-            model_name='product',
-            name='owner',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='auth.user'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='product',
-            name='prod_url',
-            field=models.CharField(blank=True, max_length=255, null=True),
-        ),
-        migrations.AddField(
-            model_name='product',
-            name='repository_url',
-            field=models.CharField(blank=True, max_length=255, null=True),
-        ),
         migrations.AlterField(
             model_name='product',
             name='description',
