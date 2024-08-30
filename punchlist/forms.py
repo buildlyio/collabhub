@@ -1,4 +1,4 @@
-from .models import PunchlistHunter, Punchlist, Issue, PunchlistSetter, Bug, DevelopmentAgency
+from .models import PunchlistHunter, Punchlist, Issue, PunchlistSetter, Bug, DevelopmentAgency, Product
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import *
 from crispy_forms.bootstrap import *
@@ -64,18 +64,22 @@ class PunchlistForm(forms.ModelForm):
 
     class Meta:
         model = Punchlist
-        fields = ('catagory','is_public','title', 'description','skills','level','brief','amount', 'tags', 'hosting', 'complexity_estimate', 'repo', 'repo_access_token', 'owner')
-        
+        fields = ('product', 'catagory', 'is_public', 'title', 'description', 'skills', 'level', 'brief', 'amount', 'tags', 'hosting', 'complexity_estimate', 'repo', 'repo_access_token', 'owner')
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
-        # call super to get form fields
         super().__init__(*args, **kwargs)
+        
+        self.fields['product'].queryset = Product.objects.filter(owner=self.request.user)
+
+        
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.add_input(Submit('submit', 'Submit'))
         self.helper.layout = Layout(
             TabHolder(
                 Tab('Punchlist',
+                    Field('product'),  # Add the product field here
                     Field('catagory'),
                     Field('title'),
                     Field('description'),
@@ -104,16 +108,8 @@ class PunchlistForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-
-        return cleaned_data
-
-class IssueForm(forms.ModelForm):
-    class Meta:
-        model = Issue
-        fields = ['title', 'description', 'language', 'framework', 'issue_url','screenshot']
-        widgets = {'issue_url': forms.HiddenInput()}
-
-    
+        # Add any custom validation here
+        return cleaned_data   
 
 from .models import PunchlistSubmission
 

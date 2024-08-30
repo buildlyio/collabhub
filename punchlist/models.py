@@ -68,6 +68,31 @@ AMOUNT_CHOICES = (
     (AMOUNT.XXL.value, '$200'),
 )
 
+class Product(models.Model):
+    name = models.CharField(max_length=255,null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    product_info = models.TextField(null=True, blank=True)
+    dev_url = models.CharField(max_length=255,null=True, blank=True)
+    prod_url = models.CharField(max_length=255,null=True, blank=True)
+    repository_url = models.CharField(max_length=255,null=True, blank=True)
+    product_uuid = models.UUIDField(unique=True,null=True, blank=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    organization_uuid = models.UUIDField(null=True, blank=True)  # Add this field for organization UUID
+    product_team = models.UUIDField(null=True, blank=True)  # Add this field for product team UUID
+    start_date = models.DateTimeField(null=True, blank=True)
+    end_date = models.DateTimeField(null=True, blank=True)
+    create_date = models.DateTimeField(null=True, blank=True)
+    edit_date = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ('name','product_uuid')
+    search_fields = ('name','product_uuid')
+    list_filter = ('name','product_uuid')
+    display = 'Products'
+
 class Position(models.Model):
     name = models.CharField(max_length=255, blank=True)
     create_date = models.DateTimeField(null=True, blank=True)
@@ -158,6 +183,7 @@ class Punchlist(models.Model):
     labs_product_name = models.CharField(max_length=255, blank=True, null=True, help_text="Product Name from Buildly Insights API")
     labs_product_id = models.CharField(max_length=255, blank=True, null=True, help_text="Product ID from Buildly Insights API")
     labs_release_id = models.JSONField(max_length=255, blank=True, null=True, help_text="Release IDs from Buildly Insights API for Product") 
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='punchlists')
     create_date = models.DateTimeField(null=True, blank=True)
     edit_date = models.DateTimeField(null=True, blank=True)
 
@@ -391,27 +417,6 @@ class DevelopmentAgencyAdmin(admin.ModelAdmin):
     list_filter = ('agency_name','contact_email')
     display = 'Agencies'
     
-
-class Product(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField()
-    product_info = models.TextField()
-    product_uuid = models.UUIDField(unique=True)
-    organization_uuid = models.UUIDField()  # Add this field for organization UUID
-    product_team = models.UUIDField()  # Add this field for product team UUID
-    start_date = models.DateTimeField()
-    end_date = models.DateTimeField()
-    create_date = models.DateTimeField()
-    edit_date = models.DateTimeField()
-
-    def __str__(self):
-        return self.name
-
-class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name','product_uuid')
-    search_fields = ('name','product_uuid')
-    list_filter = ('name','product_uuid')
-    display = 'Products'
 
 class InsightsUser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)  # Assuming you have a User model

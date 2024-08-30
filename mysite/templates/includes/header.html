@@ -50,14 +50,21 @@
         </li>
         {% endif %}
         {% if user.is_authenticated %}
-        <li class="nav-item"><a href="/collabhub/" class="nav-link">Product Collab</a></li>
+
         <li class="nav-item dropdown">
-          <a href="#" class="nav-link dropdown-toggle" id="productsDropdown" role="button" aria-expanded="false">Products</a>
+          <a href="#" class="nav-link dropdown-toggle" id="productsDropdown" role="button" aria-expanded="false">Punchlist</a>
           <ul class="dropdown-menu" aria-labelledby="productsDropdown">
             <li><a class="dropdown-item" href="/punchlist_add/">Set a Punchlist</a></li>
             <li><a class="dropdown-item" href="/bounties/">View Punchlist</a></li>
             <li><a class="dropdown-item" href="/bug_add">Submit a Bug</a></li>
             <li><a class="dropdown-item" href="/bug_list">Bug List</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a href="#" class="nav-link dropdown-toggle" id="productsDropdown" role="button" aria-expanded="false">Products</a>
+          <ul class="dropdown-menu" aria-labelledby="productsDropdown">
+            <li><a class="dropdown-item" href="/products">Product Listing</a></li>
+            <li><a class="dropdown-item" href="/products/add">Add Product</a></li>
           </ul>
         </li>
         <li class="nav-item dropdown">

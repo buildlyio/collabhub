@@ -27,3 +27,4 @@ django-cors-headers
 django-allauth
 django-import-export
 qrcode
+django-tables2

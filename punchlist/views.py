@@ -58,6 +58,7 @@ def new_punchlist(request):
         return redirect('home')
 
     punchlist_form = PunchlistForm(request.user)
+    
     if request.method == 'POST':
         punchlist_form = PunchlistForm(request.user, request.POST)
         if punchlist_form.is_valid():

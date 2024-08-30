@@ -1,0 +1,7 @@
+<!-- main_app/templates/main_app/add_product_details.html -->
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Submit Product Details</button>
+</form>

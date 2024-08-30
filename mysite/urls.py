@@ -13,6 +13,8 @@ from rest_framework.authtoken.views import obtain_auth_token
 
 from django.contrib.auth import views as auth_views
 
+from django.urls import path, include
+
 schema_view = get_schema_view(
    openapi.Info(
       title="Buildly CollabHub",
@@ -96,8 +98,17 @@ urlpatterns = urlpatterns + [
     path('get-auth-token/', obtain_auth_token, name='get_auth_token'),
 ]
 
+from .views import ProductListView, ProductCreateView, ProductUpdateView, ProductDeleteView, CreatePunchlistView
 
-from django.urls import path
+urlpatterns = urlpatterns + [
+    path('products/', ProductListView.as_view(), name='product_list'),
+    path('products/add/', ProductCreateView.as_view(), name='product_add'),
+    path('products/<int:pk>/edit/', ProductUpdateView.as_view(), name='product_edit'),
+    path('products/<int:pk>/delete/', ProductDeleteView.as_view(), name='product_delete'),
+    path('punchlist_add/product_id=<int:pk>', PunchlistCreate.as_view(), name='create_punchlist'),
+]
+
+
 from punchlist import serializer_views
 
 urlpatterns = urlpatterns + [
