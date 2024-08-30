@@ -50,9 +50,6 @@ RUN chown builder:builder /app
 # Copy the source code of the project into the container.
 COPY --chown=builder:builder . .
 
-# MAKE MIGRATIONS
-RUN python3 manage.py makemigrations
-
 # Use user "builder" to run the build commands below and the server itself.
 USER builder
 
