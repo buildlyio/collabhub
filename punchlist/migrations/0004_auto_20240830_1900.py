@@ -34,12 +34,6 @@ class Migration(migrations.Migration):
             name='repository_url',
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
-        migrations.AddField(
-            model_name='punchlist',
-            name='product',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='punchlists', to='punchlist.product'),
-            preserve_default=False,
-        ),
         migrations.AlterField(
             model_name='product',
             name='description',
