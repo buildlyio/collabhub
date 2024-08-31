@@ -138,12 +138,11 @@ def register(request):
             user.save()
 
             login(request, user)
-
+            messages.info(request, "Your Profile has been created.")
             if form.cleaned_data.get('is_labs_user'):
                 return redirect('import_labs_product')  # Redirect to import Labs product
             else:
                 return redirect('add_product_details')  # Redirect to add product details manually
-
 
     else:
         form = RegistrationForm()
