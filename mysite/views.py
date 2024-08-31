@@ -136,11 +136,6 @@ def register(request):
             user = form.save(commit=False)
             user.is_product_owner = True
             user.save()
-            profile_form = ProductOwnerProfileForm(request.POST)
-            if profile_form.is_valid():
-                profile = profile_form.save(commit=False)
-                profile.user = user
-                profile.save()
 
             login(request, user)
 
