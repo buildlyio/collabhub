@@ -23,6 +23,8 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from .labs import get_labs_data
 
+from django.db.models import Q
+
 from .models import PunchlistHunter, Punchlist, Issue, PunchlistSubmission, AcceptedPunchlist, Contract, Bug, InsightsUser, Product
 from .forms import PunchlistHunterForm, PunchlistForm, PunchlistHunterSubmissionForm, BugForm
 from .filters import PunchlistFilter, IssueFilter
@@ -138,7 +140,7 @@ def punchlist_detail(request, punchlist_id):
     return render(request, 'punchlist_detail.html', {'punchlist': punchlist})
 
 
-class PunchlistList(ListView,LoginRequiredMixin):
+class PunchlistList(ListView, LoginRequiredMixin):
     """
     Monitored Sites
     """
@@ -149,6 +151,18 @@ class PunchlistList(ListView,LoginRequiredMixin):
     template_name = 'punchlist_list.html'
     paginate_by = 16  # Display 16 items per page
     ordering = ['-create_date']  # Order by most recent
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+
+        if user.is_authenticated:
+            if user.groups.filter(id=2).exists():  # Check if user is a member of group 2 (developers)
+                return queryset  # Return all punchlists
+
+            return queryset.filter(Q(is_public=True) | Q(owner=user))  # Return public punchlists or punchlists owned by the user
+
+        return queryset.filter(public=True)  # Return only public punchlists for anonymous users
     
 
 class PunchlistCreate(CreateView,LoginRequiredMixin,):
@@ -678,6 +692,7 @@ def sour(request):
 
 from django.shortcuts import render
 from .models import DevelopmentAgency, Product
+from django.db.models import Q
 
 @login_required
 def showcase_agencies(request):
@@ -724,7 +739,12 @@ def showcase_agencies(request):
 
 def bug_list(request):
     # Fetch bugs from the database, sorted and grouped by app_name and version
-    bugs = Bug.objects.order_by('app_name', 'version')
+    # Filter bugs based on user's punchlists, is_public, and superuser status
+    user = request.user
+    if user.is_superuser:
+        bugs = Bug.objects.order_by('app_name', 'version')
+    else:
+        bugs = Bug.objects.filter(Q(punchlist__owner=user) | Q(is_public=True) | Q(name=user.get_full_name())).order_by('app_name', 'version')
     bounties = Punchlist.objects.all()
     
         # Filter by app_name

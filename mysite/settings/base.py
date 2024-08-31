@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     'paypal.standard.ipn',
     'django_celery_beat',
     'django_filters',
-    'mysite',
     'punchlist',
     'submission',
     'onboarding',

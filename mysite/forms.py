@@ -9,15 +9,12 @@ from django.contrib.auth.forms import UserCreationForm, UserChangeForm, Password
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from punchlist.models import Product
-from .models import ProductOwnerProfile
 
 # paypal
 from django.views.generic import FormView
 from paypal.standard.forms import PayPalPaymentsForm
 
 from bootstrap_modal_forms.forms import BSModalModelForm
-
-from .models import CustomUser
 
 
 class PasswordResetForm(forms.Form):
@@ -43,7 +40,7 @@ class RegistrationForm(UserCreationForm):
 
     
     class Meta:
-        model = CustomUser
+        model = User
         fields = ('email', 'first_name', 'last_name', 'username', 'password1', 'password2','is_labs_user','organization_name')
         
     def __init__(self, *args, **kwargs):
@@ -77,11 +74,6 @@ class RegistrationForm(UserCreationForm):
 
         return user
 
-
-class ProductOwnerProfileForm(forms.ModelForm):
-    class Meta:
-        model = ProductOwnerProfile
-        fields = ['organization_name']
 
 class RegistrationUpdateForm(UserChangeForm):
     email = forms.EmailField(required=True)

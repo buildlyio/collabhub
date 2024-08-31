@@ -41,7 +41,7 @@ class TeamMember(models.Model):
 
 
 class TeamMemberAdmin(admin.ModelAdmin):
-    list_display = ('user','team_member_type','first_name')
+    list_display = ('team_member_type','first_name')
     display = 'Team Member Admin'  
 
 class Resource(models.Model):

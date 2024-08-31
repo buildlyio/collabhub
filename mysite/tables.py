@@ -1,5 +1,5 @@
 import django_tables2 as tables
-from .models import Product
+from punchlist.models import Product
 
 class ProductTable(tables.Table):
     edit = tables.TemplateColumn(template_name='edit_column.html')
@@ -8,5 +8,5 @@ class ProductTable(tables.Table):
 
     class Meta:
         model = Product
-        fields = ('name', 'description', 'date_created', 'date_updated')
+        fields = ('name', 'description', 'start_date', 'end_date')
         attrs = {'class': 'table table-striped table-bordered'}

@@ -7,6 +7,8 @@ from django.views.generic import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy, reverse
 
+from punchlist.models import Product
+
 from bootstrap_modal_forms.generic import BSModalCreateView
 
 from django.conf import settings
@@ -18,7 +20,6 @@ from django.db import transaction
 from punchlist.forms import PunchlistHunterForm, PunchlistSetterForm
 
 from punchlist.models import PunchlistHunter, PunchlistSetter
-from .models import CustomUser, ProductOwnerProfile
 
 from django.contrib import messages
 
@@ -33,7 +34,6 @@ User = get_user_model()
 from django_tables2 import SingleTableView
 from django_filters.views import FilterView
 from django_tables2.views import SingleTableMixin
-from .models import Product
 from .tables import ProductTable
 
 from django.views.generic import ListView
@@ -43,6 +43,11 @@ class ProductListView(SingleTableView):
     model = Product
     table_class = ProductTable  # This should be your table class
     template_name = 'product_list.html'  # Update with your template path
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(owner=self.request.user)
+        return queryset
 
 from django.views.generic import CreateView
 from django.urls import reverse_lazy
@@ -129,7 +134,6 @@ def send_password_reset_email(request, email):
     return False
 
 
-
 def register(request):
     form = RegistrationForm(request.POST)
     if form.is_valid():
@@ -137,16 +141,18 @@ def register(request):
             user.is_product_owner = True
             user.groups.add(1)
             user.save()
+            
+            # Create a new PunchlistHunter or PunchlistSetter object for the user
+            try:
+                get_user = User.objects.get(username=user.username)
+                punchlist_setter = PunchlistSetter.objects.create(user=get_user)
+            except User.DoesNotExist:
+                pass
 
-            login(request, user)
-            messages.info(request, "Your Profile has been created.")
-            if form.cleaned_data.get('is_labs_user'):
-                return redirect('import_labs_product')  # Redirect to import Labs product
-            else:
-                return redirect('add_product_details')  # Redirect to add product details manually
-
-    else:
-        form = RegistrationForm()
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            
+            messages.info(request, "Your Profile has been created and you should have been logged in, if not please process to the <a href='/login'>Login</a> page.")
+            return redirect('product_add')  # Redirect to add product details manually
 
     return render(request, 'register.html', {'form': form})
 
@@ -162,6 +168,10 @@ def edit_profile(request):
 
                 # Create a new PunchlistHunter or PunchlistSetter object for the user
                 punchlist_setter, created = PunchlistSetter.objects.get_or_create(user=user)
+                if created:
+                    punchlist_setter = PunchlistSetter.objects.create(user=user)
+                else:
+                    punchlist_setter = PunchlistSetter.objects.get(user=user)
                 
                 messages.info(request, "Your Profile has been updated.")
                 redirect("/login")
