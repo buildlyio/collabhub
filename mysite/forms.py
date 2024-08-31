@@ -110,12 +110,6 @@ class RegistrationUpdateForm(UserChangeForm):
 
         # Set initial values for is_punchlist_hunter and github_profile fields
         user = self.instance
-        if hasattr(user, 'punchlisthunter'):
-            punchlist_hunter = user.punchlisthunter
-            self.initial['is_punchlist_hunter'] = True
-            self.initial['github_profile'] = punchlist_hunter.github_profile
-        else:
-            self.initial['is_punchlist_hunter'] = False
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -123,15 +117,6 @@ class RegistrationUpdateForm(UserChangeForm):
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
         user.save()
-
-        is_punchlist_hunter = self.cleaned_data['is_punchlist_hunter']
-        if is_punchlist_hunter:
-            punchlist_hunter, _ = PunchlistHunter.objects.get_or_create(user=user)
-            punchlist_hunter.github_profile = self.cleaned_data['github_profile']
-            punchlist_hunter.save()
-        else:
-            PunchlistHunter.objects.filter(user=user).delete()
-            PunchlistSetter.objects.get_or_create(user=user)
 
         return user
     

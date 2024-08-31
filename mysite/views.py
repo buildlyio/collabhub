@@ -135,6 +135,7 @@ def register(request):
     if form.is_valid():
             user = form.save(commit=False)
             user.is_product_owner = True
+            user.groups.add(1)
             user.save()
 
             login(request, user)
