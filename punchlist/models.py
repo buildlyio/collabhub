@@ -76,7 +76,7 @@ class Product(models.Model):
     prod_url = models.CharField(max_length=255,null=True, blank=True)
     repository_url = models.CharField(max_length=255,null=True, blank=True)
     product_uuid = models.UUIDField(unique=True,null=True, blank=True)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     organization_uuid = models.UUIDField(null=True, blank=True)  # Add this field for organization UUID
     product_team = models.UUIDField(null=True, blank=True)  # Add this field for product team UUID
     start_date = models.DateTimeField(null=True, blank=True)
@@ -183,7 +183,7 @@ class Punchlist(models.Model):
     labs_product_name = models.CharField(max_length=255, blank=True, null=True, help_text="Product Name from Buildly Insights API")
     labs_product_id = models.CharField(max_length=255, blank=True, null=True, help_text="Product ID from Buildly Insights API")
     labs_release_id = models.JSONField(max_length=255, blank=True, null=True, help_text="Release IDs from Buildly Insights API for Product") 
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='punchlists')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='punchlists', null=True, blank=True)
     create_date = models.DateTimeField(null=True, blank=True)
     edit_date = models.DateTimeField(null=True, blank=True)
 
@@ -405,6 +405,7 @@ class DevelopmentAgency(models.Model):
     contact_email = models.EmailField()
     contact_phone = models.CharField(max_length=20)
     linkedin_url = models.URLField(null=True, blank=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     how_they_found_us = models.TextField()
     logo = models.ImageField(upload_to='agency-logo', null=True, blank=True)
 
