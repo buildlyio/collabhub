@@ -6,47 +6,89 @@
 
         <ol class="carousel-indicators" id="hero-carousel-indicators"></ol>
         <div class="carousel-inner" role="listbox">
+          <!--- Slide 1 -->
           <div class="carousel-item active" data-bs-interval="5000" style="background-image: url({% static 'assets/img/slide/slide-1.jpg' %})">
             <div class="carousel-container">
-              <div class="carousel-content">
+              <div class="carousel-content" style="border-radius: 10px; background-color: rgba(255, 255, 255, 0.8); width: 70%;">
                 <h2 class="animate__animated animate__fadeInDown">Welcome to the <a href="https://www.buildly.io">Buildly</a> Collab Hub</h2>
-                <p class="hero-light">
+                <p class="hero-light" style="width: 70%">
                   The CollabHub brings together, product teams with remote development agencies to build great products together using <a href="https://labs.buildly.io">Buildly Labs</a>.  
                   Here you can <em>find a team to build your new product, or help you migrate that legacy system to the cloud</em>.  Or if you just a have a small feature or bug that needs fixing, 
                   you can use the CollabHub to find a community developer to help you out.
-                  <br/>
-                  <br/>
-                  <a href="https://www.buildly.io">Buildly Labs</a> is a platform that helps you <b>build your product fast</b> and automate the annoy and slow processes away, and the CollabHub is where you can find the help you need to get it done.
-                  <br/>
-                  <b>Product Teams</b>: Sign up @ <a href="https://labs.buildly.io">Buildly</a> and get access to the the Product Labs and the CollabHub. <br/> 
-                  and <em>Agencies</em>: Sign up @ <a href="/parter">Partner</a> and get access to the CollabHub.
-                  <br/>
-                  <br/>
-                  <a href="{% url 'register' %}" class="btn btn-primary">Get Started for Free!</a>
-                </p>
-                
+                </p>  
+                <div class="container align-items-center justify-content-center">
+                  <div class="row">
+                    <div class="col">
+                      <div class="card">
+                        <div class="card-body">
+                          <p class="card-text">
+                            <b>Product Teams</b>: Sign up @ <a href="https://labs.buildly.io">Buildly</a> and get access to the the Product Labs and the CollabHub. <br/> 
+                            and <em>Agencies</em>: Sign up @ <a href="/parter">Partner</a> and get access to the CollabHub.
+                            <a href="https://www.buildly.io">Buildly Labs</a> is a platform that helps you <b>build your product fast</b> and automate the annoy and slow processes away, and the CollabHub is where you can find the help you need to get it done.
+                          </p>
+                          <b>Product Teams</b>: Sign up @ <a href="https://labs.buildly.io">Buildly</a> and get access to the the Product Labs and the CollabHub. <br/> 
+                          and <em>Agencies</em>: Sign up @ <a href="/parter">Partner</a> and get access to the CollabHub.
+                          <br/>
+                          <br/>
+                          <a href="{% url 'register' %}" class="btn btn-primary">Get Started for Free!</a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col">
+                      <br/>
+                      <br/>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Slide 3 -->
+          <!-- Slide 2 -->
           <div class="carousel-item" data-bs-interval="5000" style="background-image: url({% static 'assets/img/blog/blog-3.jpg' %})">
             <div class="carousel-container">
-                <div class="carousel-content">
-                    <h2 class="animate__animated animate__fadeInDown">Enhance Your Release Testing with Punchlist</h2>
-                    <p class="hero-light">
-                        Introducing <b>Punchlist</b>, your essential tool for efficient release testing and bug tracking, seamlessly integrated with <a href="https://labs.buildly.io">Buildly Product Labs</a>.
-                        <br/><br/>
-                        Use the <a href="https://chromewebstore.google.com/detail/punchlist/pglidllklbmjllilnoainiaplpbknejh" target="_blank">Punchlist Chrome plugin</a> to easily report and fix bugs, ensuring your products are of the highest quality.
-                        <br/><br/>
-                        With Buildly Product Labs, you can quickly develop, test, and refine your cloud-native applications. Punchlist helps streamline this process, allowing your team to focus on innovation rather than troubleshooting.
-                        <br/><br/>
-                        <a href="https://chromewebstore.google.com/detail/punchlist/pglidllklbmjllilnoainiaplpbknejh" target="_blank" class="btn btn-primary">Get Punchlist Now</a>
-                    </p>
+              <div class="carousel-content" style="border-radius: 10px; background-color: rgba(255, 255, 255, 0.8); width: 70%;">
+                <h2 class="animate__animated animate__fadeInDown">Enhance Your Release Testing with Punchlist</h2>
+                <p class="hero-light" style="width: 70%">
+                    Introducing <b>Punchlist</b>, your essential tool for efficient release testing and bug tracking, seamlessly integrated with <a href="https://labs.buildly.io">Buildly Product Labs</a>.
+                </p>    
+                <div class="container align-items-center justify-content-center">
+                  <div class="row">
+                    <div class="col">
+                      <div class="card">
+                        <div class="card-body">
+                          <h5 class="card-title">Punchlist</h5>
+                          <p class="card-text">
+                            Use the <a href="https://chromewebstore.google.com/detail/punchlist/pglidllklbmjllilnoainiaplpbknejh" target="_blank">Punchlist Chrome plugin</a> to easily report and fix bugs, ensuring your products are of the highest quality.
+                          </p>
+                          <a href="https://chromewebstore.google.com/detail/punchlist/pglidllklbmjllilnoainiaplpbknejh" class="btn btn-primary">Get it Now!</a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col">
+                      <div class="card">
+                        <div class="card-body">
+                          <h5 class="card-title">Buildly Labs</h5>
+                          <p class="card-text">With Buildly Product Labs, you can quickly develop, test, and refine your cloud-native applications. Punchlist helps streamline this process, allowing your team to focus on innovation rather than troubleshooting.</p>
+                          <a href="https://labs.buildly.io" target="_blank" class="btn btn-primary">Try Labs</a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col">
+                      <br/>
+                      <br/>
+                    </div>
+                  </div>
                 </div>
+              </div>
             </div>
           </div>
-
         </div>
 
         <a class="carousel-control-prev" href="#heroCarousel" role="button" data-bs-slide="prev">
