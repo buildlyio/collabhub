@@ -1,3 +1,7 @@
+"""
+rename this to dev.py to use for local development
+"""
+
 from .base import *
 
 DATABASES = {
@@ -31,5 +35,3 @@ try:
     from .local import *
 except ImportError:
     pass
-
-OPENAI_API_KEY = "asdfghjkl1234567890"

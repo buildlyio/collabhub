@@ -10,6 +10,9 @@ from django.contrib import admin
 from django.utils import timezone
 from django.contrib.auth.models import User
 
+from .util import evaluate_product_idea
+
+
 
 class Level(Enum):
     INTERN = 'Intern'
@@ -84,6 +87,46 @@ class Product(models.Model):
     end_date = models.DateTimeField(null=True, blank=True)
     create_date = models.DateTimeField(null=True, blank=True)
     edit_date = models.DateTimeField(null=True, blank=True)
+    
+    # Evaluation fields
+    originality_score = models.TextField(null=True, blank=True)
+    marketability_score = models.TextField(null=True, blank=True)
+    feasibility_score = models.TextField(null=True, blank=True)
+    completeness_score = models.TextField(null=True, blank=True)
+    summary = models.TextField(blank=True, null=True)
+    gemini_completeness_score = models.TextField(null=True, blank=True)
+    gemini_originality_score = models.TextField(null=True, blank=True)
+    gemini_marketability_score = models.TextField(null=True, blank=True)
+    gemini_feasibility_score = models.TextField(null=True, blank=True)
+    gemini_summary = models.TextField(blank=True, null=True)
+
+    # Override the save method to include evaluation logic
+    def save(self, *args, **kwargs):
+        # Convert the instance to a dictionary suitable for analysis
+        application_data = {
+            'name': self.name,
+            'description': self.description,
+            'product_info': self.product_info,
+            # Include other relevant fields as needed
+        }
+
+        # Assume `analyze_ai_response` is imported and ready to use
+        # and it now accepts a dictionary and returns a dictionary with scores and summary
+        evaluation_results = evaluate_startup_idea(application_data)
+        # review_text, originality_score, marketability_score, feasibility_score, completeness_score
+        # Update the instance with evaluation results
+        self.summary = evaluation_results[0]
+        self.originality_score = evaluation_results[1]
+        self.marketability_score = evaluation_results[2]
+        self.feasibility_score = evaluation_results[3]
+        self.completeness_score = evaluation_results[4]
+        self.gemini_summary = evaluation_results[5]
+        self.gemini_originality_score = evaluation_results[6]
+        self.gemini_marketability_score = evaluation_results[7]
+        self.gemini_feasibility_score = evaluation_results[8]
+        self.gemini_completeness_score = evaluation_results[9]
+
+        super().save(*args, **kwargs)  # Call the "real" save() method.
 
     def __str__(self):
         return self.name

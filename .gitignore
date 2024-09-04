@@ -131,3 +131,6 @@ dmypy.json
 # meida contents
 media/*
 
+# dev settings
+mysite/settings/dev.py
+

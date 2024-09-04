@@ -51,3 +51,5 @@ STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage'
 AWS_DEFAULT_ACL = 'public-read'
 
 SENDGRID_API_KEY = os.environ.get("SENDGRID")
+
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
