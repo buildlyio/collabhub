@@ -74,7 +74,7 @@ def evaluate_product_idea(application):
                 if "Score" in line:
                     criterion, score = line.split(":")
                     scores[criterion.strip()] = int(score.split("/")[0])
-
+            score_text = score_text.split('\n')
             originality_score = scores.get('Originality Score', 0)
             marketability_score = scores.get('Marketability Score', 0)
             feasibility_score = scores.get('Feasibility Score', 0)
@@ -117,7 +117,7 @@ def evaluate_product_idea(application):
     except Exception as e: 
         logging.error(f"Rate Limit Error: {str(e)}")
         scores = "0"
-
+        score_text = "0"
         originality_score = "0"
         marketability_score = "0"
         feasibility_score = "0"

@@ -112,7 +112,7 @@ class Product(models.Model):
 
         # Assume `analyze_ai_response` is imported and ready to use
         # and it now accepts a dictionary and returns a dictionary with scores and summary
-        evaluation_results = evaluate_startup_idea(application_data)
+        evaluation_results = evaluate_product_idea(application_data)
         # review_text, originality_score, marketability_score, feasibility_score, completeness_score
         # Update the instance with evaluation results
         self.summary = evaluation_results[0]
