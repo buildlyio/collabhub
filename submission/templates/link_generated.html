@@ -1,8 +1,24 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-<h2>Your unique submission link and QR code:</h2>
-<p>URL: <a href="https://collab.buildly.io/submission/submit/{{ submission_link.unique_url }}">{{ submission_link.unique_url }}</a></p>
-<p>Provider: <p>{{ submission_link.admin_user.name }}</p>
-<img src="{% static 'media/qr_codes/' %}{{ submission_link.qr_code }}" alt="QR Code">
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-9">
+                <h5 class="card-title">{{ team_member_profile.first_name }} {{ team_member_profile.last_name }}</h5>
+                <p class="card-text">Contact Info: {{ team_member_profile.email }}</p>
+                <a href="{{ team_member_profile.linkedin_profile }}" class="btn btn-primary">LinkedIn Profile</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h2 class="card-title">Your unique submission link and QR code:</h2>
+        <p class="card-text">URL: <a href="/submission/submit/{{ submission_link.unique_url }}">{{ submission_link.unique_url }}</a></p>
+        <p class="card-text">Provider: {{ team_member_profile.email }}</p>
+        <img src="{% static 'media/qr_codes/' %}{{ submission_link.qr_code }}" alt="QR Code" class="img-fluid">
+    </div>
+</div>
 {% endblock %}

@@ -35,22 +35,29 @@ def register(request):
 
 @login_required
 def dashboard(request):
-    team_member = TeamMember.objects.get(user=request.user)
-    if not team_member.approved:
+    try:
+        team_member = TeamMember.objects.get(user=request.user)
+    except TeamMember.DoesNotExist:
+        team_member = None
+
+    if team_member is not None and not team_member.approved:
         return render(request, 'not_approved.html')
 
-    resources = Resource.objects.filter(team_member_type=team_member.team_member_type) | Resource.objects.filter(team_member_type='all')
-    calendar_embed_code = team_member.google_calendar_embed_code
+    if team_member is not None:
+        resources = Resource.objects.filter(team_member_type=team_member.team_member_type) | Resource.objects.filter(team_member_type='all')
+        calendar_embed_code = team_member.google_calendar_embed_code if team_member else None
     
-    qr_codes = SubmissionLink.objects.filter(admin_user=request.user)
-    submissions = Submission.objects.filter(submission_link__admin_user=request.user)
+        qr_codes = SubmissionLink.objects.filter(admin_user=request.user)
+        submissions = Submission.objects.filter(submission_link__admin_user=request.user)
 
-    return render(request, 'dashboard.html', {
-        'resources': resources,
-        'qr_codes': qr_codes,
-        'submissions': submissions,
-        'calendar_embed_code': calendar_embed_code
-    })
+        return render(request, 'dashboard.html', {
+            'resources': resources,
+            'qr_codes': qr_codes,
+            'submissions': submissions,
+            'calendar_embed_code': calendar_embed_code
+        })
+    else:
+        return render(request, 'not_approved.html')
 
 @user_passes_test(lambda u: u.is_superuser)
 def upload_resource(request):

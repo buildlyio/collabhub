@@ -4,62 +4,68 @@
 
 <!-- onboarding/templates/dashboard.html -->
 
-<h2>Your Dashboard</h2>
+<div class="row">
+    <div class="col-md-6">
+        <h2>Your Dashboard</h2>
 
-{% if resources %}
-    <h3>Resources</h3>
-    <ul>
-        {% for resource in resources %}
-        <li>
-            {{ resource.title }}
-            {% if resource.link %}
-                - <a href="{{ resource.link }}">Link</a>
-            {% endif %}
-            {% if resource.document %}
-                - <a href="{{ resource.document.url }}">Download</a>
-            {% endif %}
-        </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>No resources available.</p>
-{% endif %}
+        {% if resources %}
+            <h3>Resources</h3>
+            <ul>
+                {% for resource in resources %}
+                <li>
+                    {{ resource.title }}
+                    {% if resource.link %}
+                        - <a href="{{ resource.link }}">Link</a>
+                    {% endif %}
+                    {% if resource.document %}
+                        - <a href="{{ resource.document.url }}">Download</a>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No resources available.</p>
+        {% endif %}
 
-{% if calendar_embed_code %}
-    <h3>Your Calendar</h3>
-    <div>
-        {{ calendar_embed_code|safe }}
+        {% if calendar_embed_code %}
+            <h3>Your Calendar</h3>
+            <div>
+                {{ calendar_embed_code|safe }}
+            </div>
+        {% endif %}
     </div>
-{% endif %}
 
-{% if submissions %}
-    <h3>Submissions</h3>
-    <div>
-        {% for submission in submissions %}
-        <li>
-            {{ submission.name }}
-            {% if submission.email %}
-                - <a href="{{ submission.email }}">{{ submission.email }}</a>
-            {% endif %}
-            {% if submission.description %}
-                - {{ submission.description }}
-            {% endif %}
-        </li>
-        {% endfor %}
+    <div class="col-md-6">
+        {% if submissions %}
+            <h3>Submissions</h3>
+            <div>
+                {% for submission in submissions %}
+                <div class="submission-item">
+                    <h4>{{ submission.name }}</h4>
+                    {% if submission.email %}
+                        <p><a href="{{ submission.email }}">{{ submission.email }}</a></p>
+                    {% endif %}
+                    {% if submission.description %}
+                        <p>{{ submission.description }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% if qr_codes %}
+            <h3>QR Codes</h3>
+            <div>
+                {% for qr_code in qr_codes %}
+                <div class="qr-code-item">
+                    <a href="https://collab.buildly.io/submission/submit/{{ qr_code.unique_url }}">{{ qr_code.unique_url }}</a>
+                    <img src="{% static 'media/qr_codes/' %}{{ qr_code.qr_code }}" alt="QR Code" width="200">
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
     </div>
-{% endif %}
+</div>
 
-{% if qr_codes %}
-    <h3>QR Codes</h3>
-    <div>
-        {% for qr_code in qr_codes %}
-        <li>
-            {{ qr_code.unique_url }}
-        <li>
-            <img src="{% static 'media/qr_codes/' %}{{ qr_code.qr_code }}" alt="QR Code">
-        </li>
-        {% endfor %}
-    </div>
-{% endif %}
+
 
 {% endblock %}

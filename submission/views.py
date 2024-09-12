@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
-from .models import SubmissionLink, Submission
+from .models import SubmissionLink, Submission, User
+from onboarding.models import TeamMember
 from .forms import SubmissionForm
 import qrcode
 from django.conf import settings
@@ -44,11 +45,14 @@ def generate_link(request):
     # Store the S3 URL in the database
     submission_link.qr_code = default_storage.url(filename)
     submission_link.save()
+    
+    team_member_profile = get_object_or_404(TeamMember, user=request.user)
 
-    return render(request, 'link_generated.html', {'submission_link': submission_link})
+    return render(request, 'link_generated.html', {'submission_link': submission_link,'team_member_profile': team_member_profile})
 
 def submission_form(request, unique_url):
     submission_link = get_object_or_404(SubmissionLink, unique_url=unique_url)
+    team_member_profile = get_object_or_404(TeamMember, user=request.user)
     if request.method == 'POST':
         form = SubmissionForm(request.POST)
         if form.is_valid():
@@ -59,4 +63,4 @@ def submission_form(request, unique_url):
     else:
         form = SubmissionForm()
 
-    return render(request, 'submission_form.html', {'form': form})
+    return render(request, 'submission_form.html', {'form': form, 'team_member_profile': team_member_profile, 'submission_link': submission_link})
