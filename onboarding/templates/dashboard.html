@@ -57,8 +57,8 @@
             <div>
                 {% for qr_code in qr_codes %}
                 <div class="qr-code-item">
+                    <img src="{% static 'media/qr_codes/' %}{{ qr_code.qr_code }}" alt="QR Code" width="200"><br/>
                     <a href="https://collab.buildly.io/submission/submit/{{ qr_code.unique_url }}">{{ qr_code.unique_url }}</a>
-                    <img src="{% static 'media/qr_codes/' %}{{ qr_code.qr_code }}" alt="QR Code" width="200">
                 </div>
                 {% endfor %}
             </div>

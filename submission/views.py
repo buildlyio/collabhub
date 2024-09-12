@@ -52,14 +52,14 @@ def generate_link(request):
 
 def submission_form(request, unique_url):
     submission_link = get_object_or_404(SubmissionLink, unique_url=unique_url)
-    team_member_profile = get_object_or_404(TeamMember, user=request.user)
+    team_member_profile = get_object_or_404(TeamMember, user=submission_link.user)
     if request.method == 'POST':
         form = SubmissionForm(request.POST)
         if form.is_valid():
             submission = form.save(commit=False)
             submission.submission_link = submission_link
             submission.save()
-            return HttpResponse('Submission successful.')
+            return HttpResponse('Thank you! Submission successful.')
     else:
         form = SubmissionForm()
 
