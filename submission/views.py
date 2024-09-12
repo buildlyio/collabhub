@@ -52,7 +52,7 @@ def generate_link(request):
 
 def submission_form(request, unique_url):
     submission_link = get_object_or_404(SubmissionLink, unique_url=unique_url)
-    team_member_profile = get_object_or_404(TeamMember, user=submission_link.user)
+    team_member_profile = get_object_or_404(TeamMember, user=submission_link.admin_user)
     if request.method == 'POST':
         form = SubmissionForm(request.POST)
         if form.is_valid():
