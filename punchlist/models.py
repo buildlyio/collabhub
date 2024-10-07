@@ -275,6 +275,7 @@ class PunchlistSetterAdmin(admin.ModelAdmin):
 
 class PunchlistHunter(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True)
+    agency = models.ForeignKey('DevelopmentAgency', on_delete=models.CASCADE, blank=True, null=True) # Add this field for Development Agency
     approved = models.BooleanField(default=False)
     github_profile = models.URLField(max_length=200, blank=True, null=True)
     status = models.CharField(max_length=255, blank=True)

@@ -84,7 +84,7 @@
         <li class="nav-item"><i class="nav-item">&nbsp; Welcome, {% if request.user|has_punchlisthunter %} Punchlist Hunter {% endif %}{{user.username}} &nbsp;</i></li>
         {% else %}
         <li><a class="dropdown-item" href="/partner">Partner</a></li>
-        <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>
+        <li class="nav-item"><a class="nav-link" href="/onboarding/register">Register</a></li>
         <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
         {% endif %}
       </ul>
