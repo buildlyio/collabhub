@@ -54,7 +54,6 @@ COPY --chown=builder:builder . .
 USER builder
 
 # Collect static files.
-CMD python3 manage.py collectstatic --noinput --clear
 
 # Runtime command that executes when "docker run" is called, it does the
 # following:
