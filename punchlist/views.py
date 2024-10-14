@@ -905,5 +905,7 @@ def submit_to_github(request, object_type, pk):
 
         return render(request, "submit_to_github.html", context)
 
-    except model_class.DoesNotExist:
-        return redirect("punchlist_list")  # Handle non-existing object
+    except Exception as e:
+        # Handle exceptions
+        messages.error(request, f"An error occurred: {str(e)}")
+        return render(request, "submit_to_github.html", context)
