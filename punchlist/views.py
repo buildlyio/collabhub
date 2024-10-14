@@ -800,7 +800,7 @@ def send_to_github(request, pk):
             new_punchlist.save()
             
             # Update the bug with the created punchlist
-            bug.punchlist = punchlist
+            bug.punchlist = new_punchlist
             bug.save()
             message ="Bug Assigned to a New Punchlist"
         messages.info(request, message)
