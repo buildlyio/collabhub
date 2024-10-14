@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+    'social_django',
 
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.apple',
@@ -81,6 +82,7 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'social_django.middleware.SocialAuthExceptionMiddleware',
 
 ]
 
@@ -145,6 +147,7 @@ AUTHENTICATION_BACKENDS = (
 
  #used for social authentications
  'allauth.account.auth_backends.AuthenticationBackend',
+'social_core.backends.github.GithubOAuth2',  # Add GitHub OAuth2 backend
  )
 
 SOCIALACCOUNT_PROVIDERS = {
@@ -227,3 +230,14 @@ REST_FRAMEWORK = {
 SENDGRID_API_KEY = ''
 
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+
+# GitHub OAuth keys
+SOCIAL_AUTH_GITHUB_KEY = os.environ.get('GITHUB_KEY')
+SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('GITHUB_SECRET')
+
+# Optional: Scope settings to access user repositories and issues
+SOCIAL_AUTH_GITHUB_SCOPE = ['repo', 'user']  # Scopes to access private repositories and user data
+
+# Redirect URL after successful login
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'

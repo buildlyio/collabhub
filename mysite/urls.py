@@ -106,6 +106,8 @@ urlpatterns = urlpatterns + [
     path('products/<int:pk>/edit/', ProductUpdateView.as_view(), name='product_edit'),
     path('products/<int:pk>/delete/', ProductDeleteView.as_view(), name='product_delete'),
     path('punchlist_add/product_id=<int:pk>', PunchlistCreate.as_view(), name='create_punchlist'),
+    path('auth/', include('social_django.urls', namespace='social')),  # Add this line for social auth
+
 ]
 
 

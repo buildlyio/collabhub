@@ -90,6 +90,17 @@
         <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
         {% endif %}
       </ul>
+      <ul>
+        <li>{% if user.profile.github_token %}
+          <p>Your GitHub account is connected!</p>
+          {% else %}
+              <a href="{% url 'social:begin' 'github' %}?next=/bounties">
+                  <button>Authorize GitHub Access</button>
+              </a>
+          {% endif %}
+        </li>
+      </ul>
+      
     </nav><!-- .navbar -->
   </div>
 </header><!-- End Header -->

@@ -38,6 +38,8 @@ from .tables import ProductTable
 
 from django.views.generic import ListView
 
+from social_django.models import UserSocialAuth
+
 
 class ProductListView(SingleTableView):
     model = Product
@@ -232,3 +234,28 @@ def add_product_details(request):
         form = ProductForm()
 
     return render(request, 'main_app/add_product_details.html', {'form': form})
+
+
+from django.shortcuts import redirect, render
+from social_django.utils import load_strategy
+from social_django.models import UserSocialAuth
+
+def github_complete(request):
+    # Get the OAuth token from the social auth framework
+    user = request.user  # The user should already be logged in via your app
+
+    if user.is_authenticated:
+        # Load the GitHub access token using social auth
+        strategy = load_strategy()
+        social_user = user.social_auth.get(provider='github')
+        github_access_token = social_user.extra_data['access_token']
+
+        # Optionally, store the token in a user profile or database for future use
+        # Example: Save token in a user profile (assuming you have a profile model)
+        user.profile.github_token = github_access_token
+        user.profile.save()
+
+        return redirect('/')  # Redirect user after successful linking
+    else:
+        return redirect('/login/')  # Redirect to login if not authenticated
+
