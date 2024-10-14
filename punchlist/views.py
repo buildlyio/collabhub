@@ -829,6 +829,9 @@ def submit_bug_to_github(request, pk):
     return redirect("punchlist_detail", pk=obj.punchlist.id)
 
 @login_required
+from social_django.models import UserSocialAuth
+
+@login_required
 def submit_to_github(request, object_type, pk):
     # Determine the model based on object_type (issue or bug)
     if object_type == "issue":
@@ -842,13 +845,18 @@ def submit_to_github(request, object_type, pk):
         # Get the object (issue or bug) by its ID
         obj = model_class.objects.get(pk=pk)
 
+        # Retrieve GitHub Token from the logged-in user's social auth data
+        try:
+            social_user = UserSocialAuth.objects.get(user=request.user, provider='github')
+            github_token = social_user.extra_data['access_token']
+        except UserSocialAuth.DoesNotExist:
+            # Handle case where the user hasn't linked their GitHub account
+            messages.error(request, "You haven't connected your GitHub account.")
+            return redirect("punchlist_detail", pk=obj.punchlist.id)
+
         if request.method == "POST":
-            # Retrieve GitHub Token from the associated Punchlist
-            punchlist = Punchlist.objects.get(id=obj.punchlist.id)
-            github_token = punchlist.repo_access_token
-
-            github_repo = request.POST.get("github_repo")  # Get the selected GitHub repo from the form
-
+            # Get the selected GitHub repo from the form
+            github_repo = request.POST.get("github_repo")
 
             # Construct the GitHub API endpoint for creating an issue
             api_url = f"https://api.github.com/repos/{github_repo}/issues"
@@ -905,7 +913,7 @@ def submit_to_github(request, object_type, pk):
 
         return render(request, "submit_to_github.html", context)
 
-    except Exception as e:
-        # Handle exceptions
-        messages.error(request, f"An error occurred: {str(e)}")
-        return render(request, "submit_to_github.html", context)
+    except model_class.DoesNotExist:
+        # Handle the case where the object doesn't exist
+        messages.error(request, f"{object_type.capitalize()} not found.")
+        return redirect("punchlist_list")
