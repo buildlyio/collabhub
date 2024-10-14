@@ -828,7 +828,7 @@ def submit_bug_to_github(request, pk):
     obj = Bug.objects.get(pk=pk)
     return redirect("punchlist_detail", pk=obj.punchlist.id)
 
-@login_required
+
 from social_django.models import UserSocialAuth
 
 @login_required
