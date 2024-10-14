@@ -53,3 +53,14 @@ AWS_DEFAULT_ACL = 'public-read'
 SENDGRID_API_KEY = os.environ.get("SENDGRID")
 
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+
+# GitHub OAuth keys
+SOCIAL_AUTH_GITHUB_KEY = os.environ.get('GITHUB_KEY')
+SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('GITHUB_SECRET')
+
+# Optional: Scope settings to access user repositories and issues
+SOCIAL_AUTH_GITHUB_SCOPE = ['repo', 'user']  # Scopes to access private repositories and user data
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'https://collab.buildly.io/bounties'
+
+# Use HTTPS for redirect URIs if applicable
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = True  # Set this to True if you're using HTTPS

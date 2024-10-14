@@ -237,7 +237,7 @@ SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('GITHUB_SECRET')
 
 # Optional: Scope settings to access user repositories and issues
 SOCIAL_AUTH_GITHUB_SCOPE = ['repo', 'user']  # Scopes to access private repositories and user data
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'https://collab.buildly.io/bounties/'
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/bounties'
 
 # Redirect URL after successful login
 LOGIN_REDIRECT_URL = '/'
