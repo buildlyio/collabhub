@@ -31,6 +31,11 @@ class PunchlistSerializer(serializers.ModelSerializer):
         model = Punchlist
         fields = '__all__'
 
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = '__all__'
+
 class IssueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Issue

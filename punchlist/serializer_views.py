@@ -65,6 +65,14 @@ class PunchlistDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Punchlist.objects.all()
     serializer_class = PunchlistSerializer
 
+class ProductList(generics.ListCreateAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
+class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
 class IssueList(generics.ListCreateAPIView):
     queryset = Issue.objects.all()
     serializer_class = IssueSerializer
