@@ -129,8 +129,8 @@ urlpatterns = urlpatterns + [
     path('punchlist-hunters/', serializer_views.PunchlistHunterList.as_view(), name='punchlist-hunter-list'),
     path('punchlist-hunters/<int:pk>/', serializer_views.PunchlistHunterDetail.as_view(), name='punchlist-hunter-detail'),
 
-    path('bounties/', serializer_views.PunchlistList.as_view(), name='punchlist-list'),
-    path('bounties/<int:pk>/', serializer_views.PunchlistDetail.as_view(), name='punchlist-detail'),
+    path('punchlist/', serializer_views.PunchlistList.as_view(), name='punchlist-list'),
+    path('punchlist/<int:pk>/', serializer_views.PunchlistDetail.as_view(), name='punchlist-detail'),
 
     path('issues/', serializer_views.IssueList.as_view(), name='issue-list'),
     path('issues/<int:pk>/', serializer_views.IssueDetail.as_view(), name='issue-detail'),
@@ -138,8 +138,11 @@ urlpatterns = urlpatterns + [
     path('plans/', serializer_views.PlanList.as_view(), name='plan-list'),
     path('plans/<int:pk>/', serializer_views.PlanDetail.as_view(), name='plan-detail'),
 
-    path('accepted-bounties/', serializer_views.AcceptedPunchlistList.as_view(), name='accepted-punchlist-list'),
-    path('accepted-bounties/<int:pk>/', serializer_views.AcceptedPunchlistDetail.as_view(), name='accepted-punchlist-detail'),
+    path('accepted-punhclist', serializer_views.AcceptedPunchlistList.as_view(), name='accepted-punchlist-list'),
+    path('accepted-punchlist/<int:pk>/', serializer_views.AcceptedPunchlistDetail.as_view(), name='accepted-punchlist-detail'),
+    
+    path('products/', serializer_views.ProductList.as_view(), name='product-list'),
+    path('products/<int:pk>/', serializer_views.ProductDetail.as_view(), name='product-detail'),
 
     path('contracts/', serializer_views.ContractList.as_view(), name='contract-list'),
     path('contracts/<int:pk>/', serializer_views.ContractDetail.as_view(), name='contract-detail'),
