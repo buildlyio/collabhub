@@ -478,3 +478,38 @@ class InsightsUserAdmin(admin.ModelAdmin):
     search_fields = ('user','insightsorganization_id')
     list_filter = ('user','insightsorganization_id')
     display = 'Insights User'
+
+
+class AgencyReview(models.Model):
+    agency = models.ForeignKey(DevelopmentAgency, on_delete=models.CASCADE)
+    platform = models.CharField(max_length=100)  # e.g., Google, Yelp, etc.
+    platfrom_url = models.URLField(blank=True, null=True)  # Link to platform profile
+    rating = models.FloatField()
+    review_text = models.TextField(blank=True, null=True)
+    review_link = models.URLField(blank=True, null=True)  # Link to review page
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.agency.name} - {self.platform}: {self.rating}"
+
+class AgencyReviewAdmin(admin.ModelAdmin):
+    list_display = ('agency','platform','rating','timestamp')
+    search_fields = ('agency','platform','rating')
+    list_filter = ('agency','platform','rating')
+    display = 'Agency Reviews'
+
+class AgencyAggregate(models.Model):
+    agency = models.OneToOneField(DevelopmentAgency, on_delete=models.CASCADE)
+    average_rating = models.FloatField()
+    review_count = models.IntegerField()
+    last_checked = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.agency.name}: {self.average_rating} ({self.review_count} reviews)"
+    
+class AgencyAggregateAdmin(admin.ModelAdmin):
+    list_display = ('agency','average_rating','review_count','last_checked')
+    search_fields = ('agency','average_rating','review_count')
+    list_filter = ('agency','average_rating','review_count')
+    display = 'Agency Aggregates'
+

@@ -54,6 +54,10 @@ SENDGRID_API_KEY = os.environ.get("SENDGRID")
 
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
+GOOGLE_PLACES_API_KEY = os.environ.get('GOOGLE_PLACES_API_KEY')
+
+YELP_API_KEY = os.environ.get('YELP_API_KEY')
+
 # GitHub OAuth keys
 SOCIAL_AUTH_GITHUB_KEY = os.environ.get('GITHUB_KEY')
 SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('GITHUB_SECRET')

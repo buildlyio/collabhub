@@ -5,7 +5,6 @@ from django.contrib import admin
 from punchlist.views import *
 from . import views
 
-
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -14,6 +13,9 @@ from rest_framework.authtoken.views import obtain_auth_token
 from django.contrib.auth import views as auth_views
 
 from django.urls import path, include
+
+from django.contrib.admin.views.decorators import staff_member_required
+
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -49,6 +51,9 @@ urlpatterns = [
 
     path('accounts/', include('allauth.urls')),
     path('punchlist/<int:punchlist_id>/submit/', submit_user_for_punchlist, name='submit_user_for_punchlist'),
+    
+    # agency review utility call
+    path('agency_review_utility/', views.agency_review_utility, name='agency_review_utility'),
     
     # Include your API URLs
     re_path(r'^docs/swagger(?P<format>\.json|\.yaml)$',
@@ -156,7 +161,7 @@ urlpatterns = urlpatterns + [
 if settings.DEBUG:
     from django.conf.urls.static import static
     from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-
+    
     # Serve static and media files from development server
     urlpatterns += staticfiles_urlpatterns()
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

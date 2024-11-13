@@ -259,3 +259,9 @@ def github_complete(request):
     else:
         return redirect('/login/')  # Redirect to login if not authenticated
 
+import punchlist.util_agency as util_agency
+
+def agency_review_utility(request):
+    util_status = util_agency.check_all_agencies()
+    return redirect('/')  # Redirect to the home page after running the utility
+

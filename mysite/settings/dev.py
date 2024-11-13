@@ -33,3 +33,5 @@ except ImportError:
     pass
 
 OPENAI_API_KEY = "asdfghjkl1234567890"
+GOOGLE_PLACES_API_KEY = "AIzaSyDxlz70Pll-cl3e5G0ayzAZJ284282veOg"
+YELP_API_KEY = "YOUR_YELP_API_KEY"
