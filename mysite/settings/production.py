@@ -35,7 +35,7 @@ EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_PASSWORD")  # new
 EMAIL_PORT = 587  # new
 EMAIL_USE_TLS = True  # new
 
-AWS_STORAGE_BUCKET_NAME = 'bountyhunter'
+AWS_STORAGE_BUCKET_NAME = 'collab'
 AWS_ACCESS_KEY_ID = 'DO00MW9V6QPPJKVCGHYA'
 AWS_SECRET_ACCESS_KEY = os.environ.get("SPACES_SECRET")
 AWS_S3_CUSTOM_DOMAIN = 'cms-static.nyc3.digitaloceanspaces.com' + "/" + AWS_STORAGE_BUCKET_NAME
