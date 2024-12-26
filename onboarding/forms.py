@@ -4,9 +4,10 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import TeamMember
+from .models import TEAM_MEMBER_TYPES
 
 class TeamMemberRegistrationForm(UserCreationForm):
-    team_member_type = forms.ChoiceField(choices=TeamMember.TEAM_MEMBER_TYPES)
+    team_member_type = forms.ChoiceField(choices=TEAM_MEMBER_TYPES)
     first_name = forms.CharField(max_length=100)
     last_name = forms.CharField(max_length=100)
     email = forms.EmailField()
