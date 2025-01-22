@@ -1,6 +1,6 @@
 """
 Get the list of product and release from the Buildly Insights API
-https://insights-api.buildly.io/docs/
+https://labs-api.buildly.io/docs/
 """
 
 import requests
@@ -10,8 +10,8 @@ from .models import Punchlist
 
 
 def get_products():
-    url = "https://insights-api.buildly.io/product/product/"
-    headers = { "Authorization  ": f"Token {os.environ.get('INSIGHTS_API_KEY')}" } 
+    url = "https://labs-api.buildly.io/product/product/"
+    headers = { "Authorization": f"Token {str(os.getenv('INSIGHTS_API_KEY'))}" }
     print(url)
     print(headers)
     response = requests.get(url, headers=headers)   
@@ -26,8 +26,8 @@ def get_products():
         return None 
     
 def get_releases(product_id):
-    url = f"https://insights-api.buildly.io/release/release/?product_uuid={product_id}"
-    headers = { "Authorization  ": f"Token {os.environ.get('INSIGHTS_API_KEY')}" }     
+    url = f"https://labs-api.buildly.io/release/release/?product_uuid={product_id}"
+    headers = { "Authorization": f"Token {str(os.getenv('INSIGHTS_API_KEY'))}" }
     response = requests.get(url, headers=headers)   
     
     if response.status_code == 200:

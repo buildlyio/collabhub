@@ -15,7 +15,11 @@ DATABASES = {
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['squid-app-sejn2.ondigitalocean.app', '127.0.0.1', '[::1]','punchlist.buildly.io','collab.buildly.io','market.buildly.io','localhost:3000']
+# ALLOWED_HOSTS = ['squid-app-sejn2.ondigitalocean.app', '127.0.0.1', '[::1]','punchlist.buildly.io','collab.buildly.io','market.buildly.io','localhost:3000']
+try:
+    ALLOWED_HOSTS = os.environ['ALLOWED_HOSTS'].split(',')
+except KeyError:
+    ALLOWED_HOSTS = []
 
 CORS_ORIGIN_ALLOW_ALL = False
 

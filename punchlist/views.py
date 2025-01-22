@@ -563,7 +563,7 @@ from .models import Product, InsightsUser
 def collabhub(request):
     # Check if the user is authenticated
     if not request.user.is_authenticated:
-        messages.info(request, 'Please register for an Insights account at https://insights.buildly.io to access the collabhub.')
+        messages.info(request, 'Please register for an Insights account at https://labs.buildly.io to access the collabhub.')
         return redirect('home')  # Redirect to the home page with a message
 
     try:
@@ -572,12 +572,12 @@ def collabhub(request):
         organization_id = insights_user.insightsorganization_id
     except InsightsUser.DoesNotExist:
         # If the InsightsUser object doesn't exist for the user, redirect with a message
-        messages.info(request, 'Please register for an Insights account at https://insights.buildly.io to access the collabhub.')
+        messages.info(request, 'Please register for an Insights account at https://labs.buildly.io to access the collabhub.')
         return redirect('home')  # Redirect to the home page with a message
     
     # Fetch data from the Buildly Insights API
     organization_id = insights_user.insightsorganization_id
-    api_url = f"https://insights-api.buildly.io/product/product?organization_id={organization_id}"
+    api_url = f"https://labs-api.buildly.io/product/product?organization_id={organization_id}"
     response = requests.get(api_url)
 
     if response.status_code == 200:
@@ -643,7 +643,7 @@ def get_insights_user_id_from_api(username, api_url):
         return None
 
 # Example usage:
-# insights_user_id = get_insights_user_id_from_api('your_username', 'https://insights-api.buildly.io')
+# insights_user_id = get_insights_user_id_from_api('your_username', 'https://labs-api.buildly.io')
 # if insights_user_id:
 #     print(f"Insights User ID: {insights_user_id}")
 # else:
@@ -653,7 +653,7 @@ def get_insights_user_id_from_api(username, api_url):
 @login_required
 def sour(request):
     # Fetch products from Buildly Insights API
-    buildly_insights_api_url = 'https://insights-api.buildly.io/product/product'
+    buildly_insights_api_url = 'https://labs-api.buildly.io/product/product'
     response = requests.get(buildly_insights_api_url)
 
     if response.status_code == 200:
