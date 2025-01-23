@@ -13,7 +13,7 @@ DATABASES = {
     }
 }
 
-DEBUG = False
+DEBUG = True
 
 # ALLOWED_HOSTS = ['squid-app-sejn2.ondigitalocean.app', '127.0.0.1', '[::1]','punchlist.buildly.io','collab.buildly.io','market.buildly.io','localhost:3000']
 try:
