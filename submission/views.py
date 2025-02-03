@@ -106,3 +106,22 @@ def update_resource_progress(request):
         return JsonResponse({'success': True, 'created': created})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+    
+
+def get_resource_progress(request):
+    resource_id = request.GET.get('resource_id')
+
+    if not resource_id:
+        return JsonResponse({'error': 'Invalid data'}, status=400)
+
+    try:
+        team_member_resource = TeamMemberResource.objects.get(
+            team_member__user=request.user,
+            resource_id=resource_id,
+        )
+
+        return JsonResponse({'progress': team_member_resource.progress})
+    except TeamMemberResource.DoesNotExist:
+        return JsonResponse({'progress': 0})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
