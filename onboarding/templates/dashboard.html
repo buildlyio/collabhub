@@ -30,6 +30,7 @@
                     <br/>
                     <label for="resource-{{ forloop.counter }}-progress">Progress:</label>
                     <input type="range" id="resource-{{ forloop.counter }}-progress" name="resource-{{ forloop.counter }}-progress" min="0" max="100" value="{{ member_resource_progress|get_resource_progress:resource.id }}" class="slider" data-resource-id="{{ resource.id }}">
+                    <span id="progress-value-{{ resource.id }}">{{ member_resource }}%</span>
                     <span id="progress-value-{{ resource.id }}">{{ member_resource_progress|get_resource_progress:resource.id }}%</span>
                     <script>
                         document.getElementById('resource-{{ forloop.counter }}-progress').addEventListener('input', function() {
