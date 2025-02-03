@@ -111,7 +111,7 @@ def update_resource_progress(request):
 
 register = template.Library()
 
-@register.filter
+@register.simple_tag
 def get_resource_progress(resource_id):
     if not resource_id:
         return 'Invalid data'
