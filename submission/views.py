@@ -15,6 +15,7 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from onboarding.models import TeamMemberResource
+from django import template
 
 
 @login_required
@@ -108,20 +109,19 @@ def update_resource_progress(request):
         return JsonResponse({'error': str(e)}, status=500)
     
 
-def get_resource_progress(request):
-    resource_id = request.GET.get('resource_id')
+register = template.Library()
 
+@register.filter
+def get_resource_progress(resource_id):
     if not resource_id:
-        return JsonResponse({'error': 'Invalid data'}, status=400)
+        return 'Invalid data'
 
     try:
         team_member_resource = TeamMemberResource.objects.get(
-            team_member__user=request.user,
             resource_id=resource_id,
         )
-
-        return JsonResponse({'progress': team_member_resource.progress})
+        return team_member_resource.progress
     except TeamMemberResource.DoesNotExist:
-        return JsonResponse({'progress': 0})
+        return 'Resource not found'
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return str(e)
