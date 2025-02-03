@@ -43,6 +43,21 @@ class TeamMember(models.Model):
 class TeamMemberAdmin(admin.ModelAdmin):
     list_display = ('team_member_type','first_name')
     display = 'Team Member Admin'  
+    
+
+class CertificationExam(models.Model):
+    team_member = models.ForeignKey(TeamMember, on_delete=models.CASCADE)
+    team_member_type = models.CharField(max_length=50, choices=TEAM_MEMBER_TYPES)
+    exam_link = models.URLField()
+    score = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f'{self.team_member} - {self.team_member_type} - {self.score}'
+
+class CertificationExamAdmin(admin.ModelAdmin):
+    list_display = ('team_member', 'team_member_type', 'score', 'exam_link')
+    display = 'Certification Exam Admin'
+
 
 class Resource(models.Model):
     team_member_type = models.CharField(max_length=50, choices=TEAM_MEMBER_TYPES)
@@ -56,3 +71,16 @@ class Resource(models.Model):
 class ResourceAdmin(admin.ModelAdmin):
     list_display = ('title','team_member_type')
     display = 'Resource Admin'  
+
+
+class TeamMemberResource(models.Model):
+    team_member = models.ForeignKey(TeamMember, on_delete=models.CASCADE)
+    resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
+    percentage_complete = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f'{self.team_member} - {self.resource} - {self.percentage_complete}%'
+
+class TeamMemberResourceAdmin(admin.ModelAdmin):
+    list_display = ('team_member', 'resource', 'percentage_complete')
+    display = 'Team Member Resource Admin'

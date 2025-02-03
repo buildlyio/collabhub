@@ -19,16 +19,13 @@ DEBUG = True
 try:
     ALLOWED_HOSTS = os.environ['ALLOWED_HOSTS'].split(',')
 except KeyError:
-    ALLOWED_HOSTS = []
+    ALLOWED_HOSTS = ['squid-app-sejn2.ondigitalocean.app', '127.0.0.1', '[::1]','punchlist.buildly.io','collab.buildly.io','market.buildly.io','localhost:3000']
 
 CORS_ORIGIN_ALLOW_ALL = False
 
-CORS_ORIGIN_WHITELIST = ALLOWED_HOSTS
+CORS_ORIGIN_WHITELIST = ALLOWED_HOSTS + ['http://localhost:3000']
 
-try:
-    from .local import *
-except ImportError:
-    pass
+# Removed import of local settings as it could not be resolved
 
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"  # new

@@ -50,6 +50,20 @@ def generate_link(request):
 
     return render(request, 'link_generated.html', {'submission_link': submission_link,'team_member_profile': team_member_profile})
 
+@login_required
+def delete_submission_link(request, unique_url):
+    submission_link = get_object_or_404(SubmissionLink, unique_url=unique_url)
+    
+    # Delete the QR code from S3
+    if submission_link.qr_code:
+        file_path = submission_link.qr_code.replace(settings.MEDIA_URL, '')
+        default_storage.delete(file_path)
+    
+    # Delete the submission link
+    submission_link.delete()
+    
+    return redirect('dashboard')  # Replace 'some_view_name' with the name of the view you want to redirect to
+
 def submission_form(request, unique_url):
     submission_link = get_object_or_404(SubmissionLink, unique_url=unique_url)
     team_member_profile = get_object_or_404(TeamMember, user=submission_link.admin_user)

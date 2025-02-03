@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load static %}
+{% block page_title %}Dashboard{% endblock %}
+{% load custom_filters %}
+
 {% block content %}
+
 
 <!-- onboarding/templates/dashboard.html -->
 
@@ -20,9 +24,16 @@
                     {% if resource.document %}
                         - <a href="{{ resource.document.url }}">Download</a>
                     {% endif %}
+                    <br/>
+                    <label for="resource-{{ forloop.counter }}-progress">Progress:</label>
+                    <input type="range" id="resource-{{ forloop.counter }}-progress" name="resource-{{ forloop.counter }}-progress" min="0" max="100" value="{{ resource.progress }}" class="slider">
+                    <span>{{ resource.progress }}%</span>
                 </li>
                 {% endfor %}
             </ul>
+            {% if all_resources_50_percent_complete %}
+                <a href="{{ certification_exam_url }}">Take Certification Exam</a>
+            {% endif %}
         {% else %}
             <p>No resources available.</p>
         {% endif %}
@@ -43,7 +54,7 @@
                 <div class="submission-item">
                     <h4>{{ submission.name }}</h4>
                     {% if submission.email %}
-                        <p><a href="{{ submission.email }}">{{ submission.email }}</a></p>
+                        <p><a href="mailto:{{ submission.email }}">{{ submission.email }}</a></p>
                     {% endif %}
                     {% if submission.description %}
                         <p>{{ submission.description }}</p>
@@ -57,15 +68,21 @@
             <div>
                 {% for qr_code in qr_codes %}
                 <div class="qr-code-item">
-                    <img src="{% static 'media/qr_codes/' %}{{ qr_code.qr_code }}" alt="QR Code" width="200"><br/>
+                    <img src="{% static 'media/qr_codes/' %}{{ qr_code.qr_code }}" alt="QR Code" width="200" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <a href="{% url 'delete_submission_link' qr_code.id %}" style="display:none;">Delete QR Code</a>
+                    <br/>
                     <a href="https://collab.buildly.io/submission/submit/{{ qr_code.unique_url }}">{{ qr_code.unique_url }}</a>
                 </div>
                 {% endfor %}
             </div>
         {% endif %}
+        {% if certification_complete %}
+            <h3>Certification</h3>
+            <div>
+                <a href="{{ certification_image_url }}" download="Certification.png">Download Certification Image</a>
+            </div>
+        {% endif %}
     </div>
 </div>
-
-
 
 {% endblock %}

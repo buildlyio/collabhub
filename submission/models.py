@@ -15,7 +15,6 @@ class SubmissionLink(models.Model):
     qr_code = models.CharField(max_length=1000, blank=True)
     create_date = models.DateTimeField(null=True, blank=True)
     edit_date = models.DateTimeField(null=True, blank=True)
-    
 
     def save(self, *args, **kwargs):
         # onsave add create date or update edit date

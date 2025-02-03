@@ -3,7 +3,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login, authenticate
-from .forms import TeamMemberRegistrationForm, ResourceForm
+from .forms import TeamMemberRegistrationForm, ResourceForm, TeamMemberUpdateForm
 from .models import TeamMember, Resource
 from submission.models import SubmissionLink, Submission
 
@@ -32,6 +32,23 @@ def register(request):
     else:
         form = TeamMemberRegistrationForm()
     return render(request, 'register.html', {'form': form})
+
+@login_required
+def edit_profile(request):
+    try:
+        team_member = TeamMember.objects.get(user=request.user)
+    except TeamMember.DoesNotExist:
+        return redirect('register')
+
+    if request.method == 'POST':
+        form = TeamMemberUpdateForm(request.POST, instance=team_member)
+        if form.is_valid():
+            form.save()
+            return redirect('dashboard')
+    else:
+        form = TeamMemberUpdateForm(instance=team_member)
+    
+    return render(request, 'edit_profile.html', {'form': form})
 
 @login_required
 def dashboard(request):

@@ -22,6 +22,11 @@ class TeamMemberRegistrationForm(UserCreationForm):
 
 from .models import Resource
 
+class TeamMemberUpdateForm(forms.ModelForm):
+    class Meta:
+        model = TeamMember
+        fields = '__all__'
+        
 class ResourceForm(forms.ModelForm):
     class Meta:
         model = Resource

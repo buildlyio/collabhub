@@ -6,3 +6,5 @@ from import_export import resources
 
 admin.site.register(TeamMember, TeamMemberAdmin)
 admin.site.register(Resource, ResourceAdmin)
+admin.site.register(TeamMemberResource, TeamMemberResourceAdmin)
+admin.site.register(CertificationExam, CertificationExamAdmin)
