@@ -67,6 +67,20 @@
                 {{ calendar_embed_code|safe }}
             </div>
         {% endif %}
+
+        {% for certification_exam in certification_exams %}
+            <h3>Certification Exam: {{ certification_exam.name }}</h3>
+            <a href="{{ certification_exam.certification_url }}">Certification Link</a>
+            {% if certification_exam.percentage %}
+            <p>Progress: {{ certification_exam.percentage }}%</p>
+            {% if certification_exam.percentage > 70 %}
+                <p>Congratulations, you are certified in {{ certification_exam.team_member_type }}!</p>
+                <div>
+                <a href="{{ certification_exam.certification_image_url }}" download="Certification.png">Download Certification Image</a>
+                </div>
+            {% endif %}
+            {% endif %}
+        {% endfor %}
     </div>
 
     <div class="col-md-6">
