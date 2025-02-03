@@ -29,8 +29,28 @@
                     {% endif %}
                     <br/>
                     <label for="resource-{{ forloop.counter }}-progress">Progress:</label>
-                    <input type="range" id="resource-{{ forloop.counter }}-progress" name="resource-{{ forloop.counter }}-progress" min="0" max="100" value="{{ resource.progress }}" class="slider">
-                    <span>{{ resource.progress }}%</span>
+                    <input type="range" id="resource-{{ forloop.counter }}-progress" name="resource-{{ forloop.counter }}-progress" min="0" max="100" value="{{ member_resource_progress|get_resource_progress:resource.id }}" class="slider" data-resource-id="{{ resource.id }}">
+                    <span id="progress-value-{{ resource.id }}">{{ member_resource_progress|get_resource_progress:resource.id }}%</span>
+                    <script>
+                        document.getElementById('resource-{{ forloop.counter }}-progress').addEventListener('input', function() {
+                            var progressValue = this.value;
+                            var resourceId = this.getAttribute('data-resource-id');
+                            document.getElementById('progress-value-' + resourceId).innerText = progressValue + '%';
+
+                            // Send AJAX request to update progress
+                            fetch("{% url 'update_resource_progress' %}", {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': '{{ csrf_token }}'
+                                },
+                                body: JSON.stringify({
+                                    resource_id: resourceId,
+                                    progress: progressValue
+                                })
+                            });
+                        });
+                    </script>
                 </li>
                 {% endfor %}
             </ul>

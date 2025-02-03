@@ -7,4 +7,5 @@ urlpatterns = [
     path('upload_resource/', views.upload_resource, name='upload_resource'),
     path('resources/', views.resource_list, name='resource_list'),
     path('edit_profile/', views.edit_profile, name='edit_profile'),
+    path('update_resource_progress/', views.update_resource_progress, name='update_resource_progress'),
 ]

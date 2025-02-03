@@ -11,6 +11,10 @@ import io
 import os
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from onboarding.models import TeamMemberResource
 
 
 @login_required
@@ -52,7 +56,7 @@ def generate_link(request):
 
 @login_required
 def delete_submission_link(request, unique_url):
-    submission_link = get_object_or_404(SubmissionLink, unique_url=unique_url)
+    submission_link = get_object_or_404(SubmissionLink, id=unique_url)
     
     # Delete the QR code from S3
     if submission_link.qr_code:
@@ -78,3 +82,27 @@ def submission_form(request, unique_url):
         form = SubmissionForm()
 
     return render(request, 'submission_form.html', {'form': form, 'team_member_profile': team_member_profile, 'submission_link': submission_link})
+
+@csrf_exempt
+@login_required
+@require_POST
+def update_resource_progress(request):
+    resource_id = request.POST.get('resource_id')
+    progress = request.POST.get('progress')
+
+    if not resource_id or not progress:
+        return JsonResponse({'error': 'Invalid data'}, status=400)
+
+    try:
+        team_member_resource, created = TeamMemberResource.objects.get_or_create(
+            team_member__user=request.user,
+            resource_id=resource_id,
+            defaults={'progress': progress}
+        )
+        if not created:
+            team_member_resource.progress = progress
+            team_member_resource.save()
+
+        return JsonResponse({'success': True, 'created': created})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

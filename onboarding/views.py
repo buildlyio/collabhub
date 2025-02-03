@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login, authenticate
 from .forms import TeamMemberRegistrationForm, ResourceForm, TeamMemberUpdateForm
-from .models import TeamMember, Resource
+from .models import TeamMember, Resource, TeamMemberResource,CertificationExam
 from submission.models import SubmissionLink, Submission
 
 def register(request):
@@ -62,6 +62,8 @@ def dashboard(request):
 
     if team_member is not None:
         resources = Resource.objects.filter(team_member_type=team_member.team_member_type) | Resource.objects.filter(team_member_type='all')
+        member_resource = TeamMemberResource.objects.filter(team_member=team_member)
+        certification_exam = CertificationExam.objects.filter(team_member=team_member)
         calendar_embed_code = team_member.google_calendar_embed_code if team_member else None
     
         qr_codes = SubmissionLink.objects.filter(admin_user=request.user)
@@ -71,7 +73,9 @@ def dashboard(request):
             'resources': resources,
             'qr_codes': qr_codes,
             'submissions': submissions,
-            'calendar_embed_code': calendar_embed_code
+            'calendar_embed_code': calendar_embed_code,
+            'member_resource': member_resource, 
+            'certification_exam': certification_exam    
         })
     else:
         return render(request, 'not_approved.html')
