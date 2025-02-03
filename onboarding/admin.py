@@ -8,3 +8,7 @@ admin.site.register(TeamMember, TeamMemberAdmin)
 admin.site.register(Resource, ResourceAdmin)
 admin.site.register(TeamMemberResource, TeamMemberResourceAdmin)
 admin.site.register(CertificationExam, CertificationExamAdmin)
+
+admin.site.register(Quiz, QuizAdmin)
+admin.site.register(QuizQuestion, QuizQuestionAdmin)
+admin.site.register(QuizAnswer, QuizAnswerAdmin)

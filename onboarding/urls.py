@@ -6,4 +6,8 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('upload_resource/', views.upload_resource, name='upload_resource'),
     path('resources/', views.resource_list, name='resource_list'),
-    path('edit_profile/', views.edit_profile, name='edit_profile'),]
+    path('edit_profile/', views.edit_profile, name='edit_profile'),
+    path('quizzes/', views.quiz_list, name='quiz_list'),
+    path('quiz/<int:quiz_id>/', views.quiz_detail, name='quiz_detail'),
+    path('quiz/<int:quiz_id>/submit/', views.submit_answers, name='submit_answers'),
+    ]

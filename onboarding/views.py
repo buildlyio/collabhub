@@ -1,11 +1,14 @@
 # onboarding/views.py
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login, authenticate
 from .forms import TeamMemberRegistrationForm, ResourceForm, TeamMemberUpdateForm
-from .models import TeamMember, Resource, TeamMemberResource,CertificationExam
+from .models import TeamMember, Resource, TeamMemberResource,CertificationExam,Quiz, QuizQuestion, QuizAnswer
 from submission.models import SubmissionLink, Submission
+from django.contrib import messages
+from django.utils.timezone import now
+
 
 def register(request):
     if request.method == 'POST':
@@ -96,4 +99,33 @@ def resource_list(request):
     resources = Resource.objects.all()
     return render(request, 'resource_list.html', {'resources': resources})
 
+
+# View all available quizzes
+@login_required
+def quiz_list(request):
+    quizzes = Quiz.objects.filter(available_date__lte=now().date())  # Show only available quizzes
+    return render(request, 'quiz/quiz_list.html', {'quizzes': quizzes})
+
+# View quiz questions
+@login_required
+def quiz_detail(request, quiz_id):
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    questions = quiz.questions.all()
+    return render(request, 'quiz/quiz_detail.html', {'quiz': quiz, 'questions': questions})
+
+# Submit quiz answers
+@login_required
+def submit_answers(request, quiz_id):
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    team_member = get_object_or_404(TeamMember, user=request.user)
+    
+    if request.method == "POST":
+        for question in quiz.questions.all():
+            answer_text = request.POST.get(f'question_{question.id}', '').strip()
+            if answer_text:
+                QuizAnswer.objects.create(question=question, team_member=team_member, answer=answer_text)
+        messages.success(request, "Your answers have been submitted successfully!")
+        return redirect('quiz_list')
+
+    return render(request, 'quiz/quiz_detail.html', {'quiz': quiz, 'questions': quiz.questions.all()})
 

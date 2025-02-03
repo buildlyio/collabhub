@@ -11,6 +11,7 @@ TEAM_MEMBER_TYPES = [
     ('buildly-hire-ai', 'Buildly Hire AI'),
     ('buildly-hire-marketing', 'Buildly Hire Marketing'),
     ('buildly-hire-marketing-intern', 'Buildly Hire Marketing Intern'),
+    ('community-member-generic', 'Generic Community Member'),
     ('community-frontend', 'Community Member Frontend'),
     ('community-backend', 'Community Member Backend'),
     ('community-ai', 'Community Member AI'),
@@ -84,3 +85,54 @@ class TeamMemberResource(models.Model):
 class TeamMemberResourceAdmin(admin.ModelAdmin):
     list_display = ('team_member', 'resource', 'percentage_complete')
     display = 'Team Member Resource Admin'
+
+
+# Quiz Model
+class Quiz(models.Model):
+    name = models.CharField(max_length=255)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    available_date = models.DateField()
+    url = models.URLField(unique=True)
+
+    def __str__(self):
+        return self.name
+
+class QuizAdmin(admin.ModelAdmin):
+    list_display = ('name', 'owner', 'available_date', 'url')
+    search_fields = ('name', 'owner__username')
+
+# Question Model
+class QuizQuestion(models.Model):
+    QUESTION_TYPES = [
+        ('multiple_choice', 'Multiple Choice'),
+        ('essay', 'Essay'),
+    ]
+
+    team_member_type = models.CharField(max_length=50, choices=TEAM_MEMBER_TYPES)
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="questions")
+    question = models.TextField()
+    question_type = models.CharField(max_length=20, choices=QUESTION_TYPES)
+
+    def __str__(self):
+        return f'{self.quiz.name} - {self.question}'
+
+class QuizQuestionAdmin(admin.ModelAdmin):
+    list_display = ('quiz', 'team_member_type', 'question', 'question_type')
+    search_fields = ('question',)
+
+# Answer Model
+class QuizAnswer(models.Model):
+    question = models.ForeignKey(QuizQuestion, on_delete=models.CASCADE, related_name="answers")
+    team_member = models.ForeignKey("onboarding.TeamMember", on_delete=models.CASCADE)
+    answer = models.TextField()
+
+    def __str__(self):
+        return f'Answer by {self.team_member} to {self.question}'
+
+class QuizAnswerAdmin(admin.ModelAdmin):
+    list_display = ('question', 'team_member', 'answer')
+    search_fields = ('team_member__first_name', 'team_member__last_name')
+
+
+
+
