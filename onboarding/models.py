@@ -51,6 +51,7 @@ class CertificationExam(models.Model):
     team_member_type = models.CharField(max_length=50, choices=TEAM_MEMBER_TYPES)
     exam_link = models.URLField()
     score = models.PositiveIntegerField(default=0)
+    quiz = models.ForeignKey('Quiz', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f'{self.team_member} - {self.team_member_type} - {self.score}'

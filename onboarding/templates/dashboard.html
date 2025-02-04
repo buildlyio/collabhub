@@ -71,8 +71,13 @@
             <h3>Your Certifications</h3>
             <div>    
             {% for certification_exam in certification_exams %}
-                <h3>Certification Exam: {{ certification_exam.name }}</h3>
-                <a href="{{ certification_exam.certification_url }}">Certification Link</a>
+                <h3>Certification Exam: {{ certification_exam.team_member_type }}</h3>
+                <a href="{{ certification_exam.exam_link }}">Certification Link</a>
+                {% if certification_exam.score %} <p>Exam Score: {{ certification_exam.score }}</p>{% else %} No score yet{% endif %}   
+                {% if certification_exam.quiz %}
+                    <p>Quiz: {{ certification_exam.quiz.name }}</p>
+                    <a href="{% url 'quiz_detail' certification_exam.quiz.id %}">Take Quiz</a>
+                {% endif %}
                 {% if certification_exam.percentage %}
                     <p>Progress: {{ certification_exam.percentage }}%</p>
                     {% if certification_exam.percentage > 70 %}
