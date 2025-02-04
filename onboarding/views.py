@@ -66,7 +66,7 @@ def dashboard(request):
     if team_member is not None:
         resources = Resource.objects.filter(team_member_type=team_member.team_member_type) | Resource.objects.filter(team_member_type='all')
         member_resource = TeamMemberResource.objects.filter(team_member=team_member)
-        certification_exam = CertificationExam.objects.filter(team_member=team_member)
+        certification_exams = CertificationExam.objects.filter(team_member=team_member)
         calendar_embed_code = team_member.google_calendar_embed_code if team_member else None
     
         qr_codes = SubmissionLink.objects.filter(admin_user=request.user)
@@ -78,7 +78,7 @@ def dashboard(request):
             'submissions': submissions,
             'calendar_embed_code': calendar_embed_code,
             'member_resource': member_resource, 
-            'certification_exam': certification_exam    
+            'certification_exams': certification_exams    
         })
     else:
         return render(request, 'not_approved.html')
