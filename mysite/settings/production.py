@@ -4,12 +4,12 @@ from os.path import join, normpath
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'bugbounty',
-        'PASSWORD': os.environ.get("PASSWORD"),
-        'USER': 'bugbounty',
-        'HOST': 'db-mysql-nyc3-97229-do-user-2508039-0.b.db.ondigitalocean.com',
-        'PORT': '25060',
+        'ENGINE': 'django.db.backends.{}'.format(os.environ['DATABASE_ENGINE']),
+        'NAME': os.environ['DATABASE_NAME'],
+        'USER': os.environ['DATABASE_USER'],
+        'PASSWORD': os.getenv('DATABASE_PASSWORD'),
+        'HOST': os.getenv('DATABASE_HOST', 'localhost'),
+        'PORT': os.environ['DATABASE_PORT'],
     }
 }
 
@@ -19,7 +19,7 @@ DEBUG = True
 try:
     ALLOWED_HOSTS = os.environ['ALLOWED_HOSTS'].split(',')
 except KeyError:
-    ALLOWED_HOSTS = ['squid-app-sejn2.ondigitalocean.app', '127.0.0.1', '[::1]','punchlist.buildly.io','collab.buildly.io','market.buildly.io','localhost']
+    ALLOWED_HOSTS = ['127.0.0.1', '[::1]','punchlist.buildly.io','collab.buildly.io','market.buildly.io','localhost']
 
 CORS_ORIGIN_ALLOW_ALL = False
 

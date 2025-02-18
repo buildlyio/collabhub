@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  postgres_collabhub:
+    container_name: postgres_collabhub
+    healthcheck:
+      test: 'pg_isready -h localhost -p 5432 -q -U root -d collabhub'
+      interval: 3s
+      timeout: 5s
+      retries: 5
+    image: postgres:15
+    environment:
+      POSTGRES_DB: collabhub
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+    volumes:
+      - /var/lib/postgresql/data/
+    restart: always
+
+  collabhub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: bash /app/docker-entrypoint.sh
+    container_name: collabhub
+    image: collabhub
+    volumes:
+      - .:/app
+    ports:
+      - target: 8000
+        published: 8000
+        protocol: tcp
+        mode: host
+    depends_on:
+      - postgres_collabhub
+    environment:
+      ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0
+      CORS_ORIGIN_ALLOW_ALL: "True"
+      CORS_ORIGIN_WHITELIST: localhost,127.0.0.1,0.0.0.0
+      DATABASE_ENGINE: "postgresql"
+      DATABASE_NAME: "collabhub"
+      DATABASE_USER: "root"
+      DATABASE_PASSWORD: "root"
+      DATABASE_HOST: "postgres_collabhub"
+      DATABASE_PORT: "5432"
+      SPACES_SECRET: "space secret here..."
+      SENDGRID_PASSWORD: "Sendgrid password here..."
+      SENDGRID_APIKEY: "Sendgrid api key here..."
+      INSIGHTS_API_KEY: "Insights api key here..."
+      OPENAI_API_KEY: "OpenAI api key here..."
+      GITHUB_KEY: "GitHub key here..."
+      GITHUB_SECRET: "Github secret here..."
