@@ -91,13 +91,16 @@ def update_resource_progress(request):
     resource_id = request.POST.get('resource_id')
     progress = request.POST.get('progress')
 
+    if resource_id is None or progress is None:
+        return JsonResponse({'error': 'Invalid data'}, status=400)
+
     try:
         resource_id = int(resource_id)
         progress = int(progress)
     except ValueError:
         return JsonResponse({'error': 'Invalid data'}, status=400)
 
-    if not resource_id or not progress:
+    if resource_id <= 0 or progress < 0:
         return JsonResponse({'error': 'Invalid data'}, status=400)
 
     try:

@@ -65,6 +65,7 @@ class Resource(models.Model):
     team_member_type = models.CharField(max_length=50, choices=TEAM_MEMBER_TYPES)
     title = models.CharField(max_length=200)
     link = models.URLField(blank=True)
+    descr = models.TextField(blank=True)    
     document = models.FileField(upload_to='resources/', blank=True)
 
     def __str__(self):
