@@ -104,8 +104,9 @@ def update_resource_progress(request):
         return JsonResponse({'error': 'Invalid data'}, status=400)
 
     try:
+        team_member = get_object_or_404(TeamMember, user=request.user)
         team_member_resource, created = TeamMemberResource.objects.get_or_create(
-            team_member__user=request.user,
+            team_member=team_member,
             resource_id=resource_id,
             defaults={'progress': progress}
         )
