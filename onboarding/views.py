@@ -65,7 +65,18 @@ def dashboard(request):
         return render(request, 'not_approved.html')
 
     if team_member is not None:
-        resources = Resource.objects.filter(team_member_type=team_member.team_member_type) | Resource.objects.filter(team_member_type='all')
+        # include community resources if they are buildly-hire
+        if team_member.team_member_type in ['buildly-hire-frontend', 'buildly-hire-backend']:
+            resources = (Resource.objects.filter(team_member_type=team_member.team_member_type) |
+             Resource.objects.filter(team_member_type='all') |
+             Resource.objects.filter(team_member_type='community-frontend') |
+             Resource.objects.filter(team_member_type='community-backend'))
+        elif team_member.team_member_type == 'buildly-hire-product':
+            resources = (Resource.objects.filter(team_member_type=team_member.team_member_type) |
+             Resource.objects.filter(team_member_type='all') |
+             Resource.objects.filter(team_member_type='community-product'))
+        else:
+            resources = Resource.objects.filter(team_member_type=team_member.team_member_type) | Resource.objects.filter(team_member_type='all')
         member_resource = TeamMemberResource.objects.filter(team_member=team_member)
         certification_exams = CertificationExam.objects.filter(team_member=team_member)
         calendar_embed_code = team_member.google_calendar_embed_code if team_member else None
