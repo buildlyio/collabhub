@@ -95,8 +95,8 @@ def update_resource_progress(request):
         return JsonResponse({'error': 'Invalid data'}, status=400)
 
     try:
-        resource_id = int(resource_id)
-        progress = int(progress)
+        resource_id = int(resource_id.strip())
+        progress = int(progress.strip())
     except ValueError:
         return JsonResponse({'error': 'Invalid data'}, status=400)
 
