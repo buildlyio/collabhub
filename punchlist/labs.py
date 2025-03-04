@@ -52,9 +52,11 @@ def update_punchlist(product, labs_release_id=None):
 def get_labs_data():
     # update labs data with releases
     products = get_products()
-    print('Products count: %s' % len(products))
+
     if products is None:
-        return None 
+        return None
+
+    print('Products count: %s' % len(products))
     for product in products:
         get_product = Product.objects.filter(product_uuid=product['product_uuid'])
         if get_product.exists():

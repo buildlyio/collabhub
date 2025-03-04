@@ -30,4 +30,4 @@ class TeamMemberUpdateForm(forms.ModelForm):
 class ResourceForm(forms.ModelForm):
     class Meta:
         model = Resource
-        fields = ['team_member_type', 'title', 'link', 'document']
+        fields = ['team_member_type', 'title', 'link', 'document','descr']

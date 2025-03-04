@@ -10,10 +10,12 @@ TEAM_MEMBER_TYPES = [
     ('buildly-hire-backend', 'Buildly Hire Backend'),
     ('buildly-hire-ai', 'Buildly Hire AI'),
     ('buildly-hire-marketing', 'Buildly Hire Marketing'),
+    ('buildly-hire-product', 'Buildly Hire Product'),
     ('buildly-hire-marketing-intern', 'Buildly Hire Marketing Intern'),
     ('community-member-generic', 'Generic Community Member'),
     ('community-frontend', 'Community Member Frontend'),
     ('community-backend', 'Community Member Backend'),
+    ('community-product', 'Community Member Product'),
     ('community-ai', 'Community Member AI'),
     ('community-ui-designer', 'Community Member UI Designer'),
     ('community-ux', 'Community Member UX'),
@@ -65,6 +67,7 @@ class Resource(models.Model):
     team_member_type = models.CharField(max_length=50, choices=TEAM_MEMBER_TYPES)
     title = models.CharField(max_length=200)
     link = models.URLField(blank=True)
+    descr = models.TextField(blank=True)    
     document = models.FileField(upload_to='resources/', blank=True)
 
     def __str__(self):
