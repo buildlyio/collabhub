@@ -87,9 +87,13 @@ def submission_form(request, unique_url):
 @csrf_exempt
 @login_required
 @require_POST
+
+import json
+
 def update_resource_progress(request):
-    resource_id = int(request.POST.get('resource_id'))
-    progress = int(request.POST.get('progress'))
+    data = json.loads(request.body)
+    resource_id = int(data.get('resource_id'))
+    progress = int(data.get('progress'))
 
     try:
         team_member = get_object_or_404(TeamMember, user=request.user)
