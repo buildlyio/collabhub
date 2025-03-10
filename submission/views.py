@@ -88,20 +88,8 @@ def submission_form(request, unique_url):
 @login_required
 @require_POST
 def update_resource_progress(request):
-    resource_id = request.POST.get('resource_id')
-    progress = request.POST.get('progress')
-
-    if resource_id is None or progress is None:
-        return JsonResponse({'error': 'Invalid data'}, status=400)
-
-    try:
-        resource_id = int(resource_id.strip())
-        progress = int(progress.strip())
-    except ValueError:
-        return JsonResponse({'error': 'Invalid data'}, status=400)
-
-    if resource_id <= 0 or progress < 0:
-        return JsonResponse({'error': 'Invalid data'}, status=400)
+    resource_id = int(request.POST.get('resource_id'))
+    progress = int(request.POST.get('progress'))
 
     try:
         team_member = get_object_or_404(TeamMember, user=request.user)
