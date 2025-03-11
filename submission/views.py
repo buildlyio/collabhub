@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
@@ -88,8 +89,6 @@ def submission_form(request, unique_url):
 @login_required
 @require_POST
 
-import json
-
 def update_resource_progress(request):
     data = json.loads(request.body)
     resource_id = int(data.get('resource_id'))
@@ -100,10 +99,10 @@ def update_resource_progress(request):
         team_member_resource, created = TeamMemberResource.objects.get_or_create(
             team_member=team_member,
             resource_id=resource_id,
-            defaults={'progress': progress}
+            defaults={'percentage_complete': progress}
         )
         if not created:
-            team_member_resource.progress = progress
+            team_member_resource.percentage_complete = progress
             team_member_resource.save()
 
         return JsonResponse({'success': True, 'created': created})
