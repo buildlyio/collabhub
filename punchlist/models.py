@@ -87,6 +87,7 @@ class Product(models.Model):
     end_date = models.DateTimeField(null=True, blank=True)
     create_date = models.DateTimeField(null=True, blank=True)
     edit_date = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=255, blank=True, choices=STATUS_CHOICES, help_text="Status of your Product", default="DRAFT")
     
     # Evaluation fields
     originality_score = models.TextField(null=True, blank=True)

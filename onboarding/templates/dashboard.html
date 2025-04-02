@@ -6,131 +6,218 @@
 {% block content %}
 <!-- Header Section -->
 <header style="position: relative; text-align: center; padding: 8px;">
-    <img src="{% static 'img/graph.png' %}" alt="Centered Image" style="max-height: 200px; width: 100%; object-fit: cover;">
-    <h2 style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; text-shadow: 2px 2px 4px lightgrey;">Your Dashboard</h2>
+    <img src="{% static 'img/graph.png' %}" alt="Centered Image"
+        style="max-height: 200px; width: 100%; object-fit: cover;">
+    <h2
+        style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; text-shadow: 2px 2px 4px lightgrey;">
+        Your Dashboard</h2>
 </header>
-<br/>
+<br />
 
 <div class="row">
     <div class="col-md-6">
         <h2>Your Dashboard</h2>
 
         {% if resources %}
-            <h3>Resources</h3>
-            <ul>
-                {% for resource in resources %}
-                <li>
-                    {{ resource.title }}
-                    {% if resource.link %}
-                        - <a href="{{ resource.link }}">Link</a>
-                    {% endif %}
-                    {% if resource.descr %}
-                        <p>{{ resource.descr }}</p>
-                    {% endif %}
-                    {% if resource.document %}
-                        - <a href="{{ resource.document.url }}">Download</a>
-                    {% endif %}
-                    <br/>
-                    <label for="resource-{{ forloop.counter }}-progress">Progress:</label>
-                    <input type="range" id="resource-{{ forloop.counter }}-progress" name="resource-{{ forloop.counter }}-progress" min="0" max="100" value="{{ member_resource_progress.resource.id|default:0 }}" class="slider" data-resource-id="{{ resource.id }}">
-                    <span id="progress-value-{{ resource.id }}">{{ resource.member_resource_progress.resource.percentage_complete|default:0 }}% {{ resource }}</span>
+        <h3>Resources</h3>
+        <ul>
+            {% for resource in resources %}
+            <li>
+                {{ resource.title }}
+                {% if resource.link %}
+                - <a href="{{ resource.link }}">Link</a>
+                {% endif %}
+                {% if resource.descr %}
+                <p>{{ resource.descr }}</p>
+                {% endif %}
+                {% if resource.document %}
+                - <a href="{{ resource.document.url }}">Download</a>
+                {% endif %}
+                <br />
+                <label for="resource-{{ forloop.counter }}-progress">Progress:</label>
+                <input type="range" id="resource-{{ forloop.counter }}-progress"
+                    name="resource-{{ forloop.counter }}-progress" min="0" max="100"
+                    value="{{ member_resource_progress.resource.id|default:0 }}" class="slider"
+                    data-resource-id="{{ resource.id }}">
+                <span id="progress-value-{{ resource.id }}">{{
+                    resource.member_resource_progress.resource.percentage_complete|default:0 }}% {{ resource }}</span>
 
-                    <script>
-                        document.getElementById('resource-{{ forloop.counter }}-progress').addEventListener('input', function() {
-                            var progressValue = this.value;
-                            var resourceId = this.getAttribute('data-resource-id');
-                            document.getElementById('progress-value-' + resourceId).innerText = progressValue + '%';
+                <script>
+                    document.getElementById('resource-{{ forloop.counter }}-progress').addEventListener('input', function () {
+                        var progressValue = this.value;
+                        var resourceId = this.getAttribute('data-resource-id');
+                        document.getElementById('progress-value-' + resourceId).innerText = progressValue + '%';
 
-                            // Send AJAX request to update progress
-                            fetch("{% url 'update_resource_progress' %}", {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRFToken': '{{ csrf_token }}'
-                                },
-                                body: JSON.stringify({
-                                    resource_id: resourceId,
-                                    progress: progressValue
-                                })
-                            });
+                        // Send AJAX request to update progress
+                        fetch("{% url 'update_resource_progress' %}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({
+                                resource_id: resourceId,
+                                progress: progressValue
+                            })
                         });
-                    </script>
-                </li>
-                {% endfor %}
-            </ul>
-            {% if all_resources_50_percent_complete %}
-                <a href="{{ certification_exam_url }}">Take Certification Exam</a>
-            {% endif %}
+                    });
+                </script>
+            </li>
+            {% endfor %}
+        </ul>
+        {% if all_resources_50_percent_complete %}
+        <a href="{{ certification_exam_url }}">Take Certification Exam</a>
+        {% endif %}
         {% else %}
-            <p>No resources available.</p>
+        <p>No resources available.</p>
+        {% endif %}
+        {% if team_member %}
+        <h3>Profile</h3>
+        <div class="card" style="width: 18rem;">
+            {% if team_member.profile_image %}
+            <img src="{{ team_member.profile_image.url }}" class="card-img-top rounded-circle mx-auto d-block mt-3"
+                alt="Profile Image" style="width: 100px; height: 100px; object-fit: cover;">
+            {% endif %}
+            <div class="card-body text-center">
+                <h5 class="card-title">{{ team_member.name }}</h5>
+                {% if team_member.bio %}
+                <p class="card-text">{{ team_member.bio }}</p>
+                {% endif %}
+                {% if team_member.email %}
+                <p>
+                    <a href="mailto:{{ team_member.email }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-envelope"></i> Email
+                    </a>
+                </p>
+                {% endif %}
+                {% if team_member.phone %}
+                <p>
+                    <i class="fas fa-phone"></i> {{ team_member.phone }}
+                </p>
+                {% endif %}
+                <div class="d-flex justify-content-center">
+                    {% if team_member.linkedin %}
+                    <a href="{{ team_member.linkedin }}" class="btn btn-outline-primary btn-sm mx-1" target="_blank">
+                        <i class="fab fa-linkedin"></i> LinkedIn
+                    </a>
+                    {% endif %}
+                    {% if team_member.github %}
+                    <a href="{{ team_member.github }}" class="btn btn-outline-dark btn-sm mx-1" target="_blank">
+                        <i class="fab fa-github"></i> GitHub
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if startups_open %}
+        <h3>Startups/Products Open</h3>
+        <ul>
+            {% for startup in startups_open %}
+            <li>
+                <a href="{{ startup.link }}">{{ startup.name }}</a>
+                {% if startup.description %}
+                <p>{{ startup.description }}</p>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No startups open for collaboration.</p>
+        {% endif %}
+
+        {% if other_team_members %}
+        <h3>Other Team Members</h3>
+        <ul>
+            {% for member in other_team_members %}
+            <li>
+            <a href="{{ member.profile_url }}">{{ member.name }}</a>
+            {% if member.role %}
+            - <span>{{ member.role }}</span>
+            {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if calendar_link %}
+        <h3>Your Calendar</h3>
+        <div>
+            <a href="{{ calendar_link }}">View Calendar</a>
+        </div>
         {% endif %}
 
         {% if calendar_embed_code %}
-            <h3>Your Calendar</h3>
-            <div>
-                {{ calendar_embed_code|safe }}
-            </div>
+        <h3>Your Calendar</h3>
+        <div>
+            {{ calendar_embed_code|safe }}
+        </div>
         {% endif %}
         {% if certification_exams %}
-            <h3>Your Certifications</h3>
-            <div>    
+        <h3>Your Certifications</h3>
+        <div>
             {% for certification_exam in certification_exams %}
-                <h3>Certification Exam: {{ certification_exam.team_member_type }}</h3>
-                <a href="{{ certification_exam.exam_link }}">Certification Link</a>
-                {% if certification_exam.score %} <p>Exam Score: {{ certification_exam.score }}</p>{% else %} No score yet{% endif %}   
-                {% if certification_exam.quiz %}
-                    <p>Quiz: {{ certification_exam.quiz.name }}</p>
-                    <a href="{% url 'quiz_detail' certification_exam.quiz.id %}">Take Quiz</a>
-                {% endif %}
-                {% if certification_exam.percentage %}
-                    <p>Progress: {{ certification_exam.percentage }}%</p>
-                    {% if certification_exam.percentage > 70 %}
-                        <p>Congratulations, you are certified in {{ certification_exam.team_member_type }}!</p>
-                        <div>
-                        <a href="{{ certification_exam.certification_image_url }}" download="Certification.png">Download Certification Image</a>
-                        </div>
-                    {% endif %}
-                {% endif %}
-            {% endfor %}
+            <h3>Certification Exam: {{ certification_exam.team_member_type }}</h3>
+            <a href="{{ certification_exam.exam_link }}">Certification Link</a>
+            {% if certification_exam.score %} <p>Exam Score: {{ certification_exam.score }}</p>{% else %} No score yet{%
+            endif %}
+            {% if certification_exam.quiz %}
+            <p>Quiz: {{ certification_exam.quiz.name }}</p>
+            <a href="{% url 'quiz_detail' certification_exam.quiz.id %}">Take Quiz</a>
+            {% endif %}
+            {% if certification_exam.percentage %}
+            <p>Progress: {{ certification_exam.percentage }}%</p>
+            {% if certification_exam.percentage > 70 %}
+            <p>Congratulations, you are certified in {{ certification_exam.team_member_type }}!</p>
+            <div>
+                <a href="{{ certification_exam.certification_image_url }}" download="Certification.png">Download
+                    Certification Image</a>
             </div>
+            {% endif %}
+            {% endif %}
+            {% endfor %}
+        </div>
         {% endif %}
     </div>
 
     <div class="col-md-6">
         {% if submissions %}
-            <h3>Submissions</h3>
-            <div>
-                {% for submission in submissions %}
-                <div class="submission-item">
-                    <h4>{{ submission.name }}</h4>
-                    {% if submission.email %}
-                        <p><a href="mailto:{{ submission.email }}">{{ submission.email }}</a></p>
-                    {% endif %}
-                    {% if submission.description %}
-                        <p>{{ submission.description }}</p>
-                    {% endif %}
-                </div>
-                {% endfor %}
+        <h3>Submissions</h3>
+        <div>
+            {% for submission in submissions %}
+            <div class="submission-item">
+                <h4>{{ submission.name }}</h4>
+                {% if submission.email %}
+                <p><a href="mailto:{{ submission.email }}">{{ submission.email }}</a></p>
+                {% endif %}
+                {% if submission.description %}
+                <p>{{ submission.description }}</p>
+                {% endif %}
             </div>
+            {% endfor %}
+        </div>
         {% endif %}
         {% if qr_codes %}
-            <h3>QR Codes</h3>
-            <div>
-                {% for qr_code in qr_codes %}
-                <div class="qr-code-item">
-                    <img src="{% static 'media/qr_codes/' %}{{ qr_code.qr_code }}" alt="QR Code" width="200" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <a href="{% url 'delete_submission_link' qr_code.id %}" style="display:none;">Delete QR Code</a>
-                    <br/>
-                    <a href="https://collab.buildly.io/submission/submit/{{ qr_code.unique_url }}">{{ qr_code.unique_url }}</a>
-                </div>
-                {% endfor %}
+        <h3>QR Codes</h3>
+        <div>
+            {% for qr_code in qr_codes %}
+            <div class="qr-code-item">
+                <img src="{% static 'media/qr_codes/' %}{{ qr_code.qr_code }}" alt="QR Code" width="200"
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <a href="{% url 'delete_submission_link' qr_code.id %}" style="display:none;">Delete QR Code</a>
+                <br />
+                <a href="https://collab.buildly.io/submission/submit/{{ qr_code.unique_url }}">{{ qr_code.unique_url
+                    }}</a>
             </div>
+            {% endfor %}
+        </div>
         {% endif %}
         {% if certification_complete %}
-            <h3>Certification</h3>
-            <div>
-                <a href="{{ certification_image_url }}" download="Certification.png">Download Certification Image</a>
-            </div>
+        <h3>Certification</h3>
+        <div>
+            <a href="{{ certification_image_url }}" download="Certification.png">Download Certification Image</a>
+        </div>
         {% endif %}
     </div>
 </div>

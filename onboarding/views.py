@@ -8,6 +8,7 @@ from .models import TeamMember, Resource, TeamMemberResource,CertificationExam,Q
 from submission.models import SubmissionLink, Submission
 from django.contrib import messages
 from django.utils.timezone import now
+from punchlist.models import Product
 
 
 def register(request):
@@ -68,9 +69,19 @@ def dashboard(request):
         member_resource = TeamMemberResource.objects.filter(team_member=team_member)
         certification_exams = CertificationExam.objects.filter(team_member=team_member)
         calendar_embed_code = team_member.google_calendar_embed_code if team_member else None
-    
+
         qr_codes = SubmissionLink.objects.filter(admin_user=request.user)
         submissions = Submission.objects.filter(submission_link__admin_user=request.user)
+
+        # Fetch links to other team members
+        other_team_members = TeamMember.objects.exclude(id=team_member.id)
+
+        # Fetch startups with a status of 'open'
+        startups_open = Product.objects.filter(status__in=[
+            Product.Status.PLANNED.value,
+            Product.Status.STARTED.value,
+            Product.Status.FOUND.value
+        ])
 
         return render(request, 'dashboard.html', {
             'resources': resources,
@@ -78,7 +89,10 @@ def dashboard(request):
             'submissions': submissions,
             'calendar_embed_code': calendar_embed_code,
             'member_resource': member_resource, 
-            'certification_exams': certification_exams    
+            'certification_exams': certification_exams,
+            'team_member': team_member,
+            'other_team_members': other_team_members,
+            'startups_open': startups_open,
         })
     else:
         return render(request, 'not_approved.html')
