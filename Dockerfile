@@ -53,10 +53,6 @@ COPY --chown=builder:builder . .
 # Use user "builder" to run the build commands below and the server itself.
 USER builder
 
-# Collect static files.
-RUN python manage.py collectstatic --noinput
-RUN python manage.py makemigrations
-RUN python manage.py migrate
 # Install the application server.
 
 # Runtime command that executes when "docker run" is called, it does the
