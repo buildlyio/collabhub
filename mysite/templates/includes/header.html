@@ -42,7 +42,6 @@
         <li class="nav-item dropdown">
           <a href="#" class="nav-link dropdown-toggle" id="productsDropdown" role="button" aria-expanded="false">Dashboard</a>
           <ul class="dropdown-menu" aria-labelledby="productsDropdown">
-            <li><a class="dropdown-item" href="/onboarding/dashboard">Dashboard</a></li>
             <li><a class="dropdown-item" href="/django-admin/">Admin</a></li>
             <li><a class="dropdown-item" href="/submission/generate">Generate QR Code</a></li>
             <li><a class="dropdown-item" href="/onboarding/upload_resource">Upload Resources</a></li>
@@ -52,7 +51,9 @@
         </li>
         {% endif %}
         {% if user.is_authenticated %}
-
+        {% if user.is_staff %}
+          <li class="nav-item"><a class="nav-link" href="/onboarding/dashboard">Dashboard</a></li>
+        {% endif %}
         <li class="nav-item dropdown">
           <a href="#" class="nav-link dropdown-toggle" id="productsDropdown" role="button" aria-expanded="false">Punchlist</a>
           <ul class="dropdown-menu" aria-labelledby="productsDropdown">
