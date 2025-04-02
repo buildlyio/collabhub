@@ -78,10 +78,7 @@ def dashboard(request):
 
         # Fetch startups with a status of 'open'
         startups_open = Product.objects.filter(status__in=[
-            Product.Status.PLANNED.value,
-            Product.Status.STARTED.value,
-            Product.Status.FOUND.value
-        ])
+            'PLANNED','STARTED','IN_PROGRESS','COMPLETED'       ])
 
         return render(request, 'dashboard.html', {
             'resources': resources,
