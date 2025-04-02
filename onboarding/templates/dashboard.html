@@ -39,8 +39,7 @@
                     name="resource-{{ forloop.counter }}-progress" min="0" max="100"
                     value="{{ resource.member_resource_progress.percentage_complete|default:0 }}" class="slider"
                     data-resource-id="{{ resource.id }}">
-                <span id="progress-value-{{ resource.id }}">{{
-                    resource.member_resource_progress.resource.percentage_complete|default:0 }}% {{ resource }}</span>
+                <span id="progress-value-{{ resource.id }}">{{ resource.member_resource_progress.resource.percentage_complete|default:0 }}% {{ resource }}</span>
 
                 <script>
                     document.getElementById('resource-{{ forloop.counter }}-progress').addEventListener('input', function () {
@@ -109,36 +108,6 @@
                 </div>
             </div>
         </div>
-        {% endif %}
-
-        {% if startups_open %}
-        <h3>Startups/Products Open</h3>
-        <ul>
-            {% for startup in startups_open %}
-            <li>
-                <a href="{{ startup.link }}">{{ startup.name }}</a>
-                {% if startup.description %}
-                <p>{{ startup.description }}</p>
-                {% endif %}
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p>No startups open for collaboration.</p>
-        {% endif %}
-
-        {% if other_team_members %}
-        <h3>Other Team Members</h3>
-        <ul>
-            {% for member in other_team_members %}
-            <li>
-            <a href="{{ member.profile_url }}">{{ member.name }}</a>
-            {% if member.role %}
-            - <span>{{ member.role }}</span>
-            {% endif %}
-            </li>
-            {% endfor %}
-        </ul>
         {% endif %}
 
         {% if calendar_link %}
