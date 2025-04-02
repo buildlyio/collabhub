@@ -37,7 +37,7 @@
                 <label for="resource-{{ forloop.counter }}-progress">Progress:</label>
                 <input type="range" id="resource-{{ forloop.counter }}-progress"
                     name="resource-{{ forloop.counter }}-progress" min="0" max="100"
-                    value="{{ member_resource_progress.resource.id|default:0 }}" class="slider"
+                    value="{{ resource.member_resource_progress.percentage_complete|default:0 }}" class="slider"
                     data-resource-id="{{ resource.id }}">
                 <span id="progress-value-{{ resource.id }}">{{
                     resource.member_resource_progress.resource.percentage_complete|default:0 }}% {{ resource }}</span>
