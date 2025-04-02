@@ -41,11 +41,6 @@ RUN pip3 install "gunicorn==20.0.4"
 COPY requirements.txt /
 RUN pip install -r /requirements.txt
 
-RUN python manage.py collectstatic --noinput
-RUN python manage.py makemigrations
-RUN python manage.py migrate
-# Install the application server.
-
 # Use /app folder as a directory where the source code is stored.
 WORKDIR /app
 
@@ -59,6 +54,10 @@ COPY --chown=builder:builder . .
 USER builder
 
 # Collect static files.
+RUN python manage.py collectstatic --noinput
+RUN python manage.py makemigrations
+RUN python manage.py migrate
+# Install the application server.
 
 # Runtime command that executes when "docker run" is called, it does the
 # following:
