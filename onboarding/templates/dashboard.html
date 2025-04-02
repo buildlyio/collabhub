@@ -158,24 +158,29 @@
         <h3>Your Certifications</h3>
         <div>
             {% for certification_exam in certification_exams %}
-            <h3>Certification Exam: {{ certification_exam.team_member_type }}</h3>
-            <a href="{{ certification_exam.exam_link }}">Certification Link</a>
-            {% if certification_exam.score %} <p>Exam Score: {{ certification_exam.score }}</p>{% else %} No score yet{%
-            endif %}
-            {% if certification_exam.quiz %}
-            <p>Quiz: {{ certification_exam.quiz.name }}</p>
-            <a href="{% url 'quiz_detail' certification_exam.quiz.id %}">Take Quiz</a>
-            {% endif %}
-            {% if certification_exam.percentage %}
-            <p>Progress: {{ certification_exam.percentage }}%</p>
-            {% if certification_exam.percentage > 70 %}
-            <p>Congratulations, you are certified in {{ certification_exam.team_member_type }}!</p>
-            <div>
-                <a href="{{ certification_exam.certification_image_url }}" download="Certification.png">Download
-                    Certification Image</a>
-            </div>
-            {% endif %}
-            {% endif %}
+                <h3>Certification Exam: {{ certification_exam.team_member_type }}</h3>
+                <a href="{{ certification_exam.exam_link }}">Certification Link</a>
+                {% if certification_exam.score %} 
+                    <p>Exam Score: {{ certification_exam.score }}</p>{% else %} No score yet
+                {% endif %}
+                {% if certification_exam.quiz %}
+                    <p>Quiz: {{ certification_exam.quiz.name }}</p>
+                    <a href="{% url 'quiz_detail' certification_exam.quiz.id %}">Take Quiz</a>
+                {% endif %}
+                {% if certification_exam.percentage %}
+                    <p>Progress: {{ certification_exam.percentage }}%</p>
+                    {% if certification_exam.percentage > 70 %}
+                        <p>Congratulations, you are certified in {{ certification_exam.team_member_type }}!</p>
+                        <div>
+                            <a href="{{ certification_exam.certification_image_url }}" download="Certification.png">Download
+                                Certification Image</a>
+                        </div>
+                    {% endif %}
+                {% endif %}
+                {% if certification_exam.certification_image_url %}
+                    <p>Certification Image: <a href="{{ certification_exam.certification_image_url }}"
+                            download="Certification.png">Download</a></p>
+                {% endif %}
             {% endfor %}
         </div>
         {% endif %}
