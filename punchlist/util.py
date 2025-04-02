@@ -1,15 +1,15 @@
-from openai import OpenAI
-from django.http import JsonResponse, HttpRequest
-from django.views.decorators.http import require_http_methods
+import openai
+from django.http import JsonResponse
+# Removed unused import
 from django.conf import settings
 import re
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 import logging
 
-from openai import OpenAI
+# Removed unused import
 
-client = OpenAI(api_key=settings.OPENAI_API_KEY)
+openai.api_key = settings.OPENAI_API_KEY
 
 class RateLimitError(Exception):
     pass
@@ -41,7 +41,7 @@ def evaluate_product_idea(application):
     
     try:
         # Generate the review using ChatGPT
-        completion = client.chat.completions.create(
+        completion = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": f"Please review and evaluate the software product idea: Evaluation Criteria:\n1. Originality\n2. Marketability\n3. Feasibility\n4. Completeness\n\nPlease provide your summary text of how good or bad the idea is and individual numeric scores for each criterion out of 100 each:\n\nOriginality Score:\nMarketability Score:\nFeasibility Score:\nCompleteness Score:"},
@@ -56,14 +56,14 @@ def evaluate_product_idea(application):
         import os
 
         genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
-        model = genai.GenerativeModel('gemini-1.0-pro-latest')
-        response = model.generate_content(f"Please review and evaluate the software product idea: Evaluation Criteria:\n1. Originality\n2. Marketability\n3. Feasibility\n4. Completeness\n\nPlease provide your summary text of how good or bad the idea is and individual numeric scores for each criterion out of 100 each:\n\nOriginality Score:\nMarketability Score:\nFeasibility Score:\nCompleteness Score: {application_summary}")
+        response = genai.generate_text(
+            model="gemini-1.0-pro-latest",
+            prompt=f"Please review and evaluate the software product idea: Evaluation Criteria:\n1. Originality\n2. Marketability\n3. Feasibility\n4. Completeness\n\nPlease provide your summary text of how good or bad the idea is and individual numeric scores for each criterion out of 100 each:\n\nOriginality Score:\nMarketability Score:\nFeasibility Score:\nCompleteness Score: {application_summary}"
+        )
         
         gemini_score_text = response
                 
-        
-       # Extract scores from the response
-        if completion.choices[0].message:
+        if completion.choices and completion.choices[0].message:
             
             # Extract individual scores from the score text
             score_lines = score_text.split('\n')
@@ -87,9 +87,7 @@ def evaluate_product_idea(application):
             completeness_score = 0
 
         logging.info(f"openAI response: {score_text}")
-        
-        # Extract scores from the response
-        if gemini_score_text:
+        if gemini_score_text and isinstance(gemini_score_text, str):
             
             # Extract individual scores from the score text
             score_lines = gemini_score_text.split('\n')
