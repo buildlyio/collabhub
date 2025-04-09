@@ -428,6 +428,50 @@ h6 {
   padding: 30px;
 }
 
+/* Default styles for larger screens */
+.hero-container {
+  position: relative;
+  text-align: center;
+  color: white;
+  padding: 100px 20px;
+}
+
+.carousel-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  max-width: 600px;
+}
+
+/* Responsive styles for smaller screens */
+@media (max-width: 768px) {
+  .hero-container {
+    padding: 50px 10px;
+  }
+
+  .carousel-content {
+    position: static;
+    transform: none;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .carousel-content h2 {
+    font-size: 1.5rem;
+  }
+
+  .carousel-content p {
+    font-size: 1rem;
+  }
+
+  .btn-get-started {
+    font-size: 0.9rem;
+    padding: 10px 20px;
+  }
+}
+
 #hero .carousel-content {
   text-align: center;
 }
