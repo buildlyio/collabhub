@@ -38,8 +38,8 @@ YELP_API_KEY = "YOUR_YELP_API_KEY"
 
 # labs auth
 LABS_TOKEN_URL = os.environ.get('LABS_TOKEN_URL', 'https://labs-api.buildly.dev')
-LABS_USERNAME = "glind"
-LABS_PASSWORD = "S@rah1013"
+LABS_USERNAME = ""
+LABS_PASSWORD = ""
 """
 LABS_USERNAME = "superuser"
 LABS_PASSWORD = "pbkdf2sha256$7200"
