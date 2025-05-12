@@ -239,6 +239,11 @@ SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('GITHUB_SECRET')
 SOCIAL_AUTH_GITHUB_SCOPE = ['repo', 'user']  # Scopes to access private repositories and user data
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/bounties'
 
+# labs auth
+LABS_TOKEN_URL = os.environ.get('LABS_TOKEN_URL', 'https://labs-api.buildly.dev')
+LABS_CLIENT_ID = os.environ.get('LABS_CLIENT_ID')
+LABS_CLIENT_SECRET = os.environ.get('LABS_CLIENT_SECRET')
+
 # Redirect URL after successful login
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'

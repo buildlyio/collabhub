@@ -35,3 +35,14 @@ except ImportError:
 OPENAI_API_KEY = "asdfghjkl1234567890"
 GOOGLE_PLACES_API_KEY = "AIzaSyDxlz70Pll-cl3e5G0ayzAZJ284282veOg"
 YELP_API_KEY = "YOUR_YELP_API_KEY"
+
+# labs auth
+LABS_TOKEN_URL = os.environ.get('LABS_TOKEN_URL', 'https://labs-api.buildly.dev')
+LABS_USERNAME = "glind"
+LABS_PASSWORD = "S@rah1013"
+"""
+LABS_USERNAME = "superuser"
+LABS_PASSWORD = "pbkdf2sha256$7200"
+"""
+LABS_CLIENT_ID = "Y3E2F4gG1zMt8R64MBrI69vm2seFJcCVzk7xHLzd"
+LABS_CLIENT_SECRET = "password2025"
