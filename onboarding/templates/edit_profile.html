@@ -1,40 +1,98 @@
 {% extends "base.html" %}
 {% load static %}
-{% block page_title %}Profile{% endblock %}
-{% load custom_filters %}
+{% block page_title %}Edit Profile{% endblock %}
 
-{% block content %}
+{% block page_content %}
 
-<!-- Header Section -->
-<header style="text-align: center; padding: 8px;">
-    <img src="{% static 'img/4.png' %}" alt="Centered Image" style="max-height: 200px; width: 100%; object-fit: cover;">
-    <h3>Update your Team Member Profile</h3>
-</header>
-<br/>
-<div class="container">
-    <div class="card">
+<div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+    <!-- Header Section -->
+    <div class="relative bg-gradient-to-r from-blue-600 to-blue-800 text-white text-center py-8">
+        <img src="{% static 'img/4.png' %}" alt="Profile Banner" class="absolute inset-0 w-full h-full object-cover opacity-30">
+        <div class="relative z-10">
+            <h1 class="text-3xl font-bold mb-2">Update Your Profile</h1>
+            <p class="text-blue-100">Keep your team member profile up to date</p>
+        </div>
+    </div>
+
+    <div class="p-8">
         {% if form.errors %}
-            <div class="help-block">
-            {% for field in form %}
-                {% for error in field.errors %}
-                        <strong><i>{{ field.label }}</i> - {{ error|escape }}</strong>&nbsp;
+            <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                <h3 class="text-red-800 font-semibold mb-2">Please correct the following errors:</h3>
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <div class="text-red-700 mb-1">
+                            <strong>{{ field.label }}:</strong> {{ error|escape }}
+                        </div>
+                    {% endfor %}
                 {% endfor %}
-            {% endfor %}
+                {% for error in form.non_field_errors %}
+                    <div class="text-red-700 mb-1">
+                        <strong>{{ error|escape }}</strong>
+                    </div>
+                {% endfor %}
             </div>
-            {% for error in form.non_field_errors %}
-                <div class="alert alert-error">
-                    <strong>{{ error|escape }}</strong>
-                </div>
-            {% endfor %}
         {% endif %}
 
-        {% csrf_token %}
-        <div id="indicator_form">
-            {% load crispy_forms_tags %}
-            {% crispy form %}
-        </div>
-        <br/>
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Personal Information Section -->
+            <div class="bg-gray-50 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Personal Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% for field in form %}
+                        {% if field.name != 'csrf_token' %}
+                            <div class="{% if field.name == 'bio' or field.name == 'description' %}md:col-span-2{% endif %}">
+                                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ field.label }}
+                                    {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                                </label>
+                                {% if field.field.widget.input_type == 'textarea' %}
+                                    <textarea id="{{ field.id_for_label }}" name="{{ field.name }}" 
+                                             class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                             rows="4" placeholder="{{ field.help_text }}">{{ field.value|default:'' }}</textarea>
+                                {% elif field.field.widget.input_type == 'select' %}
+                                    <select id="{{ field.id_for_label }}" name="{{ field.name }}"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                        {% for choice in field.field.choices %}
+                                            <option value="{{ choice.0 }}" {% if choice.0 == field.value %}selected{% endif %}>{{ choice.1 }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% elif field.field.widget.input_type == 'file' %}
+                                    <input type="file" id="{{ field.id_for_label }}" name="{{ field.name }}"
+                                          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                {% else %}
+                                    <input type="{{ field.field.widget.input_type|default:'text' }}" 
+                                          id="{{ field.id_for_label }}" name="{{ field.name }}" 
+                                          value="{{ field.value|default:'' }}"
+                                          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                          placeholder="{{ field.help_text }}">
+                                {% endif %}
+                                {% if field.help_text %}
+                                    <p class="mt-1 text-sm text-gray-500">{{ field.help_text }}</p>
+                                {% endif %}
+                                {% if field.errors %}
+                                    <div class="mt-1 text-sm text-red-600">
+                                        {% for error in field.errors %}<p>{{ error }}</p>{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
 
-    </div>    
+            <!-- Submit Button -->
+            <div class="flex justify-end space-x-4">
+                <a href="/" class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    Update Profile
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
-{% endblock content %}
+
+{% endblock %}

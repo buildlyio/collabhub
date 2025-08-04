@@ -8,7 +8,6 @@ from django.urls import reverse
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm, PasswordResetForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from punchlist.models import Product
 
 # paypal
 from django.views.generic import FormView
@@ -29,7 +28,6 @@ class PasswordResetForm(forms.Form):
 
 
 from django.contrib.auth.forms import UserCreationForm
-from punchlist.models import PunchlistHunter, PunchlistSetter
 
 class RegistrationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -79,7 +77,6 @@ class RegistrationUpdateForm(UserChangeForm):
     email = forms.EmailField(required=True)
     first_name = forms.CharField(max_length=30)
     last_name = forms.CharField(max_length=30)
-    is_punchlist_hunter = forms.BooleanField(required=False)
     github_profile = forms.URLField(required=False)
 
     class Meta:
@@ -100,7 +97,7 @@ class RegistrationUpdateForm(UserChangeForm):
             Submit('submit', 'Update')
         )
 
-        # Set initial values for is_punchlist_hunter and github_profile fields
+        # Set initial values for github_profile field
         user = self.instance
 
     def save(self, commit=True):
@@ -114,56 +111,56 @@ class RegistrationUpdateForm(UserChangeForm):
     
 # main_app/forms.py
 
-from django import forms
-from punchlist.models import Product
+# from django import forms
+# from punchlist.models import Product
 
-"""
-This form is used to create a new product in the Punchlist app.
-"""
+# """
+# This form is used to create a new product in the Punchlist app.
+# """
 
-class ProductForm(forms.ModelForm):
-    
-    class Meta:
-        model = Product
-        fields = [
-            'name', 
-            'description', 
-            'product_info',
-            'dev_url',
-            'prod_url',
-            'repository_url', 
-            'start_date', 
-            'end_date',
-        ]
-        widgets = {
-            'name': forms.TextInput(attrs={'placeholder': 'Enter product name', 'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'placeholder': 'Enter a brief description of the product', 'class': 'form-control'}),
-            'product_info': forms.Textarea(attrs={'placeholder': 'Enter detailed product information', 'class': 'form-control'}),
-            'dev_url': forms.URLInput(attrs={'placeholder': 'Enter development URL', 'class': 'form-control'}),
-            'prod_url': forms.URLInput(attrs={'placeholder': 'Enter production URL', 'class': 'form-control'}),
-            'repository_url': forms.URLInput(attrs={'placeholder': 'Enter repository URL', 'class': 'form-control'}),
-            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-        }
-        labels = {
-            'name': 'Product Name',
-            'description': 'Product Description',
-            'product_info': 'Product Information',
-            'dev_url': 'Development URL',
-            'prod_url': 'Production URL',
-            'repository_url': 'Repository URL',
-            'start_date': 'Start Date',
-            'end_date': 'End Date',
-        }
-    
-    def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request')  # Store request object
-        super().__init__(*args, **kwargs)
-        
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        instance.owner = self.request.user
-        if commit:
-            instance.save()
-        return instance 
+# class ProductForm(forms.ModelForm):
+#     
+#     class Meta:
+#         model = Product
+#         fields = [
+#             'name', 
+#             'description', 
+#             'product_info',
+#             'dev_url',
+#             'prod_url',
+#             'repository_url', 
+#             'start_date', 
+#             'end_date',
+#         ]
+#         widgets = {
+#             'name': forms.TextInput(attrs={'placeholder': 'Enter product name', 'class': 'form-control'}),
+#             'description': forms.Textarea(attrs={'placeholder': 'Enter a brief description of the product', 'class': 'form-control'}),
+#             'product_info': forms.Textarea(attrs={'placeholder': 'Enter detailed product information', 'class': 'form-control'}),
+#             'dev_url': forms.URLInput(attrs={'placeholder': 'Enter development URL', 'class': 'form-control'}),
+#             'prod_url': forms.URLInput(attrs={'placeholder': 'Enter production URL', 'class': 'form-control'}),
+#             'repository_url': forms.URLInput(attrs={'placeholder': 'Enter repository URL', 'class': 'form-control'}),
+#             'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+#             'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+#         }
+#         labels = {
+#             'name': 'Product Name',
+#             'description': 'Product Description',
+#             'product_info': 'Product Information',
+#             'dev_url': 'Development URL',
+#             'prod_url': 'Production URL',
+#             'repository_url': 'Repository URL',
+#             'start_date': 'Start Date',
+#             'end_date': 'End Date',
+#         }
+#     
+#     def __init__(self, *args, **kwargs):
+#         self.request = kwargs.pop('request')  # Store request object
+#         super().__init__(*args, **kwargs)
+#         
+#     def save(self, commit=True):
+#         instance = super().save(commit=False)
+#         instance.owner = self.request.user
+#         if commit:
+#             instance.save()
+#         return instance 
     

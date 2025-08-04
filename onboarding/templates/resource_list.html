@@ -1,18 +1,91 @@
 {% extends "base.html" %}
 
-{% block content %}
-<!-- onboarding/templates/resource_list.html -->
+{% block page_title %}Resources{% endblock %}
 
-<h2>Resource List</h2>
-<ul>
-    {% for resource in resources %}
-    <li>{{ resource.title }} - <a href="{{ resource.link }}">Link</a> 
-    {% if resource.document %}
-        - <a href="{{ resource.document.url }}">Download</a>
+{% block page_content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-8 mb-8 text-white">
+        <h1 class="text-3xl md:text-4xl font-bold mb-4">Developer Resources</h1>
+        <p class="text-lg opacity-90">Explore our curated collection of tools, guides, and materials to enhance your development journey.</p>
+    </div>
+
+    <!-- Resources Grid -->
+    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {% for resource in resources %}
+        <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200 overflow-hidden">
+            <div class="p-6">
+                <!-- Resource Icon -->
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        {% if resource.document %}
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        {% else %}
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                            </svg>
+                        {% endif %}
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 ml-3">{{ resource.title }}</h3>
+                </div>
+
+                <!-- Resource Description -->
+                {% if resource.description %}
+                <p class="text-gray-600 mb-4 line-clamp-3">{{ resource.description }}</p>
+                {% endif %}
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col gap-2">
+                    {% if resource.link %}
+                    <a href="{{ resource.link }}" target="_blank" 
+                       class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                        View Resource
+                    </a>
+                    {% endif %}
+                    
+                    {% if resource.document %}
+                    <a href="{{ resource.document.url }}" download
+                       class="inline-flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Download
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12">
+            <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No Resources Available</h3>
+            <p class="text-gray-600">Resources will appear here as they become available.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Upload Section for Authorized Users -->
+    {% if user.is_authenticated %}
+    <div class="mt-12 bg-gray-50 rounded-lg p-6 text-center">
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">Share a Resource</h3>
+        <p class="text-gray-600 mb-4">Have a valuable resource to share with the community?</p>
+        <a href="/onboarding/upload_resource" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+            </svg>
+            Upload Resource
+        </a>
+    </div>
     {% endif %}
-    </li>
-    {% endfor %}
-</ul>
-
+</div>
 
 {% endblock %}  <!-- End of block content -->

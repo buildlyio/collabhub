@@ -1,82 +1,55 @@
 {% load static %}
 
-<!-- ======= Footer ======= -->
-<footer id="footer">
-  <!--
-  <div class="footer-newsletter">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-6">
-          <h4>Our Newsletter</h4>
-          <p>Learn more about punchlisthunter and our Parternships</p>
-        </div>
-        <div class="col-lg-6">
-          <form action="" method="post">
-            <input type="email" name="email"><input type="submit" value="Subscribe">
-          </form>
-        </div>
+
+<footer class="bg-gradient-to-r from-blue-900 to-blue-700 text-white py-10 mt-12">
+  <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
+    <div>
+      <h4 class="font-bold mb-3">Useful Links</h4>
+      <ul class="space-y-2">
+        <li><a href="/" class="hover:underline">Home</a></li>
+        <li><a href="/onboarding/register" class="hover:underline">Register</a></li>
+        <li><a href="/login" class="hover:underline">Login</a></li>
+        <li><a href="#" class="hover:underline">Terms of service</a></li>
+        <li><a href="#" class="hover:underline">Privacy policy</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="font-bold mb-3">Our Services</h4>
+      <ul class="space-y-2">
+        <li><a href="#" class="hover:underline">Developer Training</a></li>
+        <li><a href="#" class="hover:underline">Developer Mentorship</a></li>
+        <li><a href="#" class="hover:underline">Recruitment</a></li>
+        <li><a href="#" class="hover:underline">Marketing</a></li>
+        <li><a href="#" class="hover:underline">Technical Consultation</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="font-bold mb-3">Contact Us</h4>
+      <p class="text-sm">
+        <span class="block font-semibold">Email:</span>
+        <a href="mailto:hello@buildly.io" class="hover:underline">hello@buildly.io</a>
+      </p>
+    </div>
+    <div>
+      <h4 class="font-bold mb-3">About Collab Hub &amp; <a href="https://www.buildly.io" class="underline">Buildly</a></h4>
+      <p class="text-sm mb-4">A modern platform for agencies and developers to connect, onboard, and collaborate on projects of any size.</p>
+      <div class="flex space-x-3 mt-2">
+        <a href="https://twitter.com/buildly_io" class="hover:text-blue-300" aria-label="Twitter"><svg class="w-5 h-5 inline" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557a9.93 9.93 0 0 1-2.828.775 4.932 4.932 0 0 0 2.165-2.724c-.951.564-2.005.974-3.127 1.195a4.92 4.92 0 0 0-8.384 4.482C7.691 8.095 4.066 6.13 1.64 3.161c-.542.929-.856 2.01-.857 3.17 0 2.188 1.115 4.116 2.813 5.247a4.904 4.904 0 0 1-2.229-.616c-.054 2.281 1.581 4.415 3.949 4.89a4.936 4.936 0 0 1-2.224.084c.627 1.956 2.444 3.377 4.6 3.417A9.867 9.867 0 0 1 0 21.543a13.94 13.94 0 0 0 7.548 2.209c9.058 0 14.009-7.496 14.009-13.986 0-.213-.005-.425-.014-.636A9.936 9.936 0 0 0 24 4.557z"/></svg></a>
+        <a href="http://www.facebook.com/buildlyio" class="hover:text-blue-300" aria-label="Facebook"><svg class="w-5 h-5 inline" fill="currentColor" viewBox="0 0 24 24"><path d="M22.675 0h-21.35C.597 0 0 .592 0 1.326v21.348C0 23.408.597 24 1.326 24H12.82v-9.294H9.692v-3.622h3.127V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.797.143v3.24l-1.918.001c-1.504 0-1.797.715-1.797 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116C23.403 24 24 23.408 24 22.674V1.326C24 .592 23.403 0 22.675 0"/></svg></a>
+        <a href="http://www.instagram.com/buildly_io" class="hover:text-blue-300" aria-label="Instagram"><svg class="w-5 h-5 inline" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.334 3.608 1.308.974.974 1.246 2.241 1.308 3.608.058 1.266.069 1.646.069 4.85s-.012 3.584-.07 4.85c-.062 1.366-.334 2.633-1.308 3.608-.974.974-2.241 1.246-3.608 1.308-1.266.058-1.646.069-4.85.069s-3.584-.012-4.85-.07c-1.366-.062-2.633-.334-3.608-1.308-.974-.974-1.246-2.241-1.308-3.608C2.175 15.647 2.163 15.267 2.163 12s.012-3.584.07-4.85c.062-1.366.334-2.633 1.308-3.608C4.515 2.497 5.782 2.225 7.148 2.163 8.414 2.105 8.794 2.094 12 2.094m0-2.163C8.741 0 8.332.012 7.052.07 5.78.127 4.602.398 3.635 1.365 2.668 2.332 2.397 3.51 2.34 4.782 2.282 6.062 2.27 6.471 2.27 12c0 5.529.012 5.938.07 7.218.057 1.272.328 2.45 1.295 3.417.967.967 2.145 1.238 3.417 1.295 1.28.058 1.689.07 7.218.07s5.938-.012 7.218-.07c1.272-.057 2.45-.328 3.417-1.295.967-.967 1.238-2.145 1.295-3.417.058-1.28.07-1.689.07-7.218s-.012-5.938-.07-7.218c-.057-1.272-.328-2.45-1.295-3.417C19.45.398 18.272.127 17 .07 15.72.012 15.311 0 12 0z"/><circle cx="12" cy="12" r="3.5"/><circle cx="18.406" cy="5.594" r="1.44"/></svg></a>
+        <a href="http://www.linkedin.com/company/buildlyio" class="hover:text-blue-300" aria-label="LinkedIn"><svg class="w-5 h-5 inline" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.327-.027-3.037-1.849-3.037-1.851 0-2.132 1.445-2.132 2.939v5.667H9.358V9h3.414v1.561h.049c.476-.899 1.637-1.849 3.37-1.849 3.602 0 4.267 2.368 4.267 5.455v6.285zM5.337 7.433c-1.144 0-2.07-.926-2.07-2.07 0-1.144.926-2.07 2.07-2.07 1.144 0 2.07.926 2.07 2.07 0 1.144-.926 2.07-2.07 2.07zm1.777 13.019H3.56V9h3.554v11.452z"/></svg></a>
       </div>
     </div>
   </div>
-  -->
-  <div class="footer-top">
-    <div class="container">
-      <div class="row">
-
-        <div class="col-lg-3 col-md-6 footer-links">
-          <h4>Useful Links</h4>
-          <ul>
-            <li><i class="bx bx-chevron-right"></i> <a href="/">Home</a></li>
-            <li><i class="bx bx-chevron-right"></i> <a href="/Register">Register</a></li>
-            <li><i class="bx bx-chevron-right"></i> <a href="/login">Login</a></li>
-            <li><i class="bx bx-chevron-right"></i> <a href="#">Terms of service</a></li>
-            <li><i class="bx bx-chevron-right"></i> <a href="#">Privacy policy</a></li>
-          </ul>
-        </div>
-
-        <div class="col-lg-3 col-md-6 footer-links">
-          <h4>Our Services</h4>
-          <ul>
-            <li><i class="bx bx-chevron-right"></i> <a href="#">Developer Training</a></li>
-            <li><i class="bx bx-chevron-right"></i> <a href="#">Developer Mentorship</a></li>
-            <li><i class="bx bx-chevron-right"></i> <a href="#">Recruitment</a></li>
-            <li><i class="bx bx-chevron-right"></i> <a href="#">Marketing</a></li>
-            <li><i class="bx bx-chevron-right"></i> <a href="#">Technical Consultation</a></li>
-          </ul>
-        </div>
-
-        <div class="col-lg-3 col-md-6 footer-contact">
-          <h4>Contact Us</h4>
-          <p>
-            <strong>Email:</strong> punchlist@buildly.io<br>
-          </p>
-
-        </div>
-
-        <div class="col-lg-3 col-md-6 footer-info">
-          <h3>About Bug Punchlist & <a href="https://www.buildly.io">Buildly</a></h3>
-          <p>An affordable way to find help for the small problems or big, by breaking it down into small tasks and letting experieinced developers fix and review the fix.</p>
-          <div class="social-links mt-3">
-          <a href="https://twitter.com/buildly_io" class="twitter"><i class="bx bxl-twitter"></i></a>
-          <a href="http://www.facebook.com/buildlyio" class="facebook"><i class="bx bxl-facebook"></i></a>
-          <a href="http://www.instagram.com/buildly_io" class="instagram"><i class="bx bxl-instagram"></i></a>
-          <a href="http://www.linkedin.com/company/buildlyio" class="linkedin"><i class="bx bxl-linkedin"></i></a>
-          </div>
-        </div>
-
-      </div>
+  <div class="max-w-7xl mx-auto px-4 mt-8 flex flex-col md:flex-row justify-between items-center text-sm text-blue-100">
+    <div>
+      &copy; {{ now|date:'Y' }} <span class="font-semibold">Buildly</span>. All Rights Reserved
+    </div>
+    <div>
+      <a href="https://www.buildly.io/" class="hover:underline">Buildly</a>
     </div>
   </div>
-
-  <div class="container">
-    <div class="copyright">
-      &copy; Copyright <strong><span>Buildly</span></strong>. All Rights Reserved
-    </div>
-    <div class="credits">
-      <a href="https://www.buildly.io/">Buildly</a>
-    </div>
-  </div>
-</footer><!-- End Footer -->
+</footer>
 
 <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 

@@ -28,6 +28,41 @@ class TeamMemberUpdateForm(forms.ModelForm):
         fields = '__all__'
         
 class ResourceForm(forms.ModelForm):
+    team_member_type = forms.ChoiceField(
+        choices=TEAM_MEMBER_TYPES,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        help_text='Select the team member type this resource is intended for'
+    )
+    
     class Meta:
         model = Resource
-        fields = ['team_member_type', 'title', 'link', 'document','descr']
+        fields = ['team_member_type', 'title', 'link', 'document', 'descr']
+        widgets = {
+            'title': forms.TextInput(attrs={'placeholder': 'Enter resource title'}),
+            'link': forms.URLInput(attrs={'placeholder': 'https://example.com'}),
+            'descr': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Describe this resource and how it helps developers'}),
+        }
+
+
+from .models import DevelopmentAgency
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
+
+class DevelopmentAgencyForm(forms.ModelForm):
+    class Meta:
+        model = DevelopmentAgency
+        fields = ['agency_name', 'team_size', 'skills', 'background', 'hourly_rate', 'project_rate', 'industries_worked', 'agency_type', 'github_repository', 'contact_name', 'contact_email', 'contact_phone', 'linkedin_url', 'how_they_found_us', 'logo']
+        widgets = {
+            'skills': forms.Textarea(attrs={'rows': 3}),
+            'background': forms.Textarea(attrs={'rows': 3}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.add_input(Submit('submit', 'Register Agency', css_class='btn btn-primary'))
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        return cleaned_data

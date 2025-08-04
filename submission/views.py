@@ -88,7 +88,6 @@ def submission_form(request, unique_url):
 @csrf_exempt
 @login_required
 @require_POST
-
 def update_resource_progress(request):
     data = json.loads(request.body)
     resource_id = int(data.get('resource_id'))
@@ -96,6 +95,25 @@ def update_resource_progress(request):
 
     try:
         team_member = get_object_or_404(TeamMember, user=request.user)
+        
+        # First, check if there are multiple records and clean them up
+        existing_records = TeamMemberResource.objects.filter(
+            team_member=team_member,
+            resource_id=resource_id
+        )
+        
+        if existing_records.count() > 1:
+            # Keep the most recent one and delete duplicates
+            latest_record = existing_records.order_by('-id').first()
+            existing_records.exclude(id=latest_record.id).delete()
+            
+            # Update the remaining record
+            latest_record.percentage_complete = progress
+            latest_record.save()
+            
+            return JsonResponse({'success': True, 'cleaned_duplicates': True})
+        
+        # Normal get_or_create for single/no records
         team_member_resource, created = TeamMemberResource.objects.get_or_create(
             team_member=team_member,
             resource_id=resource_id,

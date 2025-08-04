@@ -12,3 +12,6 @@ admin.site.register(CertificationExam, CertificationExamAdmin)
 admin.site.register(Quiz, QuizAdmin)
 admin.site.register(QuizQuestion, QuizQuestionAdmin)
 admin.site.register(QuizAnswer, QuizAnswerAdmin)
+
+# Register DevelopmentAgency
+admin.site.register(DevelopmentAgency, DevelopmentAgencyAdmin)

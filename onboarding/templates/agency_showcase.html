@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block page_content %}
+<div class="max-w-7xl mx-auto">
+    <h1 class="text-3xl font-bold text-blue-900 mb-6">Find Your Perfect Agency Partner</h1>
+    <p class="text-gray-600 mb-8">Browse our curated list of development agencies ready to help with your project.</p>
+    
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h3 class="text-lg font-semibold mb-4">Filter Agencies</h3>
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label for="agency_type" class="block text-sm font-medium text-gray-700 mb-2">Agency Type</label>
+                <select name="agency_type" id="agency_type" class="w-full p-2 border border-gray-300 rounded">
+                    <option value="">All Types</option>
+                    {% for key, value in agency_types %}
+                        <option value="{{ key }}" {% if selected_agency_type == key %}selected{% endif %}>{{ value }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label for="industries_worked" class="block text-sm font-medium text-gray-700 mb-2">Industry</label>
+                <select name="industries_worked" id="industries_worked" class="w-full p-2 border border-gray-300 rounded">
+                    <option value="">All Industries</option>
+                    {% for key, value in industry_choices %}
+                        <option value="{{ key }}" {% if selected_industries_worked == key %}selected{% endif %}>{{ value }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label for="skills" class="block text-sm font-medium text-gray-700 mb-2">Skills</label>
+                <input type="text" name="skills" id="skills" value="{{ selected_skills }}" 
+                       placeholder="e.g., React, Python, Django" class="w-full p-2 border border-gray-300 rounded">
+            </div>
+            
+            <div class="flex items-end">
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
+                    Filter
+                </button>
+                <a href="/onboarding/agencies" class="ml-2 text-blue-600 hover:text-blue-800">Clear</a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Agency Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for agency in agencies %}
+        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+            {% if agency.logo %}
+            <div class="h-32 bg-gray-100 flex items-center justify-center">
+                <img src="{{ agency.logo.url }}" alt="{{ agency.agency_name }}" class="max-h-20 max-w-full object-contain">
+            </div>
+            {% else %}
+            <div class="h-32 bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
+                <h3 class="text-white text-xl font-bold">{{ agency.agency_name|truncatechars:3|upper }}</h3>
+            </div>
+            {% endif %}
+            
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ agency.agency_name }}</h3>
+                
+                {% if agency.agency_type %}
+                <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm mb-3">{{ agency.get_agency_type_display }}</span>
+                {% endif %}
+                
+                <div class="space-y-2 text-sm text-gray-600 mb-4">
+                    {% if agency.team_size %}
+                    <p><strong>Team Size:</strong> {{ agency.team_size }}</p>
+                    {% endif %}
+                    
+                    {% if agency.industries_worked %}
+                    <p><strong>Industry:</strong> {{ agency.get_industries_worked_display }}</p>
+                    {% endif %}
+                    
+                    {% if agency.hourly_rate %}
+                    <p><strong>Hourly Rate:</strong> {{ agency.hourly_rate }}</p>
+                    {% endif %}
+                </div>
+                
+                {% if agency.skills %}
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600 line-clamp-3">{{ agency.skills|truncatechars:150 }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="flex justify-between items-center">
+                    <div class="flex space-x-2">
+                        {% if agency.linkedin_url %}
+                        <a href="{{ agency.linkedin_url }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.338 16.338H13.67V12.16c0-.995-.017-2.277-1.387-2.277-1.39 0-1.601 1.086-1.601 2.207v4.248H8.014v-8.59h2.559v1.174h.037c.356-.675 1.227-1.387 2.526-1.387 2.703 0 3.203 1.778 3.203 4.092v4.711zM5.005 6.575a1.548 1.548 0 11-.003-3.096 1.548 1.548 0 01.003 3.096zm-1.337 9.763H6.34v-8.59H3.667v8.59zM17.668 1H2.328C1.595 1 1 1.581 1 2.298v15.403C1 18.418 1.595 19 2.328 19h15.34c.734 0 1.332-.582 1.332-1.299V2.298C19 1.581 18.402 1 17.668 1z" clip-rule="evenodd"/>
+                            </svg>
+                        </a>
+                        {% endif %}
+                        
+                        {% if agency.github_repository %}
+                        <a href="{{ agency.github_repository }}" target="_blank" class="text-gray-700 hover:text-gray-900">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z" clip-rule="evenodd"/>
+                            </svg>
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    <a href="mailto:{{ agency.contact_email }}" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition">
+                        Contact
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12">
+            <div class="text-gray-500">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6m-6 4h6"/>
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No agencies found</h3>
+                <p class="text-gray-500 mb-4">Try adjusting your filters or check back later for new agencies.</p>
+                <a href="/onboarding/agency_add" class="inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
+                    Register Your Agency
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Call to Action -->
+    <div class="mt-12 bg-blue-50 rounded-lg p-8 text-center">
+        <h3 class="text-2xl font-bold text-blue-900 mb-4">Don't see your perfect match?</h3>
+        <p class="text-gray-600 mb-6">Register your agency to connect with talented developers and clients.</p>
+        <a href="/onboarding/agency_add" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+            Register Your Agency
+        </a>
+    </div>
+</div>
+
+<style>
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+</style>
+{% endblock %}

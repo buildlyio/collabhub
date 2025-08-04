@@ -37,10 +37,9 @@ INSTALLED_APPS = [
     'paypal.standard.ipn',
     'django_celery_beat',
     'django_filters',
-    'punchlist',
+    # 'punchlist',  # Removed - focusing on agency/developer onboarding
     'submission',
     'onboarding',
-    'mysite.templatetags.custom_filters',
     'import_export',
     'storages',
     'django_tables2',
@@ -213,8 +212,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-PAYPAL_RECEIVER_EMAIL = "punchlist@buildly.io"
-PAYPAL_TEST = True
+# PayPal settings removed - focusing on agency/developer onboarding
 
 SITE_ID = 1
 
@@ -235,9 +233,8 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 SOCIAL_AUTH_GITHUB_KEY = os.environ.get('GITHUB_KEY')
 SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('GITHUB_SECRET')
 
-# Optional: Scope settings to access user repositories and issues
-SOCIAL_AUTH_GITHUB_SCOPE = ['repo', 'user']  # Scopes to access private repositories and user data
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/bounties'
+# Scopes for GitHub authentication
+SOCIAL_AUTH_GITHUB_SCOPE = ['repo', 'user']
 
 # labs auth
 LABS_TOKEN_URL = os.environ.get('LABS_TOKEN_URL', 'https://labs-api.buildly.dev')

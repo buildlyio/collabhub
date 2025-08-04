@@ -10,4 +10,8 @@ urlpatterns = [
     path('quizzes/', views.quiz_list, name='quiz_list'),
     path('quiz/<int:quiz_id>/', views.quiz_detail, name='quiz_detail'),
     path('quiz/<int:quiz_id>/submit/', views.submit_answers, name='submit_answers'),
-    ]
+    
+    # Agency URLs
+    path('agency_add/', views.DevelopmentAgencyCreateView.as_view(), name='agency_add'),
+    path('agencies/', views.showcase_agencies, name='agency_list'),
+]

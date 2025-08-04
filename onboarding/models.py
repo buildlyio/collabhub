@@ -138,5 +138,51 @@ class QuizAnswerAdmin(admin.ModelAdmin):
     search_fields = ('team_member__first_name', 'team_member__last_name')
 
 
+class DevelopmentAgency(models.Model):
+    INDUSTRY_CHOICES = [
+        ('Technology', 'Technology'),
+        ('Finance', 'Finance'),
+        ('Healthcare', 'Healthcare'),
+        ('Government', 'Government'),
+        ('Non/Profit-NGO', 'Non/Profit-NGO'),
+        ('Manufacturing', 'Manufacturing'),
+        ('Agriculture', 'Agriculture'),
+        ('Climate Tech', 'Climate Tech'),
+        # Add more industry choices as needed
+    ]
+    
+    AGENCY_TYPE = [
+        ('Marketing', 'Marketing'),
+        ('Software Development', 'Software Development'),
+        ('Finance', 'Finance'),
+        ('Investment Fund', 'Investment Fund'),
+        ('Legal', 'Legal'),
+        ('Accounting/Taxes', 'Accounting/Taxes'),
+        ('Accelerator/Incubator', 'Accelerator/Incubator'),
+    ]
+    
+    agency_name = models.CharField(max_length=255)
+    team_size = models.CharField(max_length=100, blank=True)
+    skills = models.TextField(blank=True)
+    background = models.TextField(blank=True)
+    hourly_rate = models.CharField(max_length=100, blank=True)
+    project_rate = models.CharField(max_length=100, blank=True)
+    industries_worked = models.CharField(max_length=100, choices=INDUSTRY_CHOICES, blank=True)
+    agency_type = models.CharField(max_length=100, choices=AGENCY_TYPE, blank=True)
+    github_repository = models.URLField(blank=True)
+    contact_name = models.CharField(max_length=255)
+    contact_email = models.EmailField()
+    contact_phone = models.CharField(max_length=20, blank=True)
+    linkedin_url = models.URLField(blank=True)
+    how_they_found_us = models.CharField(max_length=255, blank=True)
+    logo = models.ImageField(upload_to='agency-logo', null=True, blank=True)
+    
+    def __str__(self):
+        return self.agency_name
 
 
+class DevelopmentAgencyAdmin(admin.ModelAdmin):
+    list_display = ('agency_name','contact_email', 'agency_type')
+    search_fields = ('agency_name','contact_email')
+    list_filter = ('agency_type', 'industries_worked')
+    display = 'Development Agencies'

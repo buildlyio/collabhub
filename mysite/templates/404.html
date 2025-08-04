@@ -4,8 +4,33 @@
 
 {% block body_class %}template-404{% endblock %}
 
-{% block content %}
-    <h1>Page not found</h1>
-
-    <h2>Sorry, this page could not be found.</h2>
+{% block page_content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50">
+    <div class="max-w-md w-full text-center">
+        <div class="mb-8">
+            <h1 class="text-9xl font-bold text-blue-600">404</h1>
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Page Not Found</h2>
+            <p class="text-gray-600 mb-8">
+                Sorry, the page you are looking for could not be found or has been moved.
+            </p>
+        </div>
+        
+        <div class="space-y-4">
+            <a href="/" class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                Go Home
+            </a>
+            <div>
+                <a href="javascript:history.back()" class="text-blue-600 hover:text-blue-500">
+                    ← Go Back
+                </a>
+            </div>
+        </div>
+        
+        <div class="mt-12">
+            <svg class="mx-auto h-24 w-24 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.034 0-3.9.785-5.291 2.091m6.582-6.09A8 8 0 1021 12a8 8 0 00-8-8z"/>
+            </svg>
+        </div>
+    </div>
+</div>
 {% endblock %}

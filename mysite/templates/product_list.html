@@ -3,7 +3,7 @@
 
 {% render_table products %}
 
-{% block content %}
+{% block page_content %}
   <h1>Products</h1>
   <a href="{% url 'product_add' %}" class="btn btn-primary">Add Product</a>
   {% render_table table %}

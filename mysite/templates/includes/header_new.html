@@ -6,39 +6,6 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   html, body { font-family: 'Inter', Arial, sans-serif; }
-  
-  /* Enhanced dropdown hover behavior */
-  .dropdown-menu {
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: all 0.2s ease;
-    pointer-events: none;
-  }
-  
-  .dropdown-trigger:hover .dropdown-menu,
-  .dropdown-menu:hover {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-    pointer-events: auto;
-    transition-delay: 0s;
-  }
-  
-  .dropdown-trigger:not(:hover) .dropdown-menu {
-    transition-delay: 1s; /* Increased delay before hiding */
-  }
-  
-  /* Add hover zone extension */
-  .dropdown-trigger::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    height: 10px;
-    background: transparent;
-  }
 </style>
 
 <!-- ======= Top Banner with GitHub Links ======= -->
@@ -99,29 +66,19 @@
       <ul class="flex items-center gap-4">
         <li><a class="text-white font-semibold hover:text-blue-200 transition" href="/">Home</a></li>
         <li><a class="text-white font-semibold hover:text-blue-200 transition" href="/onboarding/agencies">Agencies</a></li>
+        <li><a class="text-white font-semibold hover:text-blue-200 transition" href="/onboarding/agency_add">For Agencies</a></li>
+        <li><a class="text-white font-semibold hover:text-blue-200 transition" href="/onboarding/register">For Developers</a></li>
         
         {% if user.is_authenticated %}
-          <!-- Links for authenticated users -->
-          <li class="dropdown-trigger relative">
-            <button class="text-white font-semibold hover:text-blue-200 transition focus:outline-none px-2 py-2">Dashboard</button>
-            <ul class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-              <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/onboarding/dashboard">My Dashboard</a></li>
-              <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/onboarding/resources">Resources</a></li>
-              <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/onboarding/upload_resource">Upload Resource</a></li>
-            </ul>
-          </li>
-          <li class="dropdown-trigger relative">
-            <button class="text-white font-semibold hover:text-blue-200 transition focus:outline-none px-2 py-2">Account</button>
-            <ul class="dropdown-menu absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-              <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/edit_profile">Edit Profile</a></li>
-              <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/logout">Logout</a></li>
+          <li class="relative group">
+            <button class="text-white font-semibold hover:text-blue-200 transition focus:outline-none">Account</button>
+            <ul class="absolute right-0 mt-2 w-40 bg-white rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
+              <li><a class="block px-4 py-2 text-gray-700 hover:bg-blue-50" href="/edit_profile">Profile</a></li>
+              <li><a class="block px-4 py-2 text-gray-700 hover:bg-blue-50" href="/logout">Logout</a></li>
             </ul>
           </li>
           <li><span class="text-white font-semibold ml-2">Welcome, {{ user.username }}</span></li>
         {% else %}
-          <!-- Links for non-authenticated users -->
-          <li><a class="text-white font-semibold hover:text-blue-200 transition" href="/onboarding/agency_add">For Agencies</a></li>
-          <li><a class="text-white font-semibold hover:text-blue-200 transition" href="/onboarding/register">For Developers</a></li>
           <li><a class="text-white font-semibold hover:text-blue-200 transition" href="/login">Login</a></li>
           <li><a class="ml-2 px-4 py-2 bg-white text-blue-800 font-semibold rounded shadow hover:bg-blue-100 transition" href="/onboarding/register">Register</a></li>
         {% endif %}
@@ -129,3 +86,11 @@
     </nav>
   </div>
 </header>
+<!-- Optional: Add a hero section for visual interest -->
+<section class="hero-section bg-gradient-to-br from-slate-50 to-blue-100 py-16 text-center">
+  <div class="max-w-2xl mx-auto">
+    <h1 class="text-4xl md:text-5xl font-bold text-blue-900 mb-4">Welcome to Collab Hub</h1>
+    <p class="text-lg md:text-xl text-gray-700 mb-8">Connecting agencies and developers for seamless onboarding and collaboration.<br>Join as an agency or developer and start your journey today!</p>
+    <a href="/onboarding/register" class="inline-block px-8 py-3 bg-blue-800 text-white font-semibold rounded shadow hover:bg-blue-900 transition text-lg">Get Started</a>
+  </div>
+</section>

@@ -7,64 +7,7 @@
       <h1>{{ punchlist.title }}</h1>
       <table class="table">
         <tr>
-          <td><strong>Skills:</strong></td>
-          <td>{{ punchlist.skills }}</td>
-        </tr>
-        <tr>
-          <td><strong>Level:</strong></td>
-          <td>{{ punchlist.get_level_display }}</td>
-        </tr>
-        <tr>
-          <td><strong>Description:</strong></td>
-          <td>{{ punchlist.description }}</td>
-        </tr>
-        <tr>
-          <td><strong>Certification:</strong></td>
-          <td>{{ punchlist.certification }}</td>
-        </tr>
-        <tr>
-          <td><strong>Amount:</strong></td>
-          <td>{{ punchlist.get_amount_display }}</td>
-        </tr>
-        <tr>
-          <td><strong>Issue ID:</strong></td>
-          <td>{{ punchlist.issue_id }}</td>
-        </tr>
-        <tr>
-          <td><strong>Complexity Estimate:</strong></td>
-          <td>{{ punchlist.get_complexity_estimate_display }}</td>
-        </tr>
-        <tr>
-          <td><strong>URL:</strong></td>
-          <td><a href="{{ punchlist.url }}">{{ punchlist.url }}</a></td>
-        </tr>
-        <tr>
-          <td><strong>Status:</strong></td>
-          <td>{{ punchlist.get_status_display }}</td>
-        </tr>
-        <tr>
-          <td><strong>GitHub Repository:</strong></td>
-          <td>{{ punchlist.repo }}</td>
-        </tr>
-        <tr>
-          <td><strong>Tags:</strong></td>
-          <td>
-            {% for tag in punchlist.tags.all %}
-            <span class="badge badge-primary">{{ tag.name }}</span>
-            {% endfor %}
-          </td>
-        </tr>
-      </table>
-      {% if request.user.is_authenticated and request.user.punchlisthunter %}
-      <form method="post" action="{% url 'submit_user_for_punchlist' punchlist.pk %}">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-secondary">Submit Your Profile for this Punchlist</button>
-      </form>
-      <br />
-      {% endif %}
-    </div>
-    <div class="col-md-4">
-      <h2>Submitted Punchlist Hunters</h2>
+      <!-- Deleted: punchlist functionality removed -->
       {% if submissions %}
       <table class="table">
         <thead>
