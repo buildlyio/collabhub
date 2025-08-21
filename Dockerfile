@@ -55,13 +55,7 @@ USER builder
 
 # Install the application server.
 
-# Runtime command that executes when "docker run" is called, it does the
-# following:
-#   1. Migrate the database.
-#   2. Start the application server.
-# WARNING:
-#   Migrating database at the same time as starting the server IS NOT THE BEST
-#   PRACTICE. The database should be migrated manually or using the release
-#   phase facilities of your hosting platform. This is used only so the
-#   instance can be started with a simple "docker run" command.
-CMD set -xe; gunicorn mysite.wsgi:application
+RUN chmod +x /app/scripts/init_django.sh
+
+# Entrypoint script to run migrations, collectstatic, then start the server
+CMD /app/scripts/init_django.sh && gunicorn mysite.wsgi:application
