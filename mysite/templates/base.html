@@ -3,12 +3,62 @@
 <html lang="en">
 
 <head>
+  <!-- Structured Data: Developer and Agency Registration -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Buildly Marketplace",
+    "url": "https://collab.buildly.io/",
+    "potentialAction": [
+      {
+        "@type": "RegisterAction",
+        "target": "https://collab.buildly.io/register",
+        "name": "Register as Developer"
+      },
+      {
+        "@type": "RegisterAction",
+        "target": "https://collab.buildly.io/partner",
+        "name": "Register as Agency"
+      }
+    ]
+  }
+  </script>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
-  <title>Buildly CollabHub: Find Your Perfect Startup Collaboration Partner</title>  
-  <meta content="Buildly CollabHub is a free platform connecting startups, software, creative, and marketing teams. Find collaborators and work together on exciting projects." name="description">
-  <meta content="startup collaboration, software development, creative teams, marketing teams, product development, freelance, remote work" name="keywords">
+  <title>Buildly Marketplace | Open Source Collaboration, Developer Training, AI Startup Tools</title>
+  <meta name="description" content="Buildly Marketplace: The leading platform for open source collaboration tools, developer training, and AI-powered startup solutions. Connect, learn, and build with the best in tech.">
+  <meta name="keywords" content="buildly, ai, marketplace, startup, developer, agency, open source, collaboration tools, developer training, software, SaaS, innovation, remote teams, hackathon, open innovation, tech community, cloud, automation, machine learning, data science, product development, agile, digital transformation, open source projects, developer education, team management, project management">
+  <meta property="og:title" content="Buildly Marketplace | Open Source Collaboration, Developer Training, AI Startup Tools">
+  <meta property="og:description" content="Join Buildly Marketplace for open source collaboration, developer training, and AI-powered startup tools. Empower your team and projects with the best resources in tech.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://collab.buildly.io/">
+  <meta property="og:image" content="https://collab.buildly.io/static/img/buildly-og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Buildly Marketplace | Open Source Collaboration, Developer Training, AI Startup Tools">
+  <meta name="twitter:description" content="Discover open source collaboration tools, developer training, and AI startup resources at Buildly Marketplace.">
+  <meta name="twitter:image" content="https://collab.buildly.io/static/img/buildly-og-image.png">
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://collab.buildly.io{{ request.path }}" />
+
+  <!-- Structured Data: Organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Buildly Marketplace",
+    "url": "https://collab.buildly.io/",
+    "logo": "https://collab.buildly.io/static/img/buildly-og-image.png",
+    "sameAs": [
+      "https://twitter.com/buildlyio",
+      "https://github.com/open-build",
+      "https://labs.buildly.io"
+    ],
+    "description": "Buildly Marketplace: Open source collaboration tools, developer training, and AI-powered startup solutions."
+  }
+  </script>
 
   <!-- Favicons -->
   <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
