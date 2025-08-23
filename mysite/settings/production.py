@@ -2,14 +2,11 @@ from .base import *
 import os
 from os.path import join, normpath
 
+# Use SQLite database for production
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'bugbounty',
-        'PASSWORD': os.environ.get("PASSWORD"),
-        'USER': 'bugbounty',
-        'HOST': 'db-mysql-nyc3-97229-do-user-2508039-0.b.db.ondigitalocean.com',
-        'PORT': '25060',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 
