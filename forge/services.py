@@ -12,19 +12,21 @@ class GitHubAPIError(Exception):
     pass
 
 
-class RepoValidationService:
+class GitHubRepoValidationService:
     """Service for validating GitHub repositories for Forge apps"""
     
     def __init__(self):
-        self.github_token = getattr(settings, 'GITHUB_APP_TOKEN', None)
+        self.github_token = getattr(settings, 'GITHUB_API_TOKEN', None)
         self.marketplace_org = getattr(settings, 'FORGE_MARKETPLACE_ORG', 'buildly-marketplace')
         self.default_branch = getattr(settings, 'FORGE_DEFAULT_BRANCH', 'main')
         
-        if not self.github_token:
-            raise ValueError("GITHUB_APP_TOKEN setting is required")
+        # Note: GitHub token is optional for app startup, but required for actual validation operations
     
     def get_headers(self) -> Dict[str, str]:
         """Get GitHub API headers with authentication"""
+        if not self.github_token:
+            raise ValueError("GITHUB_API_TOKEN setting is required for validation operations")
+        
         return {
             'Authorization': f'token {self.github_token}',
             'Accept': 'application/vnd.github.v3+json',
