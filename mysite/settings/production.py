@@ -2,11 +2,21 @@ from .base import *
 import os
 from os.path import join, normpath
 
-# Use SQLite database for production
+# Use MySQL database for production with environment variables
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.environ.get('DB_NAME', 'defaultdb'),
+        'USER': os.environ.get('DB_USER', 'doadmin'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),  # Must be set via environment variable
+        'HOST': os.environ.get('DB_HOST', 'db-mysql-nyc3-40163-do-user-2508039-0.m.db.ondigitalocean.com'),
+        'PORT': os.environ.get('DB_PORT', '25060'),
+        'OPTIONS': {
+            'sql_mode': 'traditional',
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'ssl': {'ssl-mode': 'REQUIRED'}
+        }
     }
 }
 
