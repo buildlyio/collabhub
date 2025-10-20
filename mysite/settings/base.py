@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     # 'punchlist',  # Removed - focusing on agency/developer onboarding
     'submission',
     'onboarding',
+    'forge',  # Marketplace module for Buildly apps
     'import_export',
     'storages',
     'django_tables2',

@@ -70,9 +70,32 @@ YELP_API_KEY = os.environ.get('YELP_API_KEY')
 SOCIAL_AUTH_GITHUB_KEY = os.environ.get('GITHUB_KEY')
 SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('GITHUB_SECRET')
 
+# GitHub API token for Forge marketplace operations
+GITHUB_API_TOKEN = os.environ.get('GITHUB_API_TOKEN')
+
+# Forge marketplace settings
+FORGE_MARKETPLACE_ORG = 'buildly-marketplace'
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://collab.buildly.io')
+
 # Optional: Scope settings to access user repositories and issues
 SOCIAL_AUTH_GITHUB_SCOPE = ['repo', 'user']  # Scopes to access private repositories and user data
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'https://collab.buildly.io/bounties'
 
 # Use HTTPS for redirect URIs if applicable
 SOCIAL_AUTH_REDIRECT_IS_HTTPS = True  # Set this to True if you're using HTTPS
+
+# Forge Marketplace Settings
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY')
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
+
+# GitHub API for repository validation
+GITHUB_API_TOKEN = os.environ.get('GITHUB_API_TOKEN')
+
+# Forge marketplace organization
+FORGE_MARKETPLACE_ORG = os.environ.get('FORGE_MARKETPLACE_ORG', 'buildly-marketplace')
+
+# Frontend URL for payment redirects
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://collab.buildly.io')

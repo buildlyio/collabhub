@@ -1,0 +1,387 @@
+from rest_framework import viewsets, status, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
+from django.shortcuts import get_object_or_404
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.db import models
+import stripe
+import logging
+
+from .models import ForgeApp, Purchase, Entitlement, UserProfile
+from .serializers import (
+    ForgeAppListSerializer, ForgeAppDetailSerializer, ForgeAppCreateUpdateSerializer,
+    PurchaseSerializer, EntitlementSerializer, CheckoutSessionRequestSerializer,
+    CheckoutSessionResponseSerializer, ValidationTriggerSerializer
+)
+from .services import GitHubRepoValidationService
+
+logger = logging.getLogger(__name__)
+
+# Configure Stripe
+stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', '')
+
+
+class StandardResultsSetPagination(PageNumberPagination):
+    """Standard pagination for API responses"""
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
+class ForgeAppViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for Forge app management
+    
+    - list: Public listing of published apps
+    - retrieve: Public detailed view of published apps
+    - create: Staff only - create new app
+    - update/partial_update: Staff only - update existing app
+    - destroy: Staff only - delete app
+    - validate: Staff only - trigger repository validation
+    """
+    pagination_class = StandardResultsSetPagination
+    lookup_field = 'slug'
+    
+    def get_queryset(self):
+        """Filter queryset based on user permissions"""
+        if self.action in ['list', 'retrieve']:
+            # Public views - only published apps
+            return ForgeApp.objects.filter(is_published=True).order_by('-created_at')
+        else:
+            # Staff views - all apps
+            return ForgeApp.objects.all().order_by('-created_at')
+    
+    def get_serializer_class(self):
+        """Return appropriate serializer based on action"""
+        if self.action == 'list':
+            return ForgeAppListSerializer
+        elif self.action == 'retrieve':
+            return ForgeAppDetailSerializer
+        elif self.action in ['create', 'update', 'partial_update']:
+            return ForgeAppCreateUpdateSerializer
+        elif self.action == 'validate':
+            return ValidationTriggerSerializer
+        return ForgeAppDetailSerializer
+    
+    def get_permissions(self):
+        """Set permissions based on action"""
+        if self.action in ['list', 'retrieve']:
+            # Public actions
+            permission_classes = [permissions.AllowAny]
+        else:
+            # Staff-only actions
+            permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+        return [permission() for permission in permission_classes]
+    
+    def list(self, request, *args, **kwargs):
+        """List published apps with filtering and search"""
+        queryset = self.get_queryset()
+        
+        # Filter by categories
+        categories = request.query_params.get('categories')
+        if categories:
+            category_list = [cat.strip() for cat in categories.split(',')]
+            queryset = queryset.filter(categories__overlap=category_list)
+        
+        # Filter by targets
+        targets = request.query_params.get('targets')
+        if targets:
+            target_list = [target.strip() for target in targets.split(',')]
+            queryset = queryset.filter(targets__overlap=target_list)
+        
+        # Search by name or summary
+        search = request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                models.Q(name__icontains=search) | 
+                models.Q(summary__icontains=search)
+            )
+        
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, permissions.IsAdminUser])
+    def validate(self, request, slug=None):
+        """Trigger repository validation for an app"""
+        app = self.get_object()
+        
+        try:
+            # Use the validation service
+            validator = GitHubRepoValidationService()
+            validation = validator.validate_repository(
+                owner=app.repo_owner,
+                repo=app.repo_name,
+                forge_app=app
+            )
+            
+            # Return validation results
+            from .serializers import RepoValidationSerializer
+            serializer = RepoValidationSerializer(validation)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Validation failed for {app.slug}: {str(e)}")
+            return Response(
+                {'error': 'Validation failed', 'detail': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class PurchaseViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for user purchases (read-only)
+    
+    - list: User's own purchases
+    - retrieve: Specific purchase details
+    - create_checkout: Create Stripe checkout session
+    """
+    serializer_class = PurchaseSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
+    
+    def get_queryset(self):
+        """Return purchases for the current user"""
+        return Purchase.objects.filter(user=self.request.user).order_by('-created_at')
+    
+    @action(detail=False, methods=['post'])
+    def create_checkout(self, request):
+        """Create a Stripe checkout session for purchasing an app"""
+        serializer = CheckoutSessionRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        forge_app_id = serializer.validated_data['forge_app_id']
+        forge_app = get_object_or_404(ForgeApp, id=forge_app_id, is_published=True)
+        
+        # Check if user already owns this app
+        if Entitlement.objects.filter(user=request.user, forge_app=forge_app).exists():
+            return Response(
+                {'error': 'You already own this app'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Get user profile to check for discounts
+            user_profile, _ = UserProfile.objects.get_or_create(user=request.user)
+            
+            # Calculate price with discount
+            price_cents = forge_app.price_cents
+            discount_applied = False
+            
+            if user_profile.is_labs_customer:
+                # 50% discount for labs customers
+                price_cents = price_cents // 2
+                discount_applied = True
+            
+            # Create purchase record
+            purchase = Purchase.objects.create(
+                user=request.user,
+                forge_app=forge_app,
+                amount_cents=price_cents,
+                discount_applied=discount_applied,
+                status='pending'
+            )
+            
+            # Create Stripe checkout session
+            checkout_session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                line_items=[{
+                    'price_data': {
+                        'currency': 'usd',
+                        'product_data': {
+                            'name': forge_app.name,
+                            'description': forge_app.summary,
+                        },
+                        'unit_amount': price_cents,
+                    },
+                    'quantity': 1,
+                }],
+                mode='payment',
+                success_url=f"{settings.FRONTEND_URL}/forge/purchase/success?session_id={{CHECKOUT_SESSION_ID}}",
+                cancel_url=f"{settings.FRONTEND_URL}/forge/purchase/cancel",
+                metadata={
+                    'purchase_id': str(purchase.id),
+                    'forge_app_id': str(forge_app.id),
+                    'user_id': str(request.user.id),
+                }
+            )
+            
+            # Update purchase with Stripe session ID
+            purchase.stripe_payment_intent_id = checkout_session.payment_intent
+            purchase.save()
+            
+            response_serializer = CheckoutSessionResponseSerializer({
+                'checkout_url': checkout_session.url,
+                'purchase_id': purchase.id
+            })
+            
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            
+        except stripe.error.StripeError as e:
+            logger.error(f"Stripe error creating checkout: {str(e)}")
+            return Response(
+                {'error': 'Payment processing error', 'detail': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except Exception as e:
+            logger.error(f"Error creating checkout: {str(e)}")
+            return Response(
+                {'error': 'Internal server error', 'detail': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'])
+    def handle_webhook(self, request):
+        """Handle Stripe webhook events"""
+        payload = request.body
+        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+        endpoint_secret = getattr(settings, 'STRIPE_WEBHOOK_SECRET', '')
+        
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, endpoint_secret
+            )
+        except ValueError:
+            logger.error("Invalid payload in Stripe webhook")
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        except stripe.error.SignatureVerificationError:
+            logger.error("Invalid signature in Stripe webhook")
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        
+        # Handle the event
+        if event['type'] == 'checkout.session.completed':
+            session = event['data']['object']
+            self._handle_successful_payment(session)
+        elif event['type'] == 'payment_intent.payment_failed':
+            payment_intent = event['data']['object']
+            self._handle_failed_payment(payment_intent)
+        
+        return Response(status=status.HTTP_200_OK)
+    
+    def _handle_successful_payment(self, session):
+        """Handle successful payment from Stripe webhook"""
+        try:
+            purchase_id = session['metadata']['purchase_id']
+            purchase = Purchase.objects.get(id=purchase_id)
+            
+            # Update purchase status
+            purchase.status = 'completed'
+            purchase.stripe_payment_intent_id = session['payment_intent']
+            purchase.save()
+            
+            # Create entitlement
+            Entitlement.objects.get_or_create(
+                user=purchase.user,
+                forge_app=purchase.forge_app,
+                defaults={'purchase': purchase}
+            )
+            
+            logger.info(f"Successfully processed payment for purchase {purchase_id}")
+            
+        except Purchase.DoesNotExist:
+            logger.error(f"Purchase not found for session {session['id']}")
+        except Exception as e:
+            logger.error(f"Error processing successful payment: {str(e)}")
+    
+    def _handle_failed_payment(self, payment_intent):
+        """Handle failed payment from Stripe webhook"""
+        try:
+            purchase = Purchase.objects.get(stripe_payment_intent_id=payment_intent['id'])
+            purchase.status = 'failed'
+            purchase.save()
+            
+            logger.info(f"Marked purchase {purchase.id} as failed")
+            
+        except Purchase.DoesNotExist:
+            logger.error(f"Purchase not found for payment intent {payment_intent['id']}")
+        except Exception as e:
+            logger.error(f"Error processing failed payment: {str(e)}")
+
+
+class EntitlementViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for user entitlements (read-only)
+    
+    - list: User's owned apps
+    - retrieve: Specific entitlement details
+    """
+    serializer_class = EntitlementSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
+    
+    def get_queryset(self):
+        """Return entitlements for the current user"""
+        return Entitlement.objects.filter(user=self.request.user).order_by('-created_at')
+
+
+# Staff-only views for admin interface
+class AdminForgeAppViewSet(viewsets.ModelViewSet):
+    """
+    Admin viewset for complete Forge app management
+    Only accessible by staff users
+    """
+    queryset = ForgeApp.objects.all().order_by('-created_at')
+    serializer_class = ForgeAppCreateUpdateSerializer
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    pagination_class = StandardResultsSetPagination
+    lookup_field = 'id'  # Use ID instead of slug for admin
+
+
+class AdminPurchaseViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Admin viewset for viewing all purchases
+    Only accessible by staff users
+    """
+    queryset = Purchase.objects.all().order_by('-created_at')
+    serializer_class = PurchaseSerializer
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    pagination_class = StandardResultsSetPagination
+    
+    def get_queryset(self):
+        """Admin can see all purchases with filtering"""
+        queryset = super().get_queryset()
+        
+        # Filter by user
+        user_id = self.request.query_params.get('user_id')
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        
+        # Filter by status
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
+        return queryset
+
+
+class AdminEntitlementViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Admin viewset for viewing all entitlements
+    Only accessible by staff users
+    """
+    queryset = Entitlement.objects.all().order_by('-created_at')
+    serializer_class = EntitlementSerializer
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    pagination_class = StandardResultsSetPagination
+    
+    def get_queryset(self):
+        """Admin can see all entitlements with filtering"""
+        queryset = super().get_queryset()
+        
+        # Filter by user
+        user_id = self.request.query_params.get('user_id')
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        
+        # Filter by forge app
+        forge_app_id = self.request.query_params.get('forge_app_id')
+        if forge_app_id:
+            queryset = queryset.filter(forge_app_id=forge_app_id)
+        
+        return queryset

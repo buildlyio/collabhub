@@ -21,6 +21,10 @@ python3 manage.py migrate --noinput
 echo "📁 Collecting static files..."
 python3 manage.py collectstatic --noinput
 
+# Create admin user for Forge marketplace management
+echo "👤 Creating admin user..."
+python3 manage.py create_admin_user --skip-if-exists
+
 # Initialize onboarding content for production
 echo "🎯 Initializing onboarding content..."
 python3 scripts/init_onboarding_data.py

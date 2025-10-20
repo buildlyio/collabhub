@@ -44,8 +44,22 @@ class TeamMember(models.Model):
 
 
 class TeamMemberAdmin(admin.ModelAdmin):
-    list_display = ('team_member_type','first_name')
-    display = 'Team Member Admin'  
+    list_display = ('first_name', 'last_name', 'email', 'team_member_type', 'approved', 'user')
+    list_filter = ('approved', 'team_member_type')
+    search_fields = ('first_name', 'last_name', 'email', 'user__username')
+    list_editable = ('approved',)
+    actions = ['approve_users', 'unapprove_users']
+    display = 'Team Member Admin'
+    
+    def approve_users(self, request, queryset):
+        updated = queryset.update(approved=True)
+        self.message_user(request, f'{updated} team members approved.')
+    approve_users.short_description = "Approve selected team members"
+    
+    def unapprove_users(self, request, queryset):
+        updated = queryset.update(approved=False)
+        self.message_user(request, f'{updated} team members unapproved.')
+    unapprove_users.short_description = "Unapprove selected team members"  
     
 
 class CertificationExam(models.Model):

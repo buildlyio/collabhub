@@ -44,6 +44,9 @@ urlpatterns = [
     # team member onboarding
     path('onboarding/', include('onboarding.urls')),
     
+    # forge marketplace
+    path('forge/', include('forge.urls')),
+    
     # Agency URLs (redirecting to onboarding app)
     path('agency_list/', views.agency_list_redirect, name='agency_list'),  # Redirect to onboarding agencies list
     path('partner/', views.partner_redirect, name='partner'),  # Redirect to agency registration

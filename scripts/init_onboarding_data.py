@@ -262,8 +262,18 @@ def init_onboarding_content():
         }
     )
     
-    if user_created:
-        print("👤 Created admin user for quiz ownership")
+    # Set a default password if user was just created and no password is set
+    if user_created or not admin_user.password:
+        # Use environment variable or default password
+        default_password = os.environ.get('DJANGO_ADMIN_PASSWORD', 'buildly2024!')
+        admin_user.set_password(default_password)
+        admin_user.save()
+        
+        if user_created:
+            print("👤 Created admin user for quiz ownership")
+            print(f"🔐 Admin credentials: admin / {default_password}")
+        else:
+            print("🔐 Updated admin user password")
     
     print("🎯 Creating certification quizzes...")
     
