@@ -108,9 +108,11 @@ class Purchase(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='forge_purchases')
     forge_app = models.ForeignKey(ForgeApp, on_delete=models.CASCADE, related_name='purchases')
     stripe_payment_intent_id = models.CharField(max_length=200, blank=True)
+    stripe_session_id = models.CharField(max_length=200, blank=True)
     amount_cents = models.IntegerField(validators=[MinValueValidator(0)])
     discount_applied = models.BooleanField(default=False)
     status = models.CharField(max_length=20, choices=PurchaseStatus.choices, default=PurchaseStatus.REQUIRES_PAYMENT)
+    license_document = models.FileField(upload_to='licenses/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -14,9 +14,13 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 from celery.schedules import crontab
 import os
 from os.path import join, normpath
+from dotenv import load_dotenv
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
+
+# Load environment variables from .env file
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -241,6 +245,11 @@ SOCIAL_AUTH_GITHUB_SCOPE = ['repo', 'user']
 LABS_TOKEN_URL = os.environ.get('LABS_TOKEN_URL', 'https://labs-api.buildly.dev')
 LABS_CLIENT_ID = os.environ.get('LABS_CLIENT_ID')
 LABS_CLIENT_SECRET = os.environ.get('LABS_CLIENT_SECRET')
+
+# Stripe Configuration
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY')
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')  # Will be set up later
 
 # Redirect URL after successful login
 LOGIN_REDIRECT_URL = '/'

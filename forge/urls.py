@@ -1,4 +1,5 @@
 from django.urls import path, include
+from django.views.generic import TemplateView
 from rest_framework.routers import DefaultRouter
 from .views import (
     ForgeAppViewSet, PurchaseViewSet, EntitlementViewSet,
@@ -22,6 +23,7 @@ app_name = 'forge'
 urlpatterns = [
     # Public HTML marketplace pages
     path('', MarketplaceView.as_view(), name='marketplace-home'),
+    # path('debug/', TemplateView.as_view(template_name='forge/debug.html'), name='debug'),
     path('app/<slug:slug>/', AppDetailView.as_view(), name='app-detail'),
     path('checkout/<slug:slug>/', CheckoutView.as_view(), name='checkout'),
     path('success/', SuccessView.as_view(), name='purchase-success'),

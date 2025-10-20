@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block page_title %}Purchase Successful - Buildly Forge{% endblock %}
+{% block page_title %}Purchase Successful - The Forge{% endblock %}
 
-{% block content %}
+{% block page_content %}
 <div class="min-h-screen bg-gray-50 py-16">
   <div class="container mx-auto px-6">
     <div class="max-w-2xl mx-auto text-center">
@@ -91,6 +91,63 @@
           </div>
         </div>
       </div>
+
+      <!-- License Document Download -->
+      {% if purchase and show_download_link %}
+      <div class="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+        <div class="flex items-start gap-4">
+          <svg class="w-8 h-8 text-green-600 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+          </svg>
+          <div class="text-left flex-1">
+            <h3 class="text-lg font-bold text-green-900 mb-2">📄 Your License & Support Document</h3>
+            <p class="text-green-800 mb-4">
+              Your official license agreement and support document is ready for download. This document includes:
+            </p>
+            <ul class="text-green-700 text-sm space-y-1 mb-4">
+              <li>• 🔐 Complete Fair Hybrid License terms and commercial usage rights</li>
+              <li>• 📦 Repository access information and installation instructions</li>
+              <li>• 🛠️ Priority support contact details and response times</li>
+              <li>• 🎯 Buildly Labs membership benefits (if applicable)</li>
+            </ul>
+            <a href="/marketplace/api/purchases/{{ purchase.id }}/download_license/" 
+               class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m-8 5h10a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z"/>
+              </svg>
+              Download License & Support Document (PDF)
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Purchase Details -->
+      {% if purchase %}
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8 text-left">
+        <h3 class="text-lg font-bold text-blue-900 mb-4">📋 Purchase Summary</h3>
+        <div class="grid md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <span class="text-blue-700 font-medium">Application:</span>
+            <span class="text-blue-900">{{ purchase.forge_app.name }}</span>
+          </div>
+          <div>
+            <span class="text-blue-700 font-medium">Purchase ID:</span>
+            <span class="text-blue-900 font-mono">{{ purchase.id }}</span>
+          </div>
+          <div>
+            <span class="text-blue-700 font-medium">Amount Paid:</span>
+            <span class="text-blue-900">${{ purchase.amount_dollars }}</span>
+          </div>
+          <div>
+            <span class="text-blue-700 font-medium">Repository:</span>
+            <a href="{{ purchase.forge_app.repo_url }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+              {{ purchase.forge_app.repo_owner }}/{{ purchase.forge_app.repo_name }}
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
 
       <!-- Action Buttons -->
       <div class="flex flex-col sm:flex-row gap-4 justify-center">

@@ -5,11 +5,13 @@ from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
 from django.db import models
 import stripe
 import logging
 
 from .models import ForgeApp, Purchase, Entitlement, UserProfile
+from .pdf_generator import generate_license_pdf
 from .serializers import (
     ForgeAppListSerializer, ForgeAppDetailSerializer, ForgeAppCreateUpdateSerializer,
     PurchaseSerializer, EntitlementSerializer, CheckoutSessionRequestSerializer,
@@ -208,12 +210,25 @@ class PurchaseViewSet(viewsets.ReadOnlyModelViewSet):
                 metadata={
                     'purchase_id': str(purchase.id),
                     'forge_app_id': str(forge_app.id),
+                    'forge_app_slug': forge_app.slug,
+                    'forge_app_name': forge_app.name,
+                    'forge_app_repo_url': forge_app.repo_url,
+                    'forge_app_repo_owner': forge_app.repo_owner,
+                    'forge_app_repo_name': forge_app.repo_name,
+                    'forge_app_license_type': forge_app.license_type,
                     'user_id': str(request.user.id),
+                    'user_email': request.user.email,
+                    'user_name': f"{request.user.first_name} {request.user.last_name}".strip(),
+                    'original_price_cents': str(forge_app.price_cents),
+                    'final_price_cents': str(price_cents),
+                    'discount_applied': str(discount_applied),
+                    'is_labs_customer': str(user_profile.is_labs_customer),
                 }
             )
             
-            # Update purchase with Stripe session ID
+            # Update purchase with Stripe session info
             purchase.stripe_payment_intent_id = checkout_session.payment_intent
+            purchase.stripe_session_id = checkout_session.id
             purchase.save()
             
             response_serializer = CheckoutSessionResponseSerializer({
@@ -335,6 +350,20 @@ class PurchaseViewSet(viewsets.ReadOnlyModelViewSet):
             # Update purchase status
             purchase.status = 'completed'
             purchase.stripe_payment_intent_id = session['payment_intent']
+            purchase.stripe_session_id = session['id']
+            
+            # Generate license PDF with comprehensive metadata
+            purchase_data = session['metadata']
+            pdf_buffer = generate_license_pdf(purchase_data, str(purchase.id))
+            
+            # Save the PDF to the purchase record
+            filename = f"license_and_support_{purchase.forge_app.slug}_{purchase.id}.pdf"
+            purchase.license_document.save(
+                filename,
+                ContentFile(pdf_buffer.read()),
+                save=False
+            )
+            
             purchase.save()
             
             # Create entitlement
@@ -344,7 +373,7 @@ class PurchaseViewSet(viewsets.ReadOnlyModelViewSet):
                 defaults={'purchase': purchase}
             )
             
-            logger.info(f"Successfully processed payment for purchase {purchase_id}")
+            logger.info(f"Successfully processed payment and generated license for purchase {purchase_id}")
             
         except Purchase.DoesNotExist:
             logger.error(f"Purchase not found for session {session['id']}")
@@ -364,6 +393,49 @@ class PurchaseViewSet(viewsets.ReadOnlyModelViewSet):
             logger.error(f"Purchase not found for payment intent {payment_intent['id']}")
         except Exception as e:
             logger.error(f"Error processing failed payment: {str(e)}")
+    
+    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def download_license(self, request, pk=None):
+        """Download the license document for a completed purchase"""
+        try:
+            purchase = get_object_or_404(Purchase, id=pk, user=request.user, status='completed')
+            
+            if not purchase.license_document:
+                # If no document exists, generate it now
+                purchase_data = {
+                    'forge_app_name': purchase.forge_app.name,
+                    'forge_app_repo_url': purchase.forge_app.repo_url,
+                    'forge_app_repo_owner': purchase.forge_app.repo_owner,
+                    'forge_app_repo_name': purchase.forge_app.repo_name,
+                    'forge_app_license_type': purchase.forge_app.license_type,
+                    'user_email': purchase.user.email,
+                    'user_name': f"{purchase.user.first_name} {purchase.user.last_name}".strip(),
+                    'original_price_cents': str(purchase.forge_app.price_cents),
+                    'final_price_cents': str(purchase.amount_cents),
+                    'discount_applied': str(purchase.discount_applied),
+                    'is_labs_customer': str(hasattr(purchase.user, 'forge_profile') and purchase.user.forge_profile.is_labs_customer),
+                }
+                
+                pdf_buffer = generate_license_pdf(purchase_data, str(purchase.id))
+                filename = f"license_and_support_{purchase.forge_app.slug}_{purchase.id}.pdf"
+                purchase.license_document.save(
+                    filename,
+                    ContentFile(pdf_buffer.read()),
+                    save=True
+                )
+            
+            # Return the file for download
+            from django.http import HttpResponse
+            response = HttpResponse(purchase.license_document.read(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="Buildly_License_{purchase.forge_app.name}_{purchase.id}.pdf"'
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error downloading license: {str(e)}")
+            return Response(
+                {'error': 'Unable to generate license document'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class EntitlementViewSet(viewsets.ReadOnlyModelViewSet):
@@ -493,14 +565,14 @@ class CheckoutView(TemplateView):
             try:
                 user_profile = UserProfile.objects.get(user=self.request.user)
                 if user_profile.is_labs_customer:
-                    context['discount_amount'] = app.price / 2
-                    context['final_price'] = app.price / 2
+                    context['discount_amount'] = app.price_dollars / 2
+                    context['final_price'] = app.price_dollars / 2
                 else:
-                    context['final_price'] = app.price
+                    context['final_price'] = app.price_dollars
             except UserProfile.DoesNotExist:
-                context['final_price'] = app.price
+                context['final_price'] = app.price_dollars
         else:
-            context['final_price'] = app.price
+            context['final_price'] = app.price_dollars
         
         return context
 
@@ -508,3 +580,30 @@ class CheckoutView(TemplateView):
 class SuccessView(TemplateView):
     """Purchase success page"""
     template_name = 'forge/success.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get session_id from URL parameters
+        session_id = self.request.GET.get('session_id')
+        
+        if session_id:
+            try:
+                # Retrieve the Stripe session
+                session = stripe.checkout.Session.retrieve(session_id)
+                
+                # Find the corresponding purchase
+                purchase = Purchase.objects.get(
+                    stripe_session_id=session_id,
+                    user=self.request.user if self.request.user.is_authenticated else None
+                )
+                
+                context['purchase'] = purchase
+                context['session'] = session
+                context['show_download_link'] = purchase.status == 'completed' and purchase.license_document
+                
+            except (Purchase.DoesNotExist, stripe.error.StripeError) as e:
+                logger.error(f"Error retrieving purchase info for session {session_id}: {str(e)}")
+                context['error'] = "Unable to retrieve purchase information"
+        
+        return context

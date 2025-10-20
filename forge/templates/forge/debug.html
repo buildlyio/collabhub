@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}The Forge - Debug{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-6 py-8">
+    <h1 class="text-3xl font-bold mb-8">The Forge - Debug Page</h1>
+    
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-xl font-bold mb-4">API Test</h2>
+        <button onclick="testAPI()" class="bg-blue-500 text-white px-4 py-2 rounded">Test API</button>
+        <div id="api-result" class="mt-4"></div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-bold mb-4">Apps Display</h2>
+        <div id="apps-display" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </div>
+</div>
+
+<script>
+async function testAPI() {
+    const resultDiv = document.getElementById('api-result');
+    const appsDiv = document.getElementById('apps-display');
+    
+    try {
+        resultDiv.innerHTML = 'Loading...';
+        
+        const response = await fetch('/marketplace/api/apps/');
+        const data = await response.json();
+        
+        console.log('API Response:', data);
+        
+        resultDiv.innerHTML = `
+            <h3>API Response:</h3>
+            <p>Status: ${response.status}</p>
+            <p>Count: ${data.count}</p>
+            <p>Results: ${data.results ? data.results.length : 0} apps</p>
+            <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; overflow: auto; max-height: 200px;">${JSON.stringify(data, null, 2)}</pre>
+        `;
+        
+        if (data.results && data.results.length > 0) {
+            appsDiv.innerHTML = data.results.map(app => `
+                <div class="border p-4 rounded">
+                    <h3 class="font-bold">${app.name}</h3>
+                    <p>Price: $${app.price_dollars || (app.price_cents / 100).toFixed(2)}</p>
+                    <p>Categories: ${app.categories ? app.categories.join(', ') : 'None'}</p>
+                    <p>Targets: ${app.targets ? app.targets.join(', ') : 'None'}</p>
+                    <p class="text-sm text-gray-600">${app.summary}</p>
+                </div>
+            `).join('');
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        resultDiv.innerHTML = `<p class="text-red-600">Error: ${error.message}</p>`;
+    }
+}
+
+// Auto-test on page load
+document.addEventListener('DOMContentLoaded', testAPI);
+</script>
+{% endblock %}
