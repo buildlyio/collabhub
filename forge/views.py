@@ -236,6 +236,68 @@ class PurchaseViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
+    @action(detail=False, methods=['post'], permission_classes=[permissions.AllowAny])
+    def guest_checkout_session(self, request):
+        """Create a Stripe checkout session for guest users"""
+        app_slug = request.data.get('app_slug')
+        customer_email = request.data.get('customer_email')
+        customer_name = request.data.get('customer_name')
+        success_url = request.data.get('success_url')
+        cancel_url = request.data.get('cancel_url')
+        
+        if not all([app_slug, customer_email, success_url, cancel_url]):
+            return Response(
+                {'error': 'Missing required fields'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        forge_app = get_object_or_404(ForgeApp, slug=app_slug, is_published=True)
+        
+        try:
+            # Create Stripe checkout session for guest
+            checkout_session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                customer_email=customer_email,
+                line_items=[{
+                    'price_data': {
+                        'currency': 'usd',
+                        'product_data': {
+                            'name': forge_app.name,
+                            'description': forge_app.summary,
+                        },
+                        'unit_amount': forge_app.price_cents,
+                    },
+                    'quantity': 1,
+                }],
+                mode='payment',
+                success_url=success_url + '?session_id={CHECKOUT_SESSION_ID}',
+                cancel_url=cancel_url,
+                metadata={
+                    'forge_app_slug': forge_app.slug,
+                    'customer_email': customer_email,
+                    'customer_name': customer_name,
+                    'is_guest_purchase': 'true'
+                }
+            )
+            
+            return Response({
+                'checkout_url': checkout_session.url,
+                'session_id': checkout_session.id
+            }, status=status.HTTP_201_CREATED)
+            
+        except stripe.error.StripeError as e:
+            logger.error(f"Stripe error in guest checkout: {str(e)}")
+            return Response(
+                {'error': 'Payment processing error'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except Exception as e:
+            logger.error(f"Error in guest checkout: {str(e)}")
+            return Response(
+                {'error': 'Internal server error'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
     @action(detail=False, methods=['post'])
     def handle_webhook(self, request):
         """Handle Stripe webhook events"""
@@ -385,3 +447,64 @@ class AdminEntitlementViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(forge_app_id=forge_app_id)
         
         return queryset
+
+
+# HTML Template Views for Public Marketplace
+from django.shortcuts import render, get_object_or_404
+from django.views.generic import TemplateView
+from django.http import JsonResponse
+import json
+
+class MarketplaceView(TemplateView):
+    """Public marketplace listing page"""
+    template_name = 'forge/marketplace.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['apps_count'] = ForgeApp.objects.filter(is_published=True).count()
+        return context
+
+
+class AppDetailView(TemplateView):
+    """Public app detail page"""
+    template_name = 'forge/app_detail.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        slug = kwargs.get('slug')
+        app = get_object_or_404(ForgeApp, slug=slug, is_published=True)
+        context['app'] = app
+        return context
+
+
+class CheckoutView(TemplateView):
+    """Checkout page for app purchase"""
+    template_name = 'forge/checkout.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        slug = kwargs.get('slug')
+        app = get_object_or_404(ForgeApp, slug=slug, is_published=True)
+        
+        context['app'] = app
+        
+        # Calculate pricing
+        if self.request.user.is_authenticated:
+            try:
+                user_profile = UserProfile.objects.get(user=self.request.user)
+                if user_profile.is_labs_customer:
+                    context['discount_amount'] = app.price / 2
+                    context['final_price'] = app.price / 2
+                else:
+                    context['final_price'] = app.price
+            except UserProfile.DoesNotExist:
+                context['final_price'] = app.price
+        else:
+            context['final_price'] = app.price
+        
+        return context
+
+
+class SuccessView(TemplateView):
+    """Purchase success page"""
+    template_name = 'forge/success.html'

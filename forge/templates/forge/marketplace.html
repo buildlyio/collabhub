@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Buildly Forge Marketplace{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white py-16">
+    <div class="container mx-auto px-6">
+      <div class="text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">
+          🔨 Buildly Forge Marketplace
+        </h1>
+        <p class="text-xl mb-8 max-w-3xl mx-auto">
+          Discover ready-to-deploy applications built with Buildly Core. From Docker containers to Kubernetes deployments, 
+          find the perfect solution for your project.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <div class="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-3">
+            <div class="text-2xl font-bold" id="apps-count">{{ apps_count }}+</div>
+            <div class="text-sm opacity-90">Available Apps</div>
+          </div>
+          <div class="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-3">
+            <div class="text-2xl font-bold">$49</div>
+            <div class="text-sm opacity-90">Starting Price</div>
+          </div>
+          <div class="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-3">
+            <div class="text-2xl font-bold">100%</div>
+            <div class="text-sm opacity-90">GitHub Validated</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="container mx-auto px-6 py-8">
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+      <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
+        <div class="flex flex-col sm:flex-row gap-4 flex-1">
+          <input type="text" id="search-input" placeholder="Search apps..." 
+                 class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+          
+          <select id="category-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+            <option value="">All Categories</option>
+            <option value="docker">Docker Apps</option>
+            <option value="kubernetes">Kubernetes</option>
+            <option value="web">Web Applications</option>
+            <option value="api">APIs & Microservices</option>
+            <option value="ai-ml">AI & Machine Learning</option>
+            <option value="database">Databases</option>
+            <option value="monitoring">Monitoring</option>
+            <option value="security">Security</option>
+          </select>
+
+          <select id="target-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+            <option value="">All Targets</option>
+            <option value="docker">Docker</option>
+            <option value="k8s">Kubernetes</option>
+            <option value="github-pages">GitHub Pages</option>
+            <option value="desktop">Desktop</option>
+          </select>
+        </div>
+        
+        <div class="flex gap-2">
+          <button onclick="applyFilters()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors">
+            Search
+          </button>
+          <button onclick="clearFilters()" class="border border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 rounded-lg transition-colors">
+            Clear
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Buildly Core Highlight -->
+    <div class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 mb-8">
+      <div class="flex items-center gap-4">
+        <div class="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-xl font-bold text-gray-900 mb-2">
+            ⚡ Works with Buildly Core
+          </h3>
+          <p class="text-gray-700 mb-3">
+            All applications in this marketplace are built to work seamlessly with Buildly Core - the rapid application development framework that powers modern microservices.
+          </p>
+          <a href="https://buildly.io" target="_blank" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium">
+            Learn about Buildly Core
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Apps Grid -->
+    <div id="apps-container" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <!-- Apps will be loaded here via JavaScript -->
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading" class="text-center py-8">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+      <p class="text-gray-600 mt-4">Loading amazing apps...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="text-center py-16 hidden">
+      <div class="text-gray-400 mb-4">
+        <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29-1.009-5.824-2.563M15 9.34V7a3 3 0 00-3-3 3 3 0 00-3 3v2.34m1 9.66h4l2 2H8l2-2z"/>
+        </svg>
+      </div>
+      <h3 class="text-xl font-semibold text-gray-700 mb-2">No apps found</h3>
+      <p class="text-gray-600 mb-4">Try adjusting your search criteria or browse all available apps.</p>
+      <button onclick="clearFilters()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg">
+        View All Apps
+      </button>
+    </div>
+
+    <!-- Pagination -->
+    <div id="pagination" class="flex justify-center mt-8 hidden">
+      <nav class="flex space-x-2">
+        <button id="prev-btn" onclick="loadPage(currentPage - 1)" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+          Previous
+        </button>
+        <div id="page-numbers" class="flex space-x-1"></div>
+        <button id="next-btn" onclick="loadPage(currentPage + 1)" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+          Next
+        </button>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentPage = 1;
+let totalPages = 1;
+
+function createAppCard(app) {
+  const categories = app.categories ? app.categories.slice(0, 3) : [];
+  const targets = app.targets ? app.targets : [];
+  
+  const categoryTags = categories.map(cat => 
+    `<span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">${cat}</span>`
+  ).join(' ');
+  
+  const targetBadges = targets.slice(0, 2).map(target => {
+    const icons = {
+      'docker': '🐳',
+      'k8s': '☸️',
+      'kubernetes': '☸️',
+      'github-pages': '🌐',
+      'desktop': '💻'
+    };
+    return `<span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+      ${icons[target] || '⚡'} ${target}
+    </span>`;
+  }).join(' ');
+
+  return `
+    <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden">
+      <div class="p-6">
+        <div class="flex items-start justify-between mb-4">
+          <h3 class="text-xl font-bold text-gray-900 mb-2">${app.name}</h3>
+          <div class="text-2xl font-bold text-purple-600">$${app.price}</div>
+        </div>
+        
+        <p class="text-gray-600 mb-4 line-clamp-3">${app.summary || 'No description available'}</p>
+        
+        <div class="flex flex-wrap gap-2 mb-4">
+          ${categoryTags}
+        </div>
+        
+        <div class="flex flex-wrap gap-2 mb-4">
+          ${targetBadges}
+        </div>
+        
+        <!-- Buildly Core Badge -->
+        <div class="flex items-center gap-2 mb-4 p-2 bg-blue-50 rounded-lg">
+          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          <span class="text-sm font-medium text-blue-700">Works with Buildly Core</span>
+        </div>
+        
+        <div class="flex gap-2">
+          <a href="/marketplace/app/${app.slug}" 
+             class="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-center py-2 px-4 rounded-lg font-medium transition-colors">
+            View Details
+          </a>
+          <button onclick="purchaseApp('${app.slug}')" 
+                  class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+            Buy Now
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function loadApps(page = 1, search = '', categories = '', targets = '') {
+  document.getElementById('loading').classList.remove('hidden');
+  document.getElementById('empty-state').classList.add('hidden');
+  
+  try {
+    let url = `/api/forge/apps/?page=${page}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (categories) url += `&categories=${encodeURIComponent(categories)}`;
+    if (targets) url += `&targets=${encodeURIComponent(targets)}`;
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    const container = document.getElementById('apps-container');
+    
+    if (data.results && data.results.length > 0) {
+      container.innerHTML = data.results.map(createAppCard).join('');
+      updatePagination(data);
+      document.getElementById('apps-count').textContent = data.count;
+    } else {
+      container.innerHTML = '';
+      document.getElementById('empty-state').classList.remove('hidden');
+      document.getElementById('pagination').classList.add('hidden');
+    }
+  } catch (error) {
+    console.error('Error loading apps:', error);
+    document.getElementById('apps-container').innerHTML = 
+      '<div class="col-span-full text-center text-red-600">Error loading apps. Please try again.</div>';
+  } finally {
+    document.getElementById('loading').classList.add('hidden');
+  }
+}
+
+function updatePagination(data) {
+  totalPages = Math.ceil(data.count / 20);
+  
+  if (totalPages <= 1) {
+    document.getElementById('pagination').classList.add('hidden');
+    return;
+  }
+  
+  document.getElementById('pagination').classList.remove('hidden');
+  
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+  
+  prevBtn.disabled = currentPage <= 1;
+  nextBtn.disabled = currentPage >= totalPages;
+  
+  // Update page numbers
+  const pageNumbers = document.getElementById('page-numbers');
+  pageNumbers.innerHTML = '';
+  
+  for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+    const button = document.createElement('button');
+    button.textContent = i;
+    button.className = `px-3 py-2 border rounded-lg ${i === currentPage ? 'bg-purple-600 text-white border-purple-600' : 'bg-white border-gray-300 hover:bg-gray-50'}`;
+    button.onclick = () => loadPage(i);
+    pageNumbers.appendChild(button);
+  }
+}
+
+function loadPage(page) {
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  applyFilters();
+}
+
+function applyFilters() {
+  const search = document.getElementById('search-input').value;
+  const categories = document.getElementById('category-filter').value;
+  const targets = document.getElementById('target-filter').value;
+  
+  loadApps(currentPage, search, categories, targets);
+}
+
+function clearFilters() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('category-filter').value = '';
+  document.getElementById('target-filter').value = '';
+  currentPage = 1;
+  loadApps();
+}
+
+function purchaseApp(slug) {
+  window.location.href = `/marketplace/checkout/${slug}`;
+}
+
+// Search on Enter
+document.getElementById('search-input').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    currentPage = 1;
+    applyFilters();
+  }
+});
+
+// Load apps on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadApps();
+});
+</script>
+
+<style>
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animation-delay-400 {
+  animation-delay: 400ms;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+</style>
+{% endblock %}

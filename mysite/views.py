@@ -27,7 +27,21 @@ User = get_user_model()
 
 def homepage(request):
     """View function for home page of site."""
-    return render(request, 'home_page.html')
+    # Get some featured Forge apps for the homepage
+    try:
+        from forge.models import ForgeApp
+        featured_apps = ForgeApp.objects.filter(is_published=True)[:6]
+        apps_count = ForgeApp.objects.filter(is_published=True).count()
+    except:
+        # Handle case where Forge app is not available
+        featured_apps = []
+        apps_count = 0
+    
+    context = {
+        'featured_apps': featured_apps,
+        'apps_count': apps_count,
+    }
+    return render(request, 'home_page.html', context)
 
 
 def agencies_list(request):
@@ -138,7 +152,8 @@ def login_request(request):
 				messages.error(request,"Invalid username or password.")
 		else:
 			messages.error(request,"Invalid username or password.")
-	form = AuthenticationForm()
+	else:
+		form = AuthenticationForm()
 	return render(request=request, template_name="login.html", context={"login_form":form})
 
 def logout_request(request):

@@ -2,7 +2,8 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     ForgeAppViewSet, PurchaseViewSet, EntitlementViewSet,
-    AdminForgeAppViewSet, AdminPurchaseViewSet, AdminEntitlementViewSet
+    AdminForgeAppViewSet, AdminPurchaseViewSet, AdminEntitlementViewSet,
+    MarketplaceView, AppDetailView, CheckoutView, SuccessView
 )
 
 # Create routers for public and admin APIs
@@ -19,6 +20,12 @@ admin_router.register(r'entitlements', AdminEntitlementViewSet, basename='admin-
 app_name = 'forge'
 
 urlpatterns = [
+    # Public HTML marketplace pages
+    path('', MarketplaceView.as_view(), name='marketplace-home'),
+    path('app/<slug:slug>/', AppDetailView.as_view(), name='app-detail'),
+    path('checkout/<slug:slug>/', CheckoutView.as_view(), name='checkout'),
+    path('success/', SuccessView.as_view(), name='purchase-success'),
+    
     # Public API endpoints
     path('api/', include(public_router.urls)),
     
