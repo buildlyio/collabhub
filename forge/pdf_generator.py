@@ -147,14 +147,21 @@ class LicensePDFGenerator:
         <font name="Courier">git clone {purchase_data.get('forge_app_repo_url', '')}</font><br/>
         <font name="Courier">cd {purchase_data.get('forge_app_repo_name', '')}</font><br/>
         
-        <b>Step 2: Setup Environment</b><br/>
-        Follow the README.md file in the repository for specific setup instructions.<br/>
+        <b>Step 2: Choose Your Deployment Option</b><br/>
+        This application supports multiple deployment methods:<br/>
+        • 🐳 <b>Docker:</b> Use docker-compose.yml for standalone deployment<br/>
+        • 📄 <b>GitHub Pages:</b> Follow docs/github-pages.md for static site hosting<br/>
+        • ☸️ <b>Kubernetes:</b> Apply manifests in k8s/ directory<br/>
+        • ⚡ <b>Buildly Core:</b> Follow buildly-integration.md for microservice setup<br/>
         
-        <b>Step 3: License Integration</b><br/>
+        <b>Step 3: Environment Configuration</b><br/>
+        Follow the README.md file in the repository for platform-specific setup instructions.<br/>
+        
+        <b>Step 4: License Integration</b><br/>
         Add this license file to your project root and ensure compliance with the BSL 1.1 terms.<br/>
         
-        <b>Step 4: Production Deployment</b><br/>
-        You are authorized to deploy this software in production with your commercial license.
+        <b>Step 5: Production Deployment</b><br/>
+        You are authorized to deploy this software in production with your commercial license on any supported platform.
         """
         
         story.append(Paragraph(installation_guide, self.styles['Normal']))

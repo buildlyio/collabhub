@@ -70,6 +70,8 @@ class ForgeAppAdmin(admin.ModelAdmin):
     
     def price_dollars(self, obj):
         """Display price in dollars"""
+        if obj.price_cents is None:
+            return "Not set"
         return f"${obj.price_cents / 100:.2f}"
     price_dollars.short_description = 'Price (USD)'
     

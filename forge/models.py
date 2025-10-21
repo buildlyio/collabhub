@@ -70,6 +70,8 @@ class ForgeApp(models.Model):
     @property
     def price_dollars(self):
         """Convert price from cents to dollars"""
+        if self.price_cents is None:
+            return 0.0
         return self.price_cents / 100
 
     @property
@@ -121,6 +123,8 @@ class Purchase(models.Model):
     @property
     def amount_dollars(self):
         """Convert amount from cents to dollars"""
+        if self.amount_cents is None:
+            return 0.0
         return self.amount_cents / 100
 
     class Meta:
