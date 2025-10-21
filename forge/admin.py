@@ -2,7 +2,26 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django import forms
 from .models import ForgeApp, RepoValidation, Purchase, Entitlement, UserProfile
+
+
+class ForgeAppForm(forms.ModelForm):
+    """Custom form for ForgeApp with better price handling"""
+    
+    class Meta:
+        model = ForgeApp
+        fields = '__all__'
+        help_texts = {
+            'price_cents': 'Enter price in cents (e.g., 2999 for $29.99, 0 for free)',
+        }
+        widgets = {
+            'price_cents': forms.NumberInput(attrs={
+                'min': 0,
+                'step': 1,
+                'placeholder': 'e.g., 2999 for $29.99'
+            })
+        }
 
 
 @admin.register(UserProfile)
@@ -26,6 +45,7 @@ class RepoValidationInline(admin.TabularInline):
 
 @admin.register(ForgeApp)
 class ForgeAppAdmin(admin.ModelAdmin):
+    form = ForgeAppForm
     list_display = [
         'name', 'slug', 'price_dollars', 'is_published', 
         'latest_validation_status', 'repo_link', 'created_at'
@@ -36,7 +56,7 @@ class ForgeAppAdmin(admin.ModelAdmin):
     ]
     search_fields = ['name', 'slug', 'summary', 'repo_owner', 'repo_name']
     readonly_fields = [
-        'id', 'price_dollars', 'repo_owner', 'repo_name', 
+        'id', 'repo_owner', 'repo_name', 
         'latest_validation_display', 'created_at', 'updated_at'
     ]
     prepopulated_fields = {'slug': ('name',)}
@@ -50,7 +70,8 @@ class ForgeAppAdmin(admin.ModelAdmin):
             'fields': ('repo_url', 'repo_owner', 'repo_name')
         }),
         ('Pricing & Metadata', {
-            'fields': ('price_cents', 'price_dollars', 'license_type', 'change_date_utc')
+            'fields': ('price_cents', 'license_type', 'change_date_utc'),
+            'description': 'Price in cents (e.g., 2999 = $29.99)'
         }),
         ('Categories & Targets', {
             'fields': ('categories', 'targets')

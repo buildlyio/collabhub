@@ -50,7 +50,8 @@ class ForgeApp(models.Model):
     slug = models.SlugField(max_length=100, unique=True)
     name = models.CharField(max_length=200)
     summary = models.TextField()
-    price_cents = models.IntegerField(validators=[MinValueValidator(0)])
+    price_cents = models.IntegerField(default=0, validators=[MinValueValidator(0)], 
+                                    help_text="Price in cents (e.g., 2999 for $29.99, 0 for free)")
     repo_url = models.URLField(max_length=500)
     repo_owner = models.CharField(max_length=100)
     repo_name = models.CharField(max_length=100)
