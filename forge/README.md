@@ -124,7 +124,7 @@ POST /forge/webhook/stripe/
 GITHUB_API_TOKEN=your_github_token
 
 # Required for Stripe payments
-STRIPE_SECRET_KEY=sk_live_or_test_key
+STRIPE_API_KEY=sk_live_or_test_key
 STRIPE_WEBHOOK_SECRET=whsec_webhook_secret
 
 # Optional - Frontend URL for payment redirects

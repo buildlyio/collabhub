@@ -380,10 +380,14 @@ function selectCheckoutMethod(method) {
     radio.checked = radio.value === method;
   });
 
-  // Show/hide forms
-  document.getElementById('login-form').classList.toggle('hidden', method !== 'login');
-  document.getElementById('register-form').classList.toggle('hidden', method !== 'register');
-  document.getElementById('guest-form').classList.toggle('hidden', method !== 'guest');
+  // Show/hide forms (only if they exist - for unauthenticated users)
+  const loginForm = document.getElementById('login-form');
+  const registerForm = document.getElementById('register-form');
+  const guestForm = document.getElementById('guest-form');
+  
+  if (loginForm) loginForm.classList.toggle('hidden', method !== 'login');
+  if (registerForm) registerForm.classList.toggle('hidden', method !== 'register');
+  if (guestForm) guestForm.classList.toggle('hidden', method !== 'guest');
 }
 
 async function startCheckout() {
@@ -467,9 +471,12 @@ function getCookie(name) {
   return cookieValue;
 }
 
-// Initialize with guest checkout selected
+// Initialize with guest checkout selected (only for non-authenticated users)
 document.addEventListener('DOMContentLoaded', function() {
-  selectCheckoutMethod('guest');
+  // Only initialize checkout method selection for unauthenticated users
+  if (document.getElementById('guest-form')) {
+    selectCheckoutMethod('guest');
+  }
 });
 </script>
 {% endblock %}

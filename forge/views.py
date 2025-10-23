@@ -22,7 +22,7 @@ from .services import GitHubRepoValidationService
 logger = logging.getLogger(__name__)
 
 # Configure Stripe
-stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', '')
+stripe.api_key = getattr(settings, 'STRIPE_API_KEY', '')
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -174,6 +174,14 @@ class PurchaseViewSet(viewsets.ReadOnlyModelViewSet):
             )
         
         try:
+            # Check Stripe configuration
+            if not stripe.api_key:
+                logger.error("Stripe API key not configured")
+                return Response(
+                    {'error': 'Payment system not configured'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
             # Get user profile to check for discounts
             user_profile, _ = UserProfile.objects.get_or_create(user=request.user)
             

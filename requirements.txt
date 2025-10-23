@@ -3,7 +3,7 @@ mysqlclient==2.1.0
 django-debug-toolbar
 python-dotenv
 reportlab
-stripe
+stripe>=5.0.0,<6.0.0
 django-crispy-forms
 colorful
 django_social_share

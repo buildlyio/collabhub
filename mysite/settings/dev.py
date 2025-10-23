@@ -50,7 +50,7 @@ LABS_CLIENT_SECRET = "password2025"
 # Override Stripe settings for development with test keys
 # NOTE: Replace these with actual Stripe test keys for real testing
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', 'pk_test_replace_with_your_test_key')
-STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', 'sk_test_replace_with_your_test_key')
+STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY', 'sk_test_replace_with_your_test_key')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', 'whsec_replace_with_your_webhook_secret')
 
 # Frontend URL for development

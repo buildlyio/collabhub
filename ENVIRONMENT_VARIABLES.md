@@ -20,7 +20,7 @@ cp .env.example .env
 The marketplace requires Stripe for payment processing:
 
 - `STRIPE_PUBLISHABLE_KEY`: Your Stripe publishable key (pk_test_... or pk_live_...)
-- `STRIPE_SECRET_KEY`: Your Stripe secret key (sk_test_... or sk_live_...)
+- `STRIPE_API_KEY`: Your Stripe secret key (sk_test_... or sk_live_...)
 - `STRIPE_WEBHOOK_SECRET`: Stripe webhook endpoint secret (whsec_...)
 
 **To get Stripe keys:**
@@ -78,7 +78,7 @@ DJANGO_SETTINGS_MODULE=mysite.settings.dev
 DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
 STRIPE_PUBLISHABLE_KEY=pk_test_your_test_key
-STRIPE_SECRET_KEY=sk_test_your_test_key
+STRIPE_API_KEY=sk_test_your_test_key
 ```
 
 ### Production (.env for production deployment)
@@ -87,7 +87,7 @@ DJANGO_SETTINGS_MODULE=mysite.settings.production
 DEBUG=False
 ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
 STRIPE_PUBLISHABLE_KEY=pk_live_your_live_key
-STRIPE_SECRET_KEY=sk_live_your_live_key
+STRIPE_API_KEY=sk_live_your_live_key
 DB_PASSWORD=your_secure_database_password
 ```
 
@@ -112,7 +112,7 @@ For development with marketplace functionality:
 2. Set required Stripe keys in `.env`:
    ```env
    STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
-   STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+   STRIPE_API_KEY=sk_test_your_stripe_secret_key
    ```
 
 3. Optionally set GitHub keys for repository features:
