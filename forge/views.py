@@ -155,7 +155,12 @@ class PurchaseViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=['post'])
     def create_checkout(self, request):
         """Create a Stripe checkout session for purchasing an app"""
+        logger.info(f"Checkout request from user {request.user} with data: {request.data}")
+        
         serializer = CheckoutSessionRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            logger.error(f"Serializer validation failed: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer.is_valid(raise_exception=True)
         
         forge_app_id = serializer.validated_data['forge_app_id']
@@ -238,7 +243,7 @@ class PurchaseViewSet(viewsets.ReadOnlyModelViewSet):
             
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
             
-        except stripe.error.StripeError as e:
+        except stripe.StripeError as e:
             logger.error(f"Stripe error creating checkout: {str(e)}")
             return Response(
                 {'error': 'Payment processing error', 'detail': str(e)},
@@ -300,7 +305,7 @@ class PurchaseViewSet(viewsets.ReadOnlyModelViewSet):
                 'session_id': checkout_session.id
             }, status=status.HTTP_201_CREATED)
             
-        except stripe.error.StripeError as e:
+        except stripe.StripeError as e:
             logger.error(f"Stripe error in guest checkout: {str(e)}")
             return Response(
                 {'error': 'Payment processing error'},
@@ -327,7 +332,7 @@ class PurchaseViewSet(viewsets.ReadOnlyModelViewSet):
         except ValueError:
             logger.error("Invalid payload in Stripe webhook")
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        except stripe.error.SignatureVerificationError:
+        except stripe.SignatureError:
             logger.error("Invalid signature in Stripe webhook")
             return Response(status=status.HTTP_400_BAD_REQUEST)
         
@@ -602,7 +607,7 @@ class SuccessView(TemplateView):
                 context['session'] = session
                 context['show_download_link'] = purchase.status == 'completed' and purchase.license_document
                 
-            except (Purchase.DoesNotExist, stripe.error.StripeError) as e:
+            except (Purchase.DoesNotExist, stripe.StripeError) as e:
                 logger.error(f"Error retrieving purchase info for session {session_id}: {str(e)}")
                 context['error'] = "Unable to retrieve purchase information"
         

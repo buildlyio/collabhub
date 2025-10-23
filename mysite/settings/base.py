@@ -225,7 +225,8 @@ SITE_ID = 1
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication',  # Token Auth
+        'rest_framework.authentication.SessionAuthentication',  # Session Auth (for web)
+        'rest_framework.authentication.TokenAuthentication',  # Token Auth (for API)
     ),
 }
 
