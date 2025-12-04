@@ -7,11 +7,15 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
 from django.db import models
+from django.http import HttpResponse
+from django.utils import timezone
 import stripe
 import logging
 
 from .models import ForgeApp, Purchase, Entitlement, UserProfile
 from .pdf_generator import generate_license_pdf
+from .github_release_service import GitHubReleaseService
+from .download_service import LicenseDownloadService
 from .serializers import (
     ForgeAppListSerializer, ForgeAppDetailSerializer, ForgeAppCreateUpdateSerializer,
     PurchaseSerializer, EntitlementSerializer, CheckoutSessionRequestSerializer,
@@ -134,6 +138,44 @@ class ForgeAppViewSet(viewsets.ModelViewSet):
                 {'error': 'Validation failed', 'detail': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, permissions.IsAdminUser])
+    def update_release(self, request, slug=None):
+        """
+        Update GitHub release information for an app (admin only)
+        
+        Optional POST data: {'force': true/false}
+        """
+        app = self.get_object()
+        force = request.data.get('force', False)
+        
+        if not app.repo_url:
+            return Response(
+                {'error': 'No repository configured for this app'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Update release info
+        github_service = GitHubReleaseService()
+        updated = github_service.update_app_release_info(app, force=force)
+        
+        if updated:
+            return Response({
+                'success': True,
+                'message': f'Release info updated for {app.name}',
+                'release': {
+                    'name': app.latest_release_name,
+                    'tag': app.latest_release_tag,
+                    'url': app.latest_release_url,
+                    'last_checked': app.last_release_check
+                }
+            })
+        else:
+            return Response({
+                'success': False,
+                'message': 'No release found or not updated (check within last hour)'
+            })
+
 
 
 class PurchaseViewSet(viewsets.ReadOnlyModelViewSet):
@@ -325,6 +367,107 @@ class PurchaseViewSet(viewsets.ReadOnlyModelViewSet):
                 {'error': 'Internal server error'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    @action(detail=True, methods=['get'])
+    def download(self, request, pk=None):
+        """
+        Download licensed release zip file for a purchased app
+        
+        Returns a zip file with the latest GitHub release and injected license
+        """
+        purchase = self.get_object()
+        
+        # Verify purchase is completed
+        if purchase.status != 'completed':
+            return Response(
+                {'error': 'Purchase not completed'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if user owns this purchase
+        if purchase.user != request.user:
+            return Response(
+                {'error': 'Unauthorized'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        forge_app = purchase.forge_app
+        
+        # Check if app has GitHub releases
+        if not forge_app.repo_url:
+            return Response(
+                {'error': 'No repository configured for this app'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Create licensed download
+        download_service = LicenseDownloadService()
+        zip_content, filename = download_service.create_licensed_download(forge_app, purchase)
+        
+        if not zip_content:
+            return Response(
+                {'error': 'Failed to generate download. Please try again later.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        # Update download tracking
+        purchase.download_count += 1
+        purchase.last_downloaded = timezone.now()
+        purchase.save(update_fields=['download_count', 'last_downloaded'])
+        
+        # Return zip file
+        response = HttpResponse(zip_content, content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Length'] = len(zip_content)
+        
+        logger.info(f"User {request.user.username} downloaded {forge_app.name} (purchase {purchase.id})")
+        
+        return response
+    
+    @action(detail=False, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    def update_release(self, request):
+        """
+        Update GitHub release information for an app (admin only)
+        
+        POST data: {'app_id': 'uuid', 'force': true/false}
+        """
+        app_id = request.data.get('app_id')
+        force = request.data.get('force', False)
+        
+        if not app_id:
+            return Response(
+                {'error': 'app_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            forge_app = ForgeApp.objects.get(id=app_id)
+        except ForgeApp.DoesNotExist:
+            return Response(
+                {'error': 'App not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Update release info
+        github_service = GitHubReleaseService()
+        updated = github_service.update_app_release_info(forge_app, force=force)
+        
+        if updated:
+            return Response({
+                'success': True,
+                'message': f'Release info updated for {forge_app.name}',
+                'release': {
+                    'name': forge_app.latest_release_name,
+                    'tag': forge_app.latest_release_tag,
+                    'url': forge_app.latest_release_url,
+                }
+            })
+        else:
+            return Response({
+                'success': False,
+                'message': 'No release found or not updated'
+            })
+
     
     @action(detail=False, methods=['post'])
     def handle_webhook(self, request):

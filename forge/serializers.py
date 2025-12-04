@@ -30,13 +30,14 @@ class ForgeAppListSerializer(serializers.ModelSerializer):
     """Serializer for listing Forge apps (public view)"""
     price_dollars = serializers.ReadOnlyField()
     latest_validation_status = serializers.SerializerMethodField()
+    has_release = serializers.SerializerMethodField()
     
     class Meta:
         model = ForgeApp
         fields = [
             'id', 'slug', 'name', 'summary', 'price_cents', 'price_dollars',
             'categories', 'targets', 'logo_url', 'license_type', 'change_date_utc',
-            'latest_validation_status', 'created_at'
+            'latest_validation_status', 'has_release', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
     
@@ -44,19 +45,27 @@ class ForgeAppListSerializer(serializers.ModelSerializer):
         """Get the status of the latest validation"""
         latest = obj.latest_validation
         return latest.status if latest else None
+    
+    def get_has_release(self, obj):
+        """Check if app has a GitHub release available"""
+        return obj.has_github_release
 
 
 class ForgeAppDetailSerializer(serializers.ModelSerializer):
     """Serializer for detailed Forge app view (public)"""
     price_dollars = serializers.ReadOnlyField()
     latest_validation = RepoValidationSerializer(read_only=True)
+    video_embed_url = serializers.ReadOnlyField()
+    has_release = serializers.ReadOnlyField(source='has_github_release')
     
     class Meta:
         model = ForgeApp
         fields = [
             'id', 'slug', 'name', 'summary', 'price_cents', 'price_dollars',
             'repo_url', 'license_type', 'change_date_utc', 'categories', 'targets',
-            'logo_url', 'screenshots', 'latest_validation', 'created_at'
+            'logo_url', 'screenshots', 'demo_video_url', 'video_type', 'video_embed_url',
+            'latest_release_name', 'latest_release_tag', 'latest_release_url',
+            'has_release', 'latest_validation', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
 
@@ -69,13 +78,19 @@ class ForgeAppCreateUpdateSerializer(serializers.ModelSerializer):
         fields = [
             'slug', 'name', 'summary', 'price_cents', 'repo_url', 'repo_owner',
             'repo_name', 'license_type', 'change_date_utc', 'categories', 'targets',
-            'logo_url', 'screenshots', 'is_published'
+            'logo_url', 'screenshots', 'demo_video_url', 'video_type', 'is_published'
         ]
     
     def validate_repo_url(self, value):
         """Validate that repo_url is a valid GitHub URL"""
         if not value.startswith('https://github.com/'):
             raise serializers.ValidationError("Repository URL must be a GitHub URL")
+        return value
+    
+    def validate_video_type(self, value):
+        """Validate video type is one of allowed choices"""
+        if value and value not in ['youtube', 'vimeo', 'loom']:
+            raise serializers.ValidationError("Video type must be one of: youtube, vimeo, loom")
         return value
     
     def validate(self, data):
@@ -138,14 +153,20 @@ class PurchaseSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     forge_app = ForgeAppListSerializer(read_only=True)
     amount_dollars = serializers.ReadOnlyField()
+    can_download = serializers.SerializerMethodField()
     
     class Meta:
         model = Purchase
         fields = [
             'id', 'user', 'forge_app', 'stripe_payment_intent_id',
-            'amount_cents', 'amount_dollars', 'discount_applied', 'status', 'created_at'
+            'amount_cents', 'amount_dollars', 'discount_applied', 'status', 
+            'download_count', 'last_downloaded', 'can_download', 'created_at'
         ]
-        read_only_fields = ['id', 'user', 'created_at']
+        read_only_fields = ['id', 'user', 'download_count', 'last_downloaded', 'created_at']
+    
+    def get_can_download(self, obj):
+        """Check if purchase can be downloaded"""
+        return obj.status == 'completed' and obj.forge_app.has_github_release
 
 
 class EntitlementSerializer(serializers.ModelSerializer):

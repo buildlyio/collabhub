@@ -60,7 +60,22 @@ class ForgeApp(models.Model):
     categories = models.JSONField(default=list, blank=True)
     targets = models.JSONField(default=list, blank=True)
     logo_url = models.URLField(max_length=500, null=True, blank=True)
-    screenshots = models.JSONField(default=list, blank=True)
+    screenshots = models.JSONField(default=list, blank=True, help_text="List of screenshot URLs")
+    
+    # Media - Demo Video
+    demo_video_url = models.URLField(max_length=500, null=True, blank=True, 
+                                     help_text="YouTube, Vimeo, or direct video URL")
+    video_type = models.CharField(max_length=20, default='youtube', 
+                                   choices=[('youtube', 'YouTube'), ('vimeo', 'Vimeo'), ('direct', 'Direct URL')],
+                                   help_text="Video platform type")
+    
+    # GitHub Release Information
+    latest_release_name = models.CharField(max_length=200, null=True, blank=True)
+    latest_release_url = models.URLField(max_length=500, null=True, blank=True)
+    latest_release_tag = models.CharField(max_length=100, null=True, blank=True)
+    latest_release_zip_url = models.URLField(max_length=500, null=True, blank=True)
+    last_release_check = models.DateTimeField(null=True, blank=True)
+    
     is_published = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -79,6 +94,33 @@ class ForgeApp(models.Model):
     def latest_validation(self):
         """Get the latest validation for this app"""
         return self.validations.order_by('-run_at').first()
+    
+    @property
+    def has_github_release(self):
+        """Check if app has a GitHub release configured"""
+        return bool(self.latest_release_url and self.latest_release_zip_url)
+    
+    @property
+    def video_embed_url(self):
+        """Get embeddable video URL"""
+        if not self.demo_video_url:
+            return None
+        
+        if self.video_type == 'youtube':
+            # Convert youtube.com/watch?v=XXX to youtube.com/embed/XXX
+            if 'watch?v=' in self.demo_video_url:
+                video_id = self.demo_video_url.split('watch?v=')[1].split('&')[0]
+                return f"https://www.youtube.com/embed/{video_id}"
+            elif 'youtu.be/' in self.demo_video_url:
+                video_id = self.demo_video_url.split('youtu.be/')[1].split('?')[0]
+                return f"https://www.youtube.com/embed/{video_id}"
+        elif self.video_type == 'vimeo':
+            # Convert vimeo.com/XXX to player.vimeo.com/video/XXX
+            if 'vimeo.com/' in self.demo_video_url:
+                video_id = self.demo_video_url.split('vimeo.com/')[1].split('/')[0]
+                return f"https://player.vimeo.com/video/{video_id}"
+        
+        return self.demo_video_url
 
     class Meta:
         verbose_name = "Forge App"
@@ -116,6 +158,8 @@ class Purchase(models.Model):
     discount_applied = models.BooleanField(default=False)
     status = models.CharField(max_length=20, choices=PurchaseStatus.choices, default=PurchaseStatus.REQUIRES_PAYMENT)
     license_document = models.FileField(upload_to='licenses/', blank=True, null=True)
+    download_count = models.IntegerField(default=0)
+    last_downloaded = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

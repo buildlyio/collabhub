@@ -48,16 +48,17 @@ class ForgeAppAdmin(admin.ModelAdmin):
     form = ForgeAppForm
     list_display = [
         'name', 'slug', 'price_dollars', 'is_published', 
-        'latest_validation_status', 'repo_link', 'created_at'
+        'latest_validation_status', 'has_release_display', 'repo_link', 'created_at'
     ]
     list_filter = [
         'is_published', 'license_type', 'categories', 
-        'targets', 'created_at'
+        'targets', 'video_type', 'created_at'
     ]
     search_fields = ['name', 'slug', 'summary', 'repo_owner', 'repo_name']
     readonly_fields = [
         'id', 'repo_owner', 'repo_name', 
-        'latest_validation_display', 'created_at', 'updated_at'
+        'latest_validation_display', 'release_info_display', 
+        'created_at', 'updated_at'
     ]
     prepopulated_fields = {'slug': ('name',)}
     inlines = [RepoValidationInline]
@@ -77,7 +78,13 @@ class ForgeAppAdmin(admin.ModelAdmin):
             'fields': ('categories', 'targets')
         }),
         ('Media', {
-            'fields': ('logo_url', 'screenshots')
+            'fields': ('logo_url', 'screenshots', 'demo_video_url', 'video_type'),
+            'description': 'Add screenshots as JSON array of URLs. Add video URL for YouTube/Vimeo/Loom demos.'
+        }),
+        ('GitHub Releases', {
+            'fields': ('release_info_display',),
+            'classes': ('collapse',),
+            'description': 'Latest release information from GitHub'
         }),
         ('Validation', {
             'fields': ('latest_validation_display',),
@@ -95,6 +102,30 @@ class ForgeAppAdmin(admin.ModelAdmin):
             return "Not set"
         return f"${obj.price_cents / 100:.2f}"
     price_dollars.short_description = 'Price (USD)'
+    
+    def has_release_display(self, obj):
+        """Display if app has GitHub release"""
+        if obj.has_github_release:
+            return format_html('<span style="color: green;">✓ Yes</span>')
+        return format_html('<span style="color: gray;">✗ No</span>')
+    has_release_display.short_description = 'Has Release'
+    
+    def release_info_display(self, obj):
+        """Display GitHub release information"""
+        if not obj.has_github_release:
+            return format_html('<p style="color: gray;">No release information available</p>')
+        
+        html = f"""
+        <div style="padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
+            <p><strong>Release Name:</strong> {obj.latest_release_name or 'N/A'}</p>
+            <p><strong>Tag:</strong> {obj.latest_release_tag or 'N/A'}</p>
+            <p><strong>Release URL:</strong> <a href="{obj.latest_release_url}" target="_blank">{obj.latest_release_url}</a></p>
+            <p><strong>Download URL:</strong> <a href="{obj.latest_release_zip_url}" target="_blank">ZIP</a></p>
+            <p><strong>Last Checked:</strong> {obj.last_release_check.strftime('%Y-%m-%d %H:%M:%S UTC') if obj.last_release_check else 'Never'}</p>
+        </div>
+        """
+        return format_html(html)
+    release_info_display.short_description = 'Release Information'
     
     def repo_link(self, obj):
         """Display clickable repository link"""
@@ -148,7 +179,7 @@ class ForgeAppAdmin(admin.ModelAdmin):
         return mark_safe(html)
     latest_validation_display.short_description = 'Latest Validation Details'
     
-    actions = ['trigger_validation', 'publish_apps', 'unpublish_apps']
+    actions = ['trigger_validation', 'update_releases', 'publish_apps', 'unpublish_apps']
     
     def trigger_validation(self, request, queryset):
         """Trigger validation for selected apps"""
@@ -171,6 +202,29 @@ class ForgeAppAdmin(admin.ModelAdmin):
             self.message_user(request, f"Successfully triggered validation for {success_count} apps.")
     
     trigger_validation.short_description = "Trigger repository validation"
+    
+    def update_releases(self, request, queryset):
+        """Update GitHub release information for selected apps"""
+        from .github_release_service import GitHubReleaseService
+        release_service = GitHubReleaseService()
+        
+        success_count = 0
+        for app in queryset:
+            if not app.repo_url:
+                self.message_user(request, f"No repository URL for {app.name}", level='WARNING')
+                continue
+            
+            try:
+                updated = release_service.update_app_release_info(app, force=True)
+                if updated:
+                    success_count += 1
+            except Exception as e:
+                self.message_user(request, f"Release update failed for {app.name}: {str(e)}", level='ERROR')
+        
+        if success_count:
+            self.message_user(request, f"Successfully updated releases for {success_count} apps.")
+    
+    update_releases.short_description = "Update GitHub releases"
     
     def publish_apps(self, request, queryset):
         """Publish selected apps"""
@@ -221,7 +275,7 @@ class RepoValidationAdmin(admin.ModelAdmin):
 class PurchaseAdmin(admin.ModelAdmin):
     list_display = [
         'id', 'user', 'forge_app', 'amount_dollars', 
-        'discount_applied', 'status', 'created_at'
+        'discount_applied', 'status', 'download_count', 'created_at'
     ]
     list_filter = ['status', 'discount_applied', 'created_at']
     search_fields = [
@@ -229,7 +283,8 @@ class PurchaseAdmin(admin.ModelAdmin):
         'stripe_payment_intent_id'
     ]
     readonly_fields = [
-        'id', 'amount_dollars', 'stripe_payment_intent_id', 'created_at'
+        'id', 'amount_dollars', 'stripe_payment_intent_id', 
+        'download_count', 'last_downloaded', 'created_at'
     ]
     
     fieldsets = (
@@ -238,6 +293,10 @@ class PurchaseAdmin(admin.ModelAdmin):
         }),
         ('Payment', {
             'fields': ('amount_cents', 'amount_dollars', 'discount_applied', 'stripe_payment_intent_id')
+        }),
+        ('Download Tracking', {
+            'fields': ('download_count', 'last_downloaded'),
+            'classes': ('collapse',)
         }),
         ('System', {
             'fields': ('id', 'created_at'),
