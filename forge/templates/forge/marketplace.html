@@ -44,22 +44,12 @@
           
           <select id="category-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
             <option value="">All Categories</option>
-            <option value="docker">Docker Apps</option>
-            <option value="kubernetes">Kubernetes</option>
-            <option value="web">Web Applications</option>
-            <option value="api">APIs & Microservices</option>
-            <option value="ai-ml">AI & Machine Learning</option>
-            <option value="database">Databases</option>
-            <option value="monitoring">Monitoring</option>
-            <option value="security">Security</option>
+            <!-- Options will be loaded dynamically from API -->
           </select>
 
           <select id="target-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
             <option value="">All Targets</option>
-            <option value="docker">Docker</option>
-            <option value="k8s">Kubernetes</option>
-            <option value="github-pages">GitHub Pages</option>
-            <option value="desktop">Desktop</option>
+            <!-- Options will be loaded dynamically from API -->
           </select>
         </div>
         
@@ -186,6 +176,54 @@
 // Simple marketplace loader
 console.log('Starting simple marketplace loader...');
 
+let filterOptions = { categories: [], targets: [] };
+
+// Load filter options from API
+async function loadFilterOptions() {
+  try {
+    const response = await fetch('/marketplace/api/apps/filter_options/');
+    if (response.ok) {
+      filterOptions = await response.json();
+      console.log('Filter options loaded:', filterOptions);
+      populateFilterDropdowns();
+    }
+  } catch (error) {
+    console.error('Error loading filter options:', error);
+  }
+}
+
+// Populate dropdowns with dynamic options
+function populateFilterDropdowns() {
+  const categorySelect = document.getElementById('category-filter');
+  const targetSelect = document.getElementById('target-filter');
+  
+  if (categorySelect && filterOptions.categories) {
+    // Keep the "All Categories" option
+    let categoryHTML = '<option value="">All Categories</option>';
+    filterOptions.categories.forEach(cat => {
+      const displayName = cat.split('-').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' ');
+      categoryHTML += `<option value="${cat}">${displayName}</option>`;
+    });
+    categorySelect.innerHTML = categoryHTML;
+  }
+  
+  if (targetSelect && filterOptions.targets) {
+    // Keep the "All Targets" option
+    let targetHTML = '<option value="">All Targets</option>';
+    filterOptions.targets.forEach(target => {
+      const displayName = target === 'k8s' ? 'Kubernetes' : 
+                         target === 'github-pages' ? 'GitHub Pages' :
+                         target.split('-').map(word => 
+                           word.charAt(0).toUpperCase() + word.slice(1)
+                         ).join(' ');
+      targetHTML += `<option value="${target}">${displayName}</option>`;
+    });
+    targetSelect.innerHTML = targetHTML;
+  }
+}
+
 async function loadAppsSimple() {
   const container = document.getElementById('apps-container');
   const loading = document.getElementById('loading');
@@ -240,9 +278,70 @@ async function loadAppsSimple() {
   }
 }
 
+function applyFilters() {
+  const searchInput = document.getElementById('search-input').value;
+  const categoryFilter = document.getElementById('category-filter').value;
+  const targetFilter = document.getElementById('target-filter').value;
+  
+  let url = '/marketplace/api/apps/?';
+  if (searchInput) url += `search=${encodeURIComponent(searchInput)}&`;
+  if (categoryFilter) url += `categories=${encodeURIComponent(categoryFilter)}&`;
+  if (targetFilter) url += `targets=${encodeURIComponent(targetFilter)}&`;
+  
+  loadAppsWithFilters(url);
+}
+
+function clearFilters() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('category-filter').value = '';
+  document.getElementById('target-filter').value = '';
+  loadAppsSimple();
+}
+
+async function loadAppsWithFilters(url) {
+  const container = document.getElementById('apps-container');
+  const loading = document.getElementById('loading');
+  
+  try {
+    loading.style.display = 'block';
+    container.innerHTML = '';
+    
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    
+    const data = await response.json();
+    
+    if (data.results && data.results.length > 0) {
+      let html = '';
+      for (let app of data.results) {
+        const price = app.price_dollars || (app.price_cents / 100).toFixed(2);
+        html += `
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-bold mb-2">${app.name}</h3>
+            <p class="text-sm text-gray-600 mb-2">${app.summary || 'No description'}</p>
+            <div class="text-lg font-bold text-purple-600">$${price}</div>
+            <div class="mt-2 text-xs text-gray-500">Categories: ${app.categories ? app.categories.join(', ') : 'None'}</div>
+            <a href="/marketplace/app/${app.slug}" class="mt-3 block bg-purple-600 text-white text-center py-2 rounded">View Details</a>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    } else {
+      document.getElementById('empty-state').classList.remove('hidden');
+    }
+    
+  } catch (error) {
+    console.error('Error loading apps:', error);
+    container.innerHTML = `<div class="col-span-full text-center text-red-600">Error: ${error.message}</div>`;
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
 // Load on page ready
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM ready, loading apps...');
+  console.log('DOM ready, loading apps and filters...');
+  loadFilterOptions();
   loadAppsSimple();
 });
 

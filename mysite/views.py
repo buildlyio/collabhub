@@ -221,6 +221,11 @@ def agency_list_redirect(request):
     return redirect('/onboarding/agencies/')
 
 
+def forge_redirect(request):
+    """Redirect /forge/ to /marketplace/"""
+    return redirect('/marketplace/')
+
+
 def agency_review_utility(request):
     """Placeholder for agency review utility"""
     messages.info(request, "Agency review utility coming soon!")

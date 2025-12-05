@@ -9,6 +9,25 @@ from .models import ForgeApp, RepoValidation, Purchase, Entitlement, UserProfile
 class ForgeAppForm(forms.ModelForm):
     """Custom form for ForgeApp with better price handling"""
     
+    # Custom fields for better UX
+    categories_input = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'e.g., productivity, development, ai-ml (comma-separated)',
+            'size': 80
+        }),
+        help_text='Enter categories separated by commas. Examples: productivity, development, ai-ml, database, security'
+    )
+    
+    targets_input = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'e.g., docker, k8s, github-pages (comma-separated)',
+            'size': 80
+        }),
+        help_text='Enter deployment targets separated by commas. Valid options: docker, k8s, github-pages, desktop, web-embed'
+    )
+    
     class Meta:
         model = ForgeApp
         fields = '__all__'
@@ -20,8 +39,53 @@ class ForgeAppForm(forms.ModelForm):
                 'min': 0,
                 'step': 1,
                 'placeholder': 'e.g., 2999 for $29.99'
-            })
+            }),
+            'categories': forms.HiddenInput(),
+            'targets': forms.HiddenInput(),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Pre-populate the text input fields with existing values
+        if self.instance.pk:
+            if self.instance.categories:
+                self.fields['categories_input'].initial = ', '.join(self.instance.categories)
+            if self.instance.targets:
+                self.fields['targets_input'].initial = ', '.join(self.instance.targets)
+    
+    def clean_categories_input(self):
+        """Convert comma-separated string to list"""
+        value = self.cleaned_data.get('categories_input', '')
+        if not value:
+            return []
+        # Split by comma, strip whitespace, filter empty strings
+        return [cat.strip() for cat in value.split(',') if cat.strip()]
+    
+    def clean_targets_input(self):
+        """Convert comma-separated string to list and validate"""
+        value = self.cleaned_data.get('targets_input', '')
+        if not value:
+            return []
+        # Split by comma, strip whitespace, filter empty strings
+        targets = [t.strip() for t in value.split(',') if t.strip()]
+        
+        # Validate against allowed targets
+        valid_targets = ['github-pages', 'docker', 'k8s', 'desktop', 'web-embed']
+        invalid = [t for t in targets if t not in valid_targets]
+        if invalid:
+            raise forms.ValidationError(
+                f"Invalid targets: {', '.join(invalid)}. Valid options are: {', '.join(valid_targets)}"
+            )
+        return targets
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Set the JSON fields from the text inputs
+        instance.categories = self.cleaned_data.get('categories_input', [])
+        instance.targets = self.cleaned_data.get('targets_input', [])
+        if commit:
+            instance.save()
+        return instance
 
 
 @admin.register(UserProfile)
@@ -75,7 +139,8 @@ class ForgeAppAdmin(admin.ModelAdmin):
             'description': 'Price in cents (e.g., 2999 = $29.99)'
         }),
         ('Categories & Targets', {
-            'fields': ('categories', 'targets')
+            'fields': ('categories_input', 'targets_input'),
+            'description': 'Enter values as comma-separated lists. Categories can be any text, targets must be: docker, k8s, github-pages, desktop, or web-embed'
         }),
         ('Media', {
             'fields': ('logo_url', 'screenshots', 'demo_video_url', 'video_type'),

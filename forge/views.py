@@ -175,6 +175,35 @@ class ForgeAppViewSet(viewsets.ModelViewSet):
                 'success': False,
                 'message': 'No release found or not updated (check within last hour)'
             })
+    
+    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
+    def filter_options(self, request):
+        """
+        Get all unique categories and targets from published apps
+        
+        Returns: {
+            'categories': ['productivity', 'development', ...],
+            'targets': ['docker', 'k8s', ...]
+        }
+        """
+        published_apps = ForgeApp.objects.filter(is_published=True)
+        
+        # Collect all unique categories
+        all_categories = set()
+        for app in published_apps:
+            if app.categories:
+                all_categories.update(app.categories)
+        
+        # Collect all unique targets
+        all_targets = set()
+        for app in published_apps:
+            if app.targets:
+                all_targets.update(app.targets)
+        
+        return Response({
+            'categories': sorted(list(all_categories)),
+            'targets': sorted(list(all_targets))
+        })
 
 
 
