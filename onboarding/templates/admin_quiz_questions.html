@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block page_title %}Manage Questions - {{ quiz.name }}{% endblock %}
+
+{% block page_content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-lg p-8 mb-8 text-white">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold mb-2">Manage Questions</h1>
+                <p class="text-lg opacity-90">{{ quiz.name }}</p>
+                <p class="text-sm opacity-75 mt-1">{{ total_questions }} question(s) total</p>
+                {% if quiz.resources.count > 0 %}
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <span class="text-xs font-semibold">Linked Resources:</span>
+                    {% for resource in quiz.resources.all %}
+                    <span class="inline-flex items-center px-2 py-1 rounded text-xs bg-white bg-opacity-20 text-white border border-white border-opacity-30">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                        {{ resource.title }}
+                    </span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="flex gap-3">
+                <a href="{% url 'onboarding:admin_question_create' quiz.id %}"
+                   class="inline-flex items-center px-4 py-2 bg-white text-indigo-600 rounded-md hover:bg-gray-100 transition-colors font-semibold">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Add Question
+                </a>
+                <a href="{% url 'onboarding:admin_quiz_list' %}" 
+                   class="inline-flex items-center px-4 py-2 bg-white bg-opacity-20 text-white rounded-md hover:bg-opacity-30 transition-colors font-semibold">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Back to Quizzes
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Actions -->
+    <form method="post" id="bulkForm" class="mb-6">
+        {% csrf_token %}
+        <div class="bg-white rounded-lg shadow-md p-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <label class="flex items-center text-sm text-gray-700">
+                    <input type="checkbox" id="selectAll" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                    <span class="ml-2">Select All</span>
+                </label>
+                <span id="selectedCount" class="text-sm text-gray-500">0 selected</span>
+            </div>
+            <button type="submit" name="bulk_delete"
+                    class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    id="bulkDeleteBtn" disabled>
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Delete Selected
+            </button>
+        </div>
+
+        <!-- Multiple Choice Questions -->
+        {% if mc_questions %}
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6 mt-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <svg class="w-6 h-6 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Multiple Choice Questions ({{ mc_questions.count }})
+            </h2>
+            <div class="space-y-4">
+                {% for question in mc_questions %}
+                <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-start gap-4">
+                        <input type="checkbox" name="question_ids" value="{{ question.id }}" 
+                               class="question-checkbox mt-1 w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <div class="flex-1">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-gray-900 mb-1" style="white-space: pre-line;">{{ question.question }}</p>
+                                    <div class="flex items-center gap-3 mt-2">
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                            Multiple Choice
+                                        </span>
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                                            {{ question.get_team_member_type_display }}
+                                        </span>
+                                        <span class="text-xs text-gray-500">ID: {{ question.id }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="{% url 'onboarding:admin_question_edit' question.id %}"
+                               class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors text-sm font-medium">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                                Edit
+                            </a>
+                            <a href="{% url 'onboarding:admin_question_delete' question.id %}"
+                               class="inline-flex items-center px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors text-sm font-medium">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                                Delete
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Essay Questions -->
+        {% if essay_questions %}
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <svg class="w-6 h-6 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+                Essay Questions ({{ essay_questions.count }})
+            </h2>
+            <div class="space-y-4">
+                {% for question in essay_questions %}
+                <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-start gap-4">
+                        <input type="checkbox" name="question_ids" value="{{ question.id }}" 
+                               class="question-checkbox mt-1 w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <div class="flex-1">
+                            <div class="flex items-start justify-between mb-2">
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-gray-900 mb-1" style="white-space: pre-line;">{{ question.question }}</p>
+                                    <div class="flex items-center gap-3 mt-2">
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                                            Essay
+                                        </span>
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                                            {{ question.get_team_member_type_display }}
+                                        </span>
+                                        <span class="text-xs text-gray-500">ID: {{ question.id }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="{% url 'onboarding:admin_question_edit' question.id %}"
+                               class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors text-sm font-medium">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                                Edit
+                            </a>
+                            <a href="{% url 'onboarding:admin_question_delete' question.id %}"
+                               class="inline-flex items-center px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors text-sm font-medium">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                                Delete
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </form>
+
+    <!-- Empty State -->
+    {% if not mc_questions and not essay_questions %}
+    <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No Questions Yet</h3>
+        <p class="text-gray-600 mb-4">Add questions to build your quiz assessment.</p>
+        <a href="{% url 'onboarding:admin_question_create' quiz.id %}"
+           class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors font-semibold">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Add First Question
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Bulk selection functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const questionCheckboxes = document.querySelectorAll('.question-checkbox');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    const bulkForm = document.getElementById('bulkForm');
+
+    function updateSelectedCount() {
+        const checkedCount = document.querySelectorAll('.question-checkbox:checked').length;
+        selectedCountSpan.textContent = `${checkedCount} selected`;
+        bulkDeleteBtn.disabled = checkedCount === 0;
+        
+        // Update select all checkbox state
+        selectAllCheckbox.checked = checkedCount === questionCheckboxes.length && checkedCount > 0;
+        selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < questionCheckboxes.length;
+    }
+
+    selectAllCheckbox.addEventListener('change', function() {
+        questionCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+        updateSelectedCount();
+    });
+
+    questionCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedCount);
+    });
+
+    bulkForm.addEventListener('submit', function(e) {
+        if (e.submitter && e.submitter.name === 'bulk_delete') {
+            const checkedCount = document.querySelectorAll('.question-checkbox:checked').length;
+            if (!confirm(`Are you sure you want to delete ${checkedCount} question(s)? This action cannot be undone.`)) {
+                e.preventDefault();
+            }
+        }
+    });
+
+    updateSelectedCount();
+});
+</script>
+{% endblock %}

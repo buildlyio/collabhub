@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block page_title %}{{ action }} Quiz{% endblock %}
+
+{% block page_content %}
+<div class="max-w-3xl mx-auto">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-green-600 to-teal-600 rounded-lg p-8 mb-8 text-white">
+        <h1 class="text-3xl md:text-4xl font-bold">{{ action }} Quiz</h1>
+        <p class="text-lg opacity-90 mt-2">{% if quiz %}Update quiz details{% else %}Create a new quiz for assessments{% endif %}</p>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Name -->
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                    Quiz Name <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="name" id="name" required
+                       value="{% if quiz %}{{ quiz.name }}{% endif %}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                       placeholder="e.g., Developer Level Assessment">
+            </div>
+
+            <!-- URL -->
+            <div>
+                <label for="url" class="block text-sm font-medium text-gray-700 mb-2">
+                    Quiz URL <span class="text-red-500">*</span>
+                </label>
+                <input type="url" name="url" id="url" required
+                       value="{% if quiz %}{{ quiz.url }}{% endif %}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                       placeholder="https://example.com/quiz/developer-assessment">
+                <p class="mt-1 text-sm text-gray-500">A unique URL to identify this quiz</p>
+            </div>
+
+            <!-- Available Date -->
+            <div>
+                <label for="available_date" class="block text-sm font-medium text-gray-700 mb-2">
+                    Available Date <span class="text-red-500">*</span>
+                </label>
+                <input type="date" name="available_date" id="available_date" required
+                       value="{% if quiz %}{{ quiz.available_date|date:'Y-m-d' }}{% endif %}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                <p class="mt-1 text-sm text-gray-500">When this quiz becomes available to users</p>
+            </div>
+
+            <!-- Resources -->
+            <div>
+                <label for="resources" class="block text-sm font-medium text-gray-700 mb-2">
+                    Learning Resources
+                </label>
+                <select name="resources" id="resources" multiple size="8"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    {% for resource in resources %}
+                    <option value="{{ resource.id }}" 
+                            {% if quiz and resource in quiz.resources.all %}selected{% endif %}>
+                        {{ resource.title }} ({{ resource.get_team_member_type_display }})
+                    </option>
+                    {% endfor %}
+                </select>
+                <p class="mt-1 text-sm text-gray-500">
+                    Hold Ctrl (Windows) or Cmd (Mac) to select multiple resources. These will be linked to the quiz for reference.
+                </p>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex gap-4 pt-6 border-t border-gray-200">
+                <button type="submit"
+                        class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-semibold">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    {% if quiz %}Update Quiz{% else %}Create Quiz{% endif %}
+                </button>
+                <a href="{% url 'onboarding:admin_quiz_list' %}"
+                   class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors font-semibold">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Info Section -->
+    {% if not quiz %}
+    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <div class="flex">
+            <svg class="w-6 h-6 text-blue-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+                <h3 class="text-lg font-semibold text-blue-900 mb-2">Next Steps</h3>
+                <p class="text-sm text-blue-800">After creating the quiz, you'll be able to add questions (multiple choice and essay types) to build your assessment.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

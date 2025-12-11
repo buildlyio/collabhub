@@ -12,7 +12,7 @@
                 <p class="text-lg opacity-90">Manage quizzes, questions, and assessments</p>
             </div>
             <div class="flex gap-3">
-                <a href="/admin/onboarding/quiz/add/" target="_blank"
+                <a href="{% url 'onboarding:admin_quiz_create' %}"
                    class="inline-flex items-center px-4 py-2 bg-white text-green-600 rounded-md hover:bg-gray-100 transition-colors font-semibold">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -123,6 +123,21 @@
                                     {{ stat.quiz.url|truncatechars:40 }}
                                 </a>
                             </div>
+                            {% if stat.quiz.resources.count > 0 %}
+                            <div class="mt-2 flex flex-wrap gap-1">
+                                {% for resource in stat.quiz.resources.all|slice:":3" %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                    </svg>
+                                    {{ resource.title|truncatechars:20 }}
+                                </span>
+                                {% endfor %}
+                                {% if stat.quiz.resources.count > 3 %}
+                                <span class="text-xs text-gray-500">+{{ stat.quiz.resources.count|add:"-3" }} more</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
                         </td>
                         
                         <!-- Owner -->
@@ -171,19 +186,26 @@
                         <!-- Actions -->
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                             <div class="flex gap-2">
-                                <a href="/admin/onboarding/quiz/{{ stat.quiz.id }}/change/" target="_blank"
+                                <a href="{% url 'onboarding:admin_quiz_questions' stat.quiz.id %}"
+                                   class="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors font-medium">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Manage Questions
+                                </a>
+                                <a href="{% url 'onboarding:admin_quiz_edit' stat.quiz.id %}"
                                    class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors font-medium">
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                     </svg>
                                     Edit
                                 </a>
-                                <a href="/admin/onboarding/quizquestion/?quiz__id__exact={{ stat.quiz.id }}" target="_blank"
-                                   class="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors font-medium">
+                                <a href="{% url 'onboarding:admin_quiz_delete' stat.quiz.id %}"
+                                   class="inline-flex items-center px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors font-medium">
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                     </svg>
-                                    Questions
+                                    Delete
                                 </a>
                             </div>
                         </td>
@@ -198,7 +220,7 @@
                             </div>
                             <h3 class="text-lg font-medium text-gray-900 mb-2">No Quizzes Found</h3>
                             <p class="text-gray-600 mb-4">Get started by creating your first quiz.</p>
-                            <a href="/admin/onboarding/quiz/add/" target="_blank"
+                            <a href="{% url 'onboarding:admin_quiz_create' %}"
                                class="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-semibold">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -222,7 +244,8 @@
             <div>
                 <h3 class="text-lg font-semibold text-blue-900 mb-2">Quiz Management Tips</h3>
                 <ul class="space-y-1 text-sm text-blue-800">
-                    <li>• Use the Django Admin interface to create and edit quizzes and questions</li>
+                    <li>• Click "Manage Questions" to add, edit, or delete questions for each quiz</li>
+                    <li>• Use bulk operations to delete multiple questions at once</li>
                     <li>• Monitor participant engagement through the assessment reports page</li>
                     <li>• Essay questions can be evaluated with AI detection and manual scoring</li>
                     <li>• Multiple choice questions are automatically scored</li>

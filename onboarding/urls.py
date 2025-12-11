@@ -30,5 +30,12 @@ urlpatterns = [
     path('admin-assessments/', views.admin_assessment_reports, name='admin_assessment_reports'),
     path('admin-assessment/<int:team_member_id>/review/', views.admin_assessment_review, name='admin_assessment_review'),
     path('admin-quizzes/', views.admin_quiz_list, name='admin_quiz_list'),
+    path('admin-quiz/create/', views.admin_quiz_create, name='admin_quiz_create'),
+    path('admin-quiz/<int:quiz_id>/edit/', views.admin_quiz_edit, name='admin_quiz_edit'),
+    path('admin-quiz/<int:quiz_id>/delete/', views.admin_quiz_delete, name='admin_quiz_delete'),
+    path('admin-quiz/<int:quiz_id>/questions/', views.admin_quiz_questions, name='admin_quiz_questions'),
+    path('admin-quiz/<int:quiz_id>/question/add/', views.admin_question_create, name='admin_question_create'),
+    path('admin-question/<int:question_id>/edit/', views.admin_question_edit, name='admin_question_edit'),
+    path('admin-question/<int:question_id>/delete/', views.admin_question_delete, name='admin_question_delete'),
 ]
 

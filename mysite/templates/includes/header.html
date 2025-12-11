@@ -105,6 +105,14 @@
             <button class="text-white font-semibold hover:text-blue-200 transition focus:outline-none px-2 py-2">Dashboard</button>
             <ul class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
               <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/onboarding/dashboard">My Dashboard</a></li>
+              {% if user.is_superuser %}
+              <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0 flex items-center" href="/onboarding/admin-dashboard/">
+                <svg class="w-4 h-4 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                Admin Dashboard
+              </a></li>
+              {% endif %}
               <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/onboarding/resources">Resources</a></li>
               <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/onboarding/upload_resource">Upload Resource</a></li>
             </ul>

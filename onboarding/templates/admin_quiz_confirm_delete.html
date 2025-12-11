@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block page_title %}Delete Quiz{% endblock %}
+
+{% block page_content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-red-600 to-orange-600 rounded-lg p-8 mb-8 text-white">
+        <h1 class="text-3xl md:text-4xl font-bold">Delete Quiz</h1>
+        <p class="text-lg opacity-90 mt-2">This action cannot be undone</p>
+    </div>
+
+    <!-- Confirmation Card -->
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <div class="text-center mb-8">
+            <div class="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Are you sure?</h2>
+            <p class="text-gray-600">You are about to delete the following quiz:</p>
+        </div>
+
+        <!-- Quiz Details -->
+        <div class="bg-gray-50 rounded-lg p-6 mb-8 border-l-4 border-red-500">
+            <div class="space-y-3">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">{{ quiz.name }}</h3>
+                </div>
+                <div class="flex items-center text-sm text-gray-600">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                    </svg>
+                    {{ quiz.url }}
+                </div>
+                <div class="flex items-center text-sm text-gray-600">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Available: {{ quiz.available_date|date:"M d, Y" }}
+                </div>
+                <div class="flex items-center text-sm text-gray-600">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    Owner: {{ quiz.owner.username }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Impact Warning -->
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+            <div class="flex">
+                <svg class="w-5 h-5 text-red-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <div>
+                    <h4 class="text-sm font-semibold text-red-900 mb-1">Impact of Deletion</h4>
+                    <ul class="text-sm text-red-700 space-y-1">
+                        <li>• <strong>{{ question_count }}</strong> question(s) will be permanently deleted</li>
+                        <li>• <strong>{{ answer_count }}</strong> user answer(s) will be permanently deleted</li>
+                        <li>• This quiz will no longer be available to users</li>
+                        <li>• All assessment data associated with this quiz will be lost</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <form method="post" class="flex gap-4">
+            {% csrf_token %}
+            <button type="submit"
+                    class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-semibold">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Yes, Delete Quiz
+            </button>
+            <a href="{% url 'onboarding:admin_quiz_list' %}"
+               class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors font-semibold">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                No, Keep Quiz
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

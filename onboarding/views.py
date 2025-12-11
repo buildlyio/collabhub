@@ -697,3 +697,195 @@ def admin_quiz_list(request):
     
     return render(request, 'admin_quiz_list.html', context)
 
+
+@user_passes_test(lambda u: u.is_superuser)
+def admin_quiz_create(request):
+    """Create a new quiz"""
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        url = request.POST.get('url')
+        available_date = request.POST.get('available_date')
+        resource_ids = request.POST.getlist('resources')
+        
+        if name and url and available_date:
+            quiz = Quiz.objects.create(
+                name=name,
+                url=url,
+                available_date=available_date,
+                owner=request.user
+            )
+            # Link selected resources
+            if resource_ids:
+                quiz.resources.set(resource_ids)
+            messages.success(request, f'Quiz "{quiz.name}" created successfully.')
+            return redirect('onboarding:admin_quiz_questions', quiz_id=quiz.id)
+        else:
+            messages.error(request, 'Please fill in all required fields.')
+    
+    # Get all resources for selection
+    resources = Resource.objects.all().order_by('team_member_type', 'title')
+    
+    context = {
+        'action': 'Create',
+        'resources': resources,
+    }
+    return render(request, 'admin_quiz_form.html', context)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def admin_quiz_edit(request, quiz_id):
+    """Edit an existing quiz"""
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    
+    if request.method == 'POST':
+        quiz.name = request.POST.get('name', quiz.name)
+        quiz.url = request.POST.get('url', quiz.url)
+        available_date = request.POST.get('available_date')
+        if available_date:
+            quiz.available_date = available_date
+        
+        # Update resources
+        resource_ids = request.POST.getlist('resources')
+        quiz.resources.set(resource_ids)
+        
+        quiz.save()
+        messages.success(request, f'Quiz "{quiz.name}" updated successfully.')
+        return redirect('onboarding:admin_quiz_questions', quiz_id=quiz.id)
+    
+    # Get all resources for selection
+    resources = Resource.objects.all().order_by('team_member_type', 'title')
+    
+    context = {
+        'action': 'Edit',
+        'quiz': quiz,
+        'resources': resources,
+    }
+    return render(request, 'admin_quiz_form.html', context)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def admin_quiz_delete(request, quiz_id):
+    """Delete a quiz"""
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    
+    if request.method == 'POST':
+        quiz_name = quiz.name
+        quiz.delete()
+        messages.success(request, f'Quiz "{quiz_name}" deleted successfully.')
+        return redirect('onboarding:admin_quiz_list')
+    
+    # Get stats for confirmation
+    question_count = quiz.questions.count()
+    answer_count = QuizAnswer.objects.filter(question__quiz=quiz).count()
+    
+    context = {
+        'quiz': quiz,
+        'question_count': question_count,
+        'answer_count': answer_count,
+    }
+    return render(request, 'admin_quiz_confirm_delete.html', context)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def admin_quiz_questions(request, quiz_id):
+    """Manage all questions for a quiz"""
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    
+    # Handle bulk delete
+    if request.method == 'POST' and 'bulk_delete' in request.POST:
+        question_ids = request.POST.getlist('question_ids')
+        if question_ids:
+            deleted_count = QuizQuestion.objects.filter(id__in=question_ids, quiz=quiz).delete()[0]
+            messages.success(request, f'{deleted_count} question(s) deleted successfully.')
+        return redirect('onboarding:admin_quiz_questions', quiz_id=quiz_id)
+    
+    # Get all questions for this quiz
+    questions = QuizQuestion.objects.filter(quiz=quiz).order_by('id')
+    
+    # Organize questions by type
+    mc_questions = questions.filter(question_type='multiple_choice')
+    essay_questions = questions.filter(question_type='essay')
+    
+    context = {
+        'quiz': quiz,
+        'mc_questions': mc_questions,
+        'essay_questions': essay_questions,
+        'total_questions': questions.count(),
+        'team_member_types': TEAM_MEMBER_TYPES,
+    }
+    
+    return render(request, 'admin_quiz_questions.html', context)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def admin_question_create(request, quiz_id):
+    """Create a new question for a quiz"""
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    
+    if request.method == 'POST':
+        question_text = request.POST.get('question')
+        question_type = request.POST.get('question_type')
+        team_member_type = request.POST.get('team_member_type')
+        
+        if question_text and question_type and team_member_type:
+            question = QuizQuestion.objects.create(
+                quiz=quiz,
+                question=question_text,
+                question_type=question_type,
+                team_member_type=team_member_type
+            )
+            messages.success(request, 'Question added successfully.')
+            return redirect('onboarding:admin_quiz_questions', quiz_id=quiz_id)
+        else:
+            messages.error(request, 'Please fill in all required fields.')
+    
+    context = {
+        'action': 'Add',
+        'quiz': quiz,
+        'team_member_types': TEAM_MEMBER_TYPES,
+    }
+    return render(request, 'admin_question_form.html', context)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def admin_question_edit(request, question_id):
+    """Edit an existing question"""
+    question = get_object_or_404(QuizQuestion, id=question_id)
+    
+    if request.method == 'POST':
+        question.question = request.POST.get('question', question.question)
+        question.question_type = request.POST.get('question_type', question.question_type)
+        question.team_member_type = request.POST.get('team_member_type', question.team_member_type)
+        question.save()
+        messages.success(request, 'Question updated successfully.')
+        return redirect('onboarding:admin_quiz_questions', quiz_id=question.quiz.id)
+    
+    context = {
+        'action': 'Edit',
+        'quiz': question.quiz,
+        'question': question,
+        'team_member_types': TEAM_MEMBER_TYPES,
+    }
+    return render(request, 'admin_question_form.html', context)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def admin_question_delete(request, question_id):
+    """Delete a question"""
+    question = get_object_or_404(QuizQuestion, id=question_id)
+    quiz_id = question.quiz.id
+    
+    if request.method == 'POST':
+        question.delete()
+        messages.success(request, 'Question deleted successfully.')
+        return redirect('onboarding:admin_quiz_questions', quiz_id=quiz_id)
+    
+    # Get answer count for confirmation
+    answer_count = question.answers.count()
+    
+    context = {
+        'question': question,
+        'answer_count': answer_count,
+    }
+    return render(request, 'admin_question_confirm_delete.html', context)
+

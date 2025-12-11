@@ -161,6 +161,7 @@ class Quiz(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     available_date = models.DateField()
     url = models.URLField(unique=True)
+    resources = models.ManyToManyField(Resource, blank=True, related_name='quizzes', help_text="Learning resources associated with this quiz")
 
     def __str__(self):
         return self.name

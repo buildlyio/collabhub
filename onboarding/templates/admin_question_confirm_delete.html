@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block page_title %}Delete Question{% endblock %}
+
+{% block page_content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-red-600 to-orange-600 rounded-lg p-8 mb-8 text-white">
+        <h1 class="text-3xl md:text-4xl font-bold">Delete Question</h1>
+        <p class="text-lg opacity-90 mt-2">This action cannot be undone</p>
+    </div>
+
+    <!-- Confirmation Card -->
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <div class="text-center mb-8">
+            <div class="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Are you sure?</h2>
+            <p class="text-gray-600">You are about to delete the following question:</p>
+        </div>
+
+        <!-- Question Details -->
+        <div class="bg-gray-50 rounded-lg p-6 mb-8 border-l-4 border-red-500">
+            <div class="space-y-3">
+                <div>
+                    <p class="text-sm font-medium text-gray-900" style="white-space: pre-line;">{{ question.question }}</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full {% if question.question_type == 'multiple_choice' %}bg-green-100 text-green-800{% else %}bg-purple-100 text-purple-800{% endif %}">
+                        {{ question.get_question_type_display }}
+                    </span>
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                        {{ question.get_team_member_type_display }}
+                    </span>
+                </div>
+                <div class="text-sm text-gray-600">
+                    <strong>Quiz:</strong> {{ question.quiz.name }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Impact Warning -->
+        {% if answer_count > 0 %}
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+            <div class="flex">
+                <svg class="w-5 h-5 text-red-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <div>
+                    <h4 class="text-sm font-semibold text-red-900 mb-1">Warning</h4>
+                    <p class="text-sm text-red-700">
+                        This question has <strong>{{ answer_count }}</strong> user answer(s). 
+                        Deleting this question will permanently remove all associated answers and evaluation data.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <form method="post" class="flex gap-4">
+            {% csrf_token %}
+            <button type="submit"
+                    class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-semibold">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Yes, Delete Question
+            </button>
+            <a href="{% url 'onboarding:admin_quiz_questions' question.quiz.id %}"
+               class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors font-semibold">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                No, Keep Question
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}
