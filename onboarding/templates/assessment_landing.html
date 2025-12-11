@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Developer Skill Assessment{% endblock %}
+
+{% block page_content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 -mx-2 md:mx-0 px-4">
+  <!-- Alert Banner if returning -->
+  {% if reminder_count > 0 %}
+  <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+    <div class="flex items-center max-w-7xl mx-auto">
+      <div class="flex-shrink-0">
+        <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+      </div>
+      <div class="ml-3">
+        <p class="text-sm text-yellow-700">
+          <strong>Action Required:</strong> You've been reminded {{ reminder_count }} time{{ reminder_count|pluralize }}. Please complete your skill assessment to unlock full access to Buildly CollabHub.
+        </p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Hero Section -->
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="text-center mb-12">
+      <div class="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-full mb-6">
+        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+        Developer Skill Assessment
+      </h1>
+      
+      <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+        Welcome to Buildly CollabHub! Before you begin, we need to understand your skills so we can provide you with the right support and opportunities.
+      </p>
+    </div>
+
+    <!-- Important Notice Card -->
+    <div class="bg-white rounded-2xl shadow-xl border-2 border-blue-200 p-8 mb-8">
+      <div class="flex items-start gap-4">
+        <div class="flex-shrink-0">
+          <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="flex-1">
+          <h2 class="text-2xl font-bold text-gray-900 mb-4">
+            📋 Please Read Carefully - Honor System
+          </h2>
+          
+          <div class="space-y-3 text-gray-700 text-lg">
+            <p class="flex items-start gap-2">
+              <span class="text-green-600 font-bold flex-shrink-0">✓</span>
+              <span><strong>Answer truthfully and honestly.</strong> This helps us understand what you already know.</span>
+            </p>
+            
+            <p class="flex items-start gap-2">
+              <span class="text-green-600 font-bold flex-shrink-0">✓</span>
+              <span><strong>Do NOT use AI tools, ChatGPT, or get outside help.</strong> We need to see YOUR current knowledge.</span>
+            </p>
+            
+            <p class="flex items-start gap-2">
+              <span class="text-green-600 font-bold flex-shrink-0">✓</span>
+              <span><strong>Do NOT research answers or look things up.</strong> Answer based on what you know right now.</span>
+            </p>
+            
+            <p class="flex items-start gap-2">
+              <span class="text-green-600 font-bold flex-shrink-0">✓</span>
+              <span><strong>If you don't know something, that's okay!</strong> Choose the answer that best reflects your current level.</span>
+            </p>
+          </div>
+
+          <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p class="text-blue-900 font-medium">
+              🎯 <strong>Why This Matters:</strong> This assessment isn't a test you can "fail." It's a tool to help us identify where you need support. If you artificially inflate your score, we won't be able to provide you with the right training, mentorship, and resources to help you grow.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assessment Details -->
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+      <!-- What to Expect -->
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <span class="text-2xl">📝</span>
+          What to Expect
+        </h3>
+        <ul class="space-y-3 text-gray-700">
+          <li class="flex items-start gap-2">
+            <span class="text-purple-600 font-bold">•</span>
+            <span><strong>15 multiple choice questions</strong> about your technical experience</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-purple-600 font-bold">•</span>
+            <span><strong>3 short essay questions</strong> about your problem-solving approach</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-purple-600 font-bold">•</span>
+            <span><strong>20-30 minutes</strong> to complete (no time limit)</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-purple-600 font-bold">•</span>
+            <span><strong>Follow-up interview</strong> to discuss your answers and goals</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- What Happens Next -->
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <span class="text-2xl">🚀</span>
+          What Happens Next
+        </h3>
+        <ul class="space-y-3 text-gray-700">
+          <li class="flex items-start gap-2">
+            <span class="text-green-600 font-bold">✓</span>
+            <span>We'll review your assessment to understand your skill level</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-green-600 font-bold">✓</span>
+            <span>Schedule a brief follow-up conversation with you</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-green-600 font-bold">✓</span>
+            <span>Create a personalized learning and growth plan</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-green-600 font-bold">✓</span>
+            <span>Connect you with mentors, resources, and opportunities</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Level Examples -->
+    <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 mb-8">
+      <h3 class="text-xl font-bold text-gray-900 mb-4">💡 Understanding Skill Levels</h3>
+      <div class="grid md:grid-cols-4 gap-4 text-sm">
+        <div class="bg-white p-4 rounded-lg">
+          <div class="font-bold text-blue-600 mb-2">Junior</div>
+          <p class="text-gray-600">Learning fundamentals, needs guidance and mentorship</p>
+        </div>
+        <div class="bg-white p-4 rounded-lg">
+          <div class="font-bold text-green-600 mb-2">Mid-Level</div>
+          <p class="text-gray-600">Can work independently on features with some oversight</p>
+        </div>
+        <div class="bg-white p-4 rounded-lg">
+          <div class="font-bold text-orange-600 mb-2">Senior</div>
+          <p class="text-gray-600">Strong technical depth, can lead projects and mentor others</p>
+        </div>
+        <div class="bg-white p-4 rounded-lg">
+          <div class="font-bold text-purple-600 mb-2">Lead</div>
+          <p class="text-gray-600">Expert level, designs systems and makes architectural decisions</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Privacy & Security -->
+    <div class="bg-gray-50 rounded-xl p-6 mb-8">
+      <h3 class="text-lg font-bold text-gray-900 mb-3">🔒 Your Privacy & Security</h3>
+      <div class="text-gray-700 space-y-2">
+        <p>• Your assessment results are confidential and used only to support your development</p>
+        <p>• We use AI detection to ensure assessment integrity (not to penalize you)</p>
+        <p>• Results help us match you with appropriate projects and learning resources</p>
+        <p>• You'll have a chance to discuss your answers in a follow-up interview</p>
+      </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="text-center">
+      <a href="{% url 'onboarding:take_assessment' %}" 
+         class="inline-block bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-xl font-bold px-12 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
+        Start Your Assessment →
+      </a>
+      
+      <p class="mt-4 text-gray-600">
+        Takes 20-30 minutes • Save and continue later if needed
+      </p>
+      
+      <div class="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg inline-block">
+        <p class="text-sm text-yellow-900">
+          <strong>⚠️ Required:</strong> You must complete this assessment to access full features of CollabHub
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if not user.is_authenticated %}
+<script>
+  // If not logged in, redirect to login after a moment
+  setTimeout(function() {
+    if (confirm('You must be logged in to take the assessment. Redirect to login?')) {
+      window.location.href = '{% url "login" %}?next={% url "onboarding:assessment_landing" %}';
+    }
+  }, 2000);
+</script>
+{% endif %}
+{% endblock %}

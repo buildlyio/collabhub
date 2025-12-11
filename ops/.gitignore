@@ -1,0 +1,3 @@
+# .gitignore additions for ops folder
+ops/.dev_server.pid
+ops/dev_server.log

@@ -38,18 +38,38 @@ class TeamMember(models.Model):
     google_account_link = models.URLField(blank=True)
     google_calendar_embed_code = models.TextField(blank=True)  # Stores the embed code
     approved = models.BooleanField(default=False)
+    
+    # Assessment tracking
+    has_completed_assessment = models.BooleanField(default=False, help_text="Has completed Developer Level Assessment")
+    assessment_completed_at = models.DateTimeField(null=True, blank=True, help_text="When assessment was completed")
+    assessment_reminder_count = models.IntegerField(default=0, help_text="Number of times reminded to complete assessment")
+    assessment_last_reminded = models.DateTimeField(null=True, blank=True, help_text="Last time reminded about assessment")
 
     def __str__(self):
         return f'{self.first_name} {self.last_name} - {self.team_member_type}'
 
 
 class TeamMemberAdmin(admin.ModelAdmin):
-    list_display = ('first_name', 'last_name', 'email', 'team_member_type', 'approved', 'user')
-    list_filter = ('approved', 'team_member_type')
+    list_display = ('first_name', 'last_name', 'email', 'team_member_type', 'approved', 'has_completed_assessment', 'user')
+    list_filter = ('approved', 'team_member_type', 'has_completed_assessment')
     search_fields = ('first_name', 'last_name', 'email', 'user__username')
     list_editable = ('approved',)
+    readonly_fields = ('assessment_completed_at', 'assessment_reminder_count', 'assessment_last_reminded')
     actions = ['approve_users', 'unapprove_users']
     display = 'Team Member Admin'
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('user', 'team_member_type', 'first_name', 'last_name', 'email', 'approved')
+        }),
+        ('Profile', {
+            'fields': ('bio', 'linkedin', 'experience_years', 'github_account', 'google_account_link', 'google_calendar_embed_code')
+        }),
+        ('Assessment Status', {
+            'fields': ('has_completed_assessment', 'assessment_completed_at', 'assessment_reminder_count', 'assessment_last_reminded'),
+            'classes': ('collapse',)
+        }),
+    )
     
     def approve_users(self, request, queryset):
         updated = queryset.update(approved=True)
@@ -143,13 +163,71 @@ class QuizAnswer(models.Model):
     question = models.ForeignKey(QuizQuestion, on_delete=models.CASCADE, related_name="answers")
     team_member = models.ForeignKey("onboarding.TeamMember", on_delete=models.CASCADE)
     answer = models.TextField()
+    submitted_at = models.DateTimeField(auto_now_add=True, null=True)
+    
+    # AI Detection fields
+    ai_detection_score = models.FloatField(null=True, blank=True, help_text="0-100 score indicating likelihood of AI usage")
+    ai_detection_analysis = models.TextField(blank=True, help_text="Detailed AI detection analysis")
+    
+    # Evaluation fields
+    evaluator_score = models.IntegerField(null=True, blank=True, help_text="Score given by human evaluator (e.g., 1-4 for A-D)")
+    evaluator_notes = models.TextField(blank=True, help_text="Notes from human evaluator")
+    evaluated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="evaluated_answers")
+    evaluated_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        unique_together = ['question', 'team_member']
 
     def __str__(self):
         return f'Answer by {self.team_member} to {self.question}'
 
 class QuizAnswerAdmin(admin.ModelAdmin):
-    list_display = ('question', 'team_member', 'answer')
-    search_fields = ('team_member__first_name', 'team_member__last_name')
+    list_display = ('question', 'team_member', 'answer_preview', 'ai_detection_score', 'evaluator_score', 'submitted_at')
+    list_filter = ('question__quiz', 'evaluated_at', 'submitted_at')
+    search_fields = ('team_member__first_name', 'team_member__last_name', 'answer')
+    readonly_fields = ('submitted_at', 'ai_detection_score', 'ai_detection_analysis')
+    
+    fieldsets = (
+        ('Answer Details', {
+            'fields': ('question', 'team_member', 'answer', 'submitted_at')
+        }),
+        ('AI Detection', {
+            'fields': ('ai_detection_score', 'ai_detection_analysis'),
+            'classes': ('collapse',)
+        }),
+        ('Human Evaluation', {
+            'fields': ('evaluator_score', 'evaluator_notes', 'evaluated_by', 'evaluated_at')
+        }),
+    )
+    
+    def answer_preview(self, obj):
+        return obj.answer[:100] + '...' if len(obj.answer) > 100 else obj.answer
+    answer_preview.short_description = 'Answer Preview'
+    
+    actions = ['run_ai_detection']
+    
+    def run_ai_detection(self, request, queryset):
+        """Run AI detection on selected essay answers"""
+        from .ai_detection import detect_ai_usage
+        
+        essay_answers = queryset.filter(question__question_type='essay')
+        if not essay_answers:
+            self.message_user(request, "No essay answers selected. AI detection only works on essay questions.", level='WARNING')
+            return
+        
+        detected_count = 0
+        for answer in essay_answers:
+            try:
+                score, analysis = detect_ai_usage(answer.answer)
+                answer.ai_detection_score = score
+                answer.ai_detection_analysis = analysis
+                answer.save(update_fields=['ai_detection_score', 'ai_detection_analysis'])
+                detected_count += 1
+            except Exception as e:
+                self.message_user(request, f"Error detecting AI for answer {answer.id}: {str(e)}", level='ERROR')
+        
+        self.message_user(request, f"AI detection completed for {detected_count} answers.")
+    run_ai_detection.short_description = "Run AI detection on essay answers"
 
 
 class DevelopmentAgency(models.Model):

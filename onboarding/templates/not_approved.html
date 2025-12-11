@@ -1,8 +1,39 @@
 {% extends "base.html" %}
 
 {% block page_content %}
-<!-- onboarding/templates/onboarding/register.html -->
+<!-- onboarding/templates/onboarding/not_approved.html -->
 
-<h2>Your account is not approved yet.</h2>
-<p>Please wait for an admin to approve your account. You will receive an email notification once your account is approved.</p>
+<div class="max-w-2xl mx-auto mt-10 p-8 bg-yellow-50 border-2 border-yellow-400 rounded-lg">
+  <h2 class="text-2xl font-bold text-gray-900 mb-4">⚠️ Account Not Yet Approved</h2>
+  
+  <p class="text-gray-700 mb-6">
+    Your account is currently pending admin approval. You will receive an email notification once your account is approved.
+  </p>
+  
+  <!-- Assessment Section -->
+  {% if not request.user.teammember.has_completed_assessment %}
+  <div class="bg-white p-6 rounded-lg border-2 border-blue-500 mb-6">
+    <h3 class="text-xl font-bold text-blue-900 mb-3">📋 Action Required: Complete Your Assessment</h3>
+    <p class="text-gray-700 mb-4">
+      While waiting for approval, please complete your Developer Level Assessment. This will help us understand your skills and provide better support.
+    </p>
+    <a href="{% url 'onboarding:assessment_landing' %}" 
+       class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-lg transition-colors">
+      Take Assessment Now →
+    </a>
+  </div>
+  {% else %}
+  <div class="bg-green-50 p-6 rounded-lg border-2 border-green-500">
+    <h3 class="text-xl font-bold text-green-900 mb-3">✓ Assessment Complete</h3>
+    <p class="text-gray-700">
+      Thank you for completing your assessment! We'll review your responses and be in touch soon.
+    </p>
+  </div>
+  {% endif %}
+  
+  <div class="mt-6 text-sm text-gray-600">
+    <p>Questions? Contact us at <a href="mailto:support@buildly.io" class="text-blue-600 underline">support@buildly.io</a></p>
+  </div>
+</div>
+
 {% endblock %}  <!-- End of block content -->

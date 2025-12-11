@@ -87,7 +87,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
-
+    'onboarding.middleware.AssessmentRequiredMiddleware',  # Enforce assessment completion
 ]
 
 ROOT_URLCONF = 'mysite.urls'
@@ -105,6 +105,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'onboarding.context_processors.assessment_status',  # Add assessment status to all templates
             ],
         },
     },

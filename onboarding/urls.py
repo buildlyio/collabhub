@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+app_name = 'onboarding'
+
 urlpatterns = [
     path('register/', views.register, name='register'),
     path('dashboard/', views.dashboard, name='dashboard'),
@@ -14,4 +16,10 @@ urlpatterns = [
     # Agency URLs
     path('agency_add/', views.DevelopmentAgencyCreateView.as_view(), name='agency_add'),
     path('agencies/', views.showcase_agencies, name='agency_list'),
+    
+    # Assessment URLs
+    path('assessment/', views.assessment_landing, name='assessment_landing'),
+    path('assessment/quiz/', views.take_assessment, name='take_assessment'),
+    path('assessment/complete/', views.assessment_complete, name='assessment_complete'),
 ]
+

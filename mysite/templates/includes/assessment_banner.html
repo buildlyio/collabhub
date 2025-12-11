@@ -1,0 +1,31 @@
+<!-- Assessment Notification Banner -->
+{% if needs_assessment and user.is_authenticated %}
+<div class="assessment-notification-banner" style="position: sticky; top: 0; z-index: 1000; background: linear-gradient(90deg, #f59e0b 0%, #ef4444 100%); color: white; padding: 12px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+  <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+    <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+      <div style="flex-shrink: 0;">
+        <svg style="width: 24px; height: 24px;" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+      </div>
+      <div style="flex: 1;">
+        <strong style="font-size: 16px;">⚠️ Action Required:</strong>
+        <span style="font-size: 14px; opacity: 0.95;">
+          Complete your skill assessment to unlock full access to Buildly CollabHub. 
+          {% if assessment_reminder_count > 1 %}
+            <em>(Reminder #{{ assessment_reminder_count }})</em>
+          {% endif %}
+        </span>
+      </div>
+    </div>
+    <div style="flex-shrink: 0;">
+      <a href="{% url 'onboarding:assessment_landing' %}" 
+         style="display: inline-block; background: white; color: #dc2626; padding: 10px 24px; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 14px;"
+         onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)';"
+         onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+        Take Assessment Now →
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
