@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block page_title %}Assessment Reports{% endblock %}
+
+{% block page_content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg p-8 mb-8 text-white">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold mb-2">Assessment Reports</h1>
+                <p class="text-lg opacity-90">Review and evaluate user assessment submissions</p>
+            </div>
+            <a href="{% url 'onboarding:admin_dashboard' %}" 
+               class="inline-flex items-center px-4 py-2 bg-white text-blue-600 rounded-md hover:bg-gray-100 transition-colors font-semibold">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Search -->
+            <div class="md:col-span-2">
+                <label for="search" class="block text-sm font-medium text-gray-700 mb-2">Search User</label>
+                <input type="text" name="search" id="search" value="{{ search_query }}"
+                       placeholder="Name, email, or username..."
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            
+            <!-- Status Filter -->
+            <div>
+                <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Evaluation Status</label>
+                <select name="status" id="status"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">All Statuses</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending Review</option>
+                    <option value="evaluated" {% if status_filter == 'evaluated' %}selected{% endif %}>Evaluated</option>
+                </select>
+            </div>
+            
+            <!-- Apply Button -->
+            <div class="flex items-end">
+                <button type="submit"
+                        class="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-semibold">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                    </svg>
+                    Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Count -->
+    <div class="mb-4 flex justify-between items-center">
+        <p class="text-gray-600">
+            <span class="font-semibold">{{ submissions|length }}</span> submission(s) found
+        </p>
+        {% if search_query or status_filter %}
+        <a href="{% url 'onboarding:admin_assessment_reports' %}" 
+           class="text-sm text-blue-600 hover:text-blue-800">
+            Clear filters
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Submissions Table -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quiz</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Questions</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Evaluation</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AI Flags</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for submission in submissions %}
+                    <tr class="hover:bg-gray-50">
+                        <!-- User Info -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">
+                                {{ submission.team_member.first_name }} {{ submission.team_member.last_name }}
+                            </div>
+                            <div class="text-sm text-gray-500">{{ submission.team_member.email }}</div>
+                        </td>
+                        
+                        <!-- Role -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                                {{ submission.team_member.get_team_member_type_display }}
+                            </span>
+                        </td>
+                        
+                        <!-- Quiz -->
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if submission.quiz %}
+                            {{ submission.quiz.name|truncatewords:5 }}
+                            {% else %}
+                            <span class="text-gray-400">N/A</span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Questions -->
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <div class="text-gray-900 font-medium">{{ submission.total_answers }} total</div>
+                            <div class="text-gray-500 text-xs">
+                                {{ submission.mc_count }} MC / {{ submission.essay_count }} Essay
+                            </div>
+                        </td>
+                        
+                        <!-- Evaluation Status -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if submission.essay_count > 0 %}
+                                {% if submission.evaluated_essays == submission.essay_count %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    Complete
+                                </span>
+                                {% elif submission.evaluated_essays > 0 %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    Partial ({{ submission.evaluated_essays }}/{{ submission.essay_count }})
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                    Pending Review
+                                </span>
+                                {% endif %}
+                            {% else %}
+                            <span class="text-gray-400 text-xs">No essays</span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- AI Flags -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if submission.ai_flagged > 0 %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                </svg>
+                                {{ submission.ai_flagged }} flagged
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                None
+                            </span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Submitted Date -->
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {% if submission.submitted_at %}
+                            {{ submission.submitted_at|date:"M d, Y" }}
+                            <div class="text-xs text-gray-400">{{ submission.submitted_at|date:"g:i A" }}</div>
+                            {% else %}
+                            <span class="text-gray-400">Unknown</span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Actions -->
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <a href="{% url 'onboarding:admin_assessment_review' submission.team_member.id %}" 
+                               class="inline-flex items-center px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors font-medium">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                Review
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="px-6 py-12 text-center">
+                            <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">No Submissions Found</h3>
+                            <p class="text-gray-600">
+                                {% if search_query or status_filter %}
+                                Try adjusting your filters or <a href="{% url 'onboarding:admin_assessment_reports' %}" class="text-blue-600 hover:text-blue-800">clear all filters</a>
+                                {% else %}
+                                Assessment submissions will appear here once users complete their assessments.
+                                {% endif %}
+                            </p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
