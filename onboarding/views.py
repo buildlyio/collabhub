@@ -271,8 +271,8 @@ def take_assessment(request):
     try:
         quiz = Quiz.objects.get(name='Developer Level Assessment')
     except Quiz.DoesNotExist:
-        messages.error(request, 'Assessment quiz not found. Please contact support.')
-        return redirect('onboarding:dashboard')
+        messages.error(request, 'Assessment quiz not found. Please run "python manage.py create_developer_level_quiz" to create it.')
+        return redirect('onboarding:assessment_landing')
     
     # Get all questions ordered
     all_questions = quiz.questions.all().order_by('id')

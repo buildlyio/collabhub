@@ -27,6 +27,23 @@ The `scripts/init_django.sh` script will:
 2. Collect static files
 3. Initialize comprehensive onboarding content (105+ resources and 6 certification quizzes)
 
+## Required Management Commands for Production
+
+After deployment, run these commands to set up the assessment system:
+
+```bash
+# Set environment
+export DJANGO_SETTINGS_MODULE=mysite.settings.production
+
+# Create the Developer Level Assessment quiz (18 questions)
+python manage.py create_developer_level_quiz
+
+# Create learning resources for all assessment topics
+python manage.py create_learning_resources
+```
+
+**Important:** The Developer Assessment will not work until `create_developer_level_quiz` is run in production.
+
 ## Onboarding Content
 The initialization script creates:
 - Resources for Frontend, Backend, AI, Marketing, and Product Management developers
