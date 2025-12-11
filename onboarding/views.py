@@ -3,13 +3,15 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login, authenticate
+from django.contrib.auth.models import User
 from django.views.generic import CreateView
-from django.db.models import Q
+from django.db.models import Q, Count, Avg
 from .forms import TeamMemberRegistrationForm, ResourceForm, TeamMemberUpdateForm, DevelopmentAgencyForm
-from .models import TeamMember, Resource, TeamMemberResource,CertificationExam,Quiz, QuizQuestion, QuizAnswer, DevelopmentAgency
+from .models import TeamMember, Resource, TeamMemberResource,CertificationExam,Quiz, QuizQuestion, QuizAnswer, DevelopmentAgency, TEAM_MEMBER_TYPES
 from submission.models import SubmissionLink, Submission
 from django.contrib import messages
 from django.utils.timezone import now
+from datetime import timedelta
 # from punchlist.models import Product
 
 
@@ -131,8 +133,72 @@ def upload_resource(request):
 
 @user_passes_test(lambda u: u.is_superuser)
 def resource_list(request):
-    resources = Resource.objects.all()
+    resources = Resource.objects.all().order_by('team_member_type', 'title')
     return render(request, 'resource_list.html', {'resources': resources})
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def resource_create(request):
+    if request.method == 'POST':
+        team_member_type = request.POST.get('team_member_type')
+        title = request.POST.get('title')
+        link = request.POST.get('link', '')
+        descr = request.POST.get('descr', '')
+        document = request.FILES.get('document')
+        
+        Resource.objects.create(
+            team_member_type=team_member_type,
+            title=title,
+            link=link,
+            descr=descr,
+            document=document
+        )
+        messages.success(request, f'Resource "{title}" created successfully!')
+        return redirect('onboarding:resource_list')
+    
+    team_member_types = TEAM_MEMBER_TYPES
+    return render(request, 'resource_form.html', {
+        'team_member_types': team_member_types,
+        'action': 'Create'
+    })
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def resource_edit(request, resource_id):
+    resource = get_object_or_404(Resource, id=resource_id)
+    
+    if request.method == 'POST':
+        resource.team_member_type = request.POST.get('team_member_type')
+        resource.title = request.POST.get('title')
+        resource.link = request.POST.get('link', '')
+        resource.descr = request.POST.get('descr', '')
+        
+        if 'document' in request.FILES:
+            resource.document = request.FILES['document']
+        
+        resource.save()
+        messages.success(request, f'Resource "{resource.title}" updated successfully!')
+        return redirect('onboarding:resource_list')
+    
+    team_member_types = TEAM_MEMBER_TYPES
+    return render(request, 'resource_form.html', {
+        'resource': resource,
+        'team_member_types': team_member_types,
+        'action': 'Edit'
+    })
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def resource_delete(request, resource_id):
+    resource = get_object_or_404(Resource, id=resource_id)
+    
+    if request.method == 'POST':
+        title = resource.title
+        resource.delete()
+        messages.success(request, f'Resource "{title}" deleted successfully!')
+        return redirect('onboarding:resource_list')
+    
+    return render(request, 'resource_confirm_delete.html', {'resource': resource})
 
 
 # View all available quizzes
@@ -393,3 +459,241 @@ def assessment_complete(request):
     }
     
     return render(request, 'assessment_complete.html', context)
+
+
+# ============================================================================
+# ADMIN VIEWS - Dashboard, Reports, and Management
+# ============================================================================
+
+@user_passes_test(lambda u: u.is_superuser)
+def admin_dashboard(request):
+    """Main admin dashboard showing overview stats and recent activity"""
+    # Get date range for "recent" (last 30 days)
+    thirty_days_ago = now() - timedelta(days=30)
+    
+    # User stats
+    total_users = User.objects.count()
+    recent_signups = TeamMember.objects.filter(
+        user__date_joined__gte=thirty_days_ago
+    ).order_by('-user__date_joined')[:10]
+    
+    # Assessment stats
+    completed_assessments = TeamMember.objects.filter(has_completed_assessment=True).count()
+    pending_assessments = TeamMember.objects.filter(has_completed_assessment=False).count()
+    recent_completions = TeamMember.objects.filter(
+        has_completed_assessment=True,
+        assessment_completed_at__isnull=False
+    ).order_by('-assessment_completed_at')[:10]
+    
+    # Quiz stats
+    total_quizzes = Quiz.objects.count()
+    total_questions = QuizQuestion.objects.count()
+    total_answers = QuizAnswer.objects.count()
+    
+    # Evaluation stats
+    awaiting_evaluation = QuizAnswer.objects.filter(
+        question__question_type='essay',
+        evaluator_score__isnull=True
+    ).count()
+    
+    # Team member type distribution
+    type_distribution = TeamMember.objects.values('team_member_type').annotate(
+        count=Count('id')
+    ).order_by('-count')[:10]
+    
+    context = {
+        'total_users': total_users,
+        'recent_signups': recent_signups,
+        'completed_assessments': completed_assessments,
+        'pending_assessments': pending_assessments,
+        'recent_completions': recent_completions,
+        'total_quizzes': total_quizzes,
+        'total_questions': total_questions,
+        'total_answers': total_answers,
+        'awaiting_evaluation': awaiting_evaluation,
+        'type_distribution': type_distribution,
+    }
+    
+    return render(request, 'admin_dashboard.html', context)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def admin_assessment_reports(request):
+    """List all assessment submissions with filtering and search"""
+    # Get filter parameters
+    quiz_filter = request.GET.get('quiz', '')
+    status_filter = request.GET.get('status', '')
+    search_query = request.GET.get('search', '')
+    
+    # Get all team members who have submitted answers
+    team_members_with_answers = TeamMember.objects.filter(
+        quizanswer__isnull=False
+    ).distinct()
+    
+    # Apply filters
+    if search_query:
+        team_members_with_answers = team_members_with_answers.filter(
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(user__username__icontains=search_query)
+        )
+    
+    if status_filter == 'evaluated':
+        team_members_with_answers = team_members_with_answers.filter(
+            quizanswer__evaluator_score__isnull=False
+        ).distinct()
+    elif status_filter == 'pending':
+        team_members_with_answers = team_members_with_answers.filter(
+            quizanswer__question__question_type='essay',
+            quizanswer__evaluator_score__isnull=True
+        ).distinct()
+    
+    # Get submission data for each team member
+    submissions = []
+    for tm in team_members_with_answers:
+        answers = QuizAnswer.objects.filter(team_member=tm)
+        
+        # Get quiz info
+        quiz = None
+        if answers.exists():
+            quiz = answers.first().question.quiz
+        
+        # Count questions by type
+        mc_count = answers.filter(question__question_type='multiple_choice').count()
+        essay_count = answers.filter(question__question_type='essay').count()
+        
+        # Check evaluation status
+        essay_answers = answers.filter(question__question_type='essay')
+        evaluated_essays = essay_answers.filter(evaluator_score__isnull=False).count()
+        
+        # AI detection
+        ai_flagged = answers.filter(
+            ai_detection_score__gte=70
+        ).count()
+        
+        submissions.append({
+            'team_member': tm,
+            'quiz': quiz,
+            'total_answers': answers.count(),
+            'mc_count': mc_count,
+            'essay_count': essay_count,
+            'evaluated_essays': evaluated_essays,
+            'ai_flagged': ai_flagged,
+            'submitted_at': answers.order_by('-submitted_at').first().submitted_at if answers.exists() else None,
+        })
+    
+    # Sort by submission date (newest first)
+    submissions.sort(key=lambda x: x['submitted_at'] or now(), reverse=True)
+    
+    # Get available quizzes for filter dropdown
+    available_quizzes = Quiz.objects.all()
+    
+    context = {
+        'submissions': submissions,
+        'available_quizzes': available_quizzes,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'quiz_filter': quiz_filter,
+    }
+    
+    return render(request, 'admin_assessment_reports.html', context)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def admin_assessment_review(request, team_member_id):
+    """Detailed review of a specific team member's assessment"""
+    team_member = get_object_or_404(TeamMember, id=team_member_id)
+    
+    # Handle evaluation form submission
+    if request.method == 'POST':
+        answer_id = request.POST.get('answer_id')
+        evaluator_score = request.POST.get('evaluator_score')
+        evaluator_notes = request.POST.get('evaluator_notes')
+        
+        if answer_id:
+            answer = get_object_or_404(QuizAnswer, id=answer_id)
+            answer.evaluator_score = evaluator_score if evaluator_score else None
+            answer.evaluator_notes = evaluator_notes
+            answer.evaluated_by = request.user
+            answer.evaluated_at = now()
+            answer.save()
+            messages.success(request, 'Evaluation saved successfully.')
+            return redirect('onboarding:admin_assessment_review', team_member_id=team_member_id)
+    
+    # Get all answers for this team member
+    answers = QuizAnswer.objects.filter(
+        team_member=team_member
+    ).select_related('question', 'question__quiz').order_by('question__id')
+    
+    # Organize by quiz
+    quiz_data = {}
+    for answer in answers:
+        quiz = answer.question.quiz
+        if quiz not in quiz_data:
+            quiz_data[quiz] = {
+                'quiz': quiz,
+                'mc_answers': [],
+                'essay_answers': [],
+            }
+        
+        if answer.question.question_type == 'multiple_choice':
+            quiz_data[quiz]['mc_answers'].append(answer)
+        else:
+            quiz_data[quiz]['essay_answers'].append(answer)
+    
+    # Calculate stats
+    total_mc = sum(len(data['mc_answers']) for data in quiz_data.values())
+    total_essays = sum(len(data['essay_answers']) for data in quiz_data.values())
+    evaluated_essays = QuizAnswer.objects.filter(
+        team_member=team_member,
+        question__question_type='essay',
+        evaluator_score__isnull=False
+    ).count()
+    
+    context = {
+        'team_member': team_member,
+        'quiz_data': quiz_data.values(),
+        'total_mc': total_mc,
+        'total_essays': total_essays,
+        'evaluated_essays': evaluated_essays,
+    }
+    
+    return render(request, 'admin_assessment_review.html', context)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def admin_quiz_list(request):
+    """List all quizzes with management options"""
+    quizzes = Quiz.objects.annotate(
+        question_count=Count('questions'),
+        participant_count=Count('questions__answers__team_member', distinct=True)
+    )
+    
+    # Get additional stats for each quiz
+    quiz_stats = []
+    for quiz in quizzes:
+        mc_questions = QuizQuestion.objects.filter(
+            quiz=quiz,
+            question_type='multiple_choice'
+        ).count()
+        
+        essay_questions = QuizQuestion.objects.filter(
+            quiz=quiz,
+            question_type='essay'
+        ).count()
+        
+        quiz_stats.append({
+            'quiz': quiz,
+            'mc_questions': mc_questions,
+            'essay_questions': essay_questions,
+            'total_questions': quiz.question_count,
+            'participants': quiz.participant_count,
+        })
+    
+    context = {
+        'quiz_stats': quiz_stats,
+    }
+    
+    return render(request, 'admin_quiz_list.html', context)
+

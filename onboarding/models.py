@@ -108,8 +108,38 @@ class Resource(models.Model):
         return f'{self.title} - {self.team_member_type}'
 
 class ResourceAdmin(admin.ModelAdmin):
-    list_display = ('title','team_member_type')
-    display = 'Resource Admin'  
+    list_display = ('title', 'team_member_type', 'link', 'has_document')
+    list_filter = ('team_member_type',)
+    search_fields = ('title', 'descr', 'link')
+    list_per_page = 50
+    ordering = ('team_member_type', 'title')
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('team_member_type', 'title')
+        }),
+        ('Content', {
+            'fields': ('descr', 'link', 'document')
+        }),
+    )
+    
+    def has_document(self, obj):
+        return bool(obj.document)
+    has_document.boolean = True
+    has_document.short_description = 'Has Document'
+    
+    actions = ['duplicate_resources']
+    
+    def duplicate_resources(self, request, queryset):
+        """Duplicate selected resources"""
+        count = 0
+        for resource in queryset:
+            resource.pk = None
+            resource.title = f"{resource.title} (Copy)"
+            resource.save()
+            count += 1
+        self.message_user(request, f'{count} resource(s) duplicated successfully.')
+    duplicate_resources.short_description = "Duplicate selected resources"  
 
 
 class TeamMemberResource(models.Model):

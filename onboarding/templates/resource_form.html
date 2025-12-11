@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block page_title %}{{ action }} Resource{% endblock %}
+
+{% block page_content %}
+<div class="max-w-3xl mx-auto">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-8 mb-8 text-white">
+        <h1 class="text-3xl md:text-4xl font-bold">{{ action }} Resource</h1>
+        <p class="text-lg opacity-90 mt-2">{% if resource %}Update the resource details below{% else %}Add a new learning resource for the community{% endif %}</p>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Title -->
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+                    Title <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="title" id="title" required
+                       value="{% if resource %}{{ resource.title }}{% endif %}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="e.g., Django Documentation">
+            </div>
+
+            <!-- Team Member Type -->
+            <div>
+                <label for="team_member_type" class="block text-sm font-medium text-gray-700 mb-2">
+                    Team Member Type <span class="text-red-500">*</span>
+                </label>
+                <select name="team_member_type" id="team_member_type" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">-- Select Team Member Type --</option>
+                    {% for value, label in team_member_types %}
+                    <option value="{{ value }}" {% if resource and resource.team_member_type == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label for="descr" class="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                </label>
+                <textarea name="descr" id="descr" rows="4"
+                          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Provide a brief description of this resource...">{% if resource %}{{ resource.descr }}{% endif %}</textarea>
+                <p class="mt-1 text-sm text-gray-500">Optional: Help others understand what this resource offers</p>
+            </div>
+
+            <!-- Link -->
+            <div>
+                <label for="link" class="block text-sm font-medium text-gray-700 mb-2">
+                    URL Link
+                </label>
+                <input type="url" name="link" id="link"
+                       value="{% if resource %}{{ resource.link }}{% endif %}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="https://example.com/resource">
+                <p class="mt-1 text-sm text-gray-500">Optional: External URL to the resource</p>
+            </div>
+
+            <!-- Document Upload -->
+            <div>
+                <label for="document" class="block text-sm font-medium text-gray-700 mb-2">
+                    Document Upload
+                </label>
+                {% if resource and resource.document %}
+                <div class="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <span class="text-sm text-blue-800">Current file: {{ resource.document.name }}</span>
+                        </div>
+                        <a href="{{ resource.document.url }}" download class="text-sm text-blue-600 hover:text-blue-800">Download</a>
+                    </div>
+                </div>
+                {% endif %}
+                <input type="file" name="document" id="document"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                <p class="mt-1 text-sm text-gray-500">Optional: Upload a PDF, document, or other file{% if resource and resource.document %} (uploading a new file will replace the existing one){% endif %}</p>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex gap-4 pt-6 border-t border-gray-200">
+                <button type="submit"
+                        class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-semibold">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    {% if resource %}Update Resource{% else %}Create Resource{% endif %}
+                </button>
+                <a href="{% url 'onboarding:resource_list' %}"
+                   class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors font-semibold">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Help Section -->
+    <div class="mt-8 bg-gray-50 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+            <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Tips for Creating Resources
+        </h3>
+        <ul class="space-y-2 text-gray-700">
+            <li class="flex items-start">
+                <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Use clear, descriptive titles that explain what the resource covers</span>
+            </li>
+            <li class="flex items-start">
+                <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Select the appropriate team member type to help users find relevant resources</span>
+            </li>
+            <li class="flex items-start">
+                <svg class="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Provide either a URL link or upload a document (or both for maximum accessibility)</span>
+            </li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
