@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Contract - {{ contract.title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-5xl mx-auto px-4 py-8">
+        <!-- Back Button -->
+        <div class="mb-6">
+            <a href="{% url 'onboarding:customer_shared_view' token %}"
+               class="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Back to Dashboard
+            </a>
+        </div>
+
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg p-8 mb-8 text-white">
+            <h1 class="text-3xl md:text-4xl font-bold mb-2">Sign Contract</h1>
+            <p class="text-lg opacity-90">{{ contract.title }}</p>
+        </div>
+
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="{% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-green-50 text-green-800 border border-green-200{% endif %} rounded-lg p-4">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Contract Summary -->
+        <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Contract Summary</h2>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Start Date</p>
+                    <p class="font-semibold text-gray-900">{{ contract.start_date|date:"M d, Y" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">End Date</p>
+                    <p class="font-semibold text-gray-900">{{ contract.end_date|date:"M d, Y" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Developers</p>
+                    <p class="font-semibold text-gray-900">{{ contract.developers.count }}</p>
+                </div>
+                {% if contract.hourly_rate %}
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Rate</p>
+                    <p class="font-semibold text-gray-900">${{ contract.hourly_rate }}/hr</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Developers List -->
+            {% if contract.developers.all %}
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Assigned Developers</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {% for dev in contract.developers.all %}
+                    <div class="flex items-center bg-gray-50 rounded-lg p-3">
+                        <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        <span class="text-gray-900 font-medium">{{ dev.first_name }} {{ dev.last_name }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Contract Terms -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Contract Terms</h3>
+                <div class="bg-gray-50 rounded-lg p-6 max-h-96 overflow-y-auto border border-gray-200">
+                    <p class="text-sm text-gray-700 whitespace-pre-line leading-relaxed">{{ contract.contract_text }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signature Form -->
+        <div class="bg-white rounded-lg shadow-md p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Digital Signature</h2>
+            
+            <form method="post" id="signatureForm" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Name -->
+                <div>
+                    <label for="signed_by" class="block text-sm font-medium text-gray-700 mb-2">
+                        Full Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="signed_by" id="signed_by" required
+                           value="{{ customer.contact_name }}"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                           placeholder="Enter your full legal name">
+                    <p class="mt-1 text-sm text-gray-500">This is the name that will appear on the signed contract</p>
+                </div>
+
+                <!-- Signature Canvas -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Draw Your Signature <span class="text-red-500">*</span>
+                    </label>
+                    <div class="border-2 border-gray-300 rounded-lg overflow-hidden bg-white">
+                        <canvas id="signatureCanvas" 
+                                class="w-full cursor-crosshair" 
+                                width="800" 
+                                height="200"
+                                style="touch-action: none;">
+                        </canvas>
+                    </div>
+                    <div class="mt-2 flex items-center justify-between">
+                        <p class="text-sm text-gray-500">Sign above with your mouse, trackpad, or touchscreen</p>
+                        <button type="button" onclick="clearSignature()" 
+                                class="text-sm text-red-600 hover:text-red-800 font-medium">
+                            Clear Signature
+                        </button>
+                    </div>
+                    <input type="hidden" name="signature_data" id="signatureData" required>
+                </div>
+
+                <!-- Agreement Checkbox -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <label class="flex items-start">
+                        <input type="checkbox" name="agreement" id="agreement" required
+                               class="mt-1 h-5 w-5 text-purple-600 focus:ring-purple-500 border-gray-300 rounded">
+                        <span class="ml-3 text-sm text-gray-700">
+                            <span class="font-semibold">I agree to the terms and conditions</span><br>
+                            By signing this contract, I acknowledge that I have read, understood, and agree to be bound by all terms and conditions outlined above. I understand that this electronic signature is legally binding and has the same effect as a handwritten signature.
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Legal Notice -->
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <p class="text-xs text-gray-600 leading-relaxed">
+                        <strong>Legal Notice:</strong> By electronically signing this document, you agree that your electronic signature is the legal equivalent of your manual signature. You consent to be legally bound by the contract's terms and conditions. Your IP address ({{ ip_address }}) and the date and time of signing will be recorded for verification purposes.
+                    </p>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex items-center justify-between pt-4">
+                    <a href="{% url 'onboarding:customer_shared_view' token %}"
+                       class="text-gray-600 hover:text-gray-800 font-medium">
+                        ← Cancel
+                    </a>
+                    <button type="submit" 
+                            class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 shadow-lg">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Sign Contract
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-8 text-center text-sm text-gray-500">
+            <p>🔒 This is a secure, unique link. Do not share with others.</p>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('signatureCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let hasSignature = false;
+
+        // Set canvas size
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * 2;  // High DPI support
+            canvas.height = rect.height * 2;
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            ctx.scale(2, 2);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+        resizeCanvas();
+
+        // Drawing functions
+        function startDrawing(e) {
+            isDrawing = true;
+            const pos = getPosition(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+            e.preventDefault();
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const pos = getPosition(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            hasSignature = true;
+            e.preventDefault();
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                ctx.closePath();
+            }
+        }
+
+        function getPosition(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+            return { x, y };
+        }
+
+        function clearSignature() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hasSignature = false;
+            document.getElementById('signatureData').value = '';
+        }
+
+        // Event listeners for mouse
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Event listeners for touch
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+
+        // Form submission
+        document.getElementById('signatureForm').addEventListener('submit', function(e) {
+            if (!hasSignature) {
+                e.preventDefault();
+                alert('Please provide your signature before submitting.');
+                return false;
+            }
+
+            // Get signature data and set it to hidden input
+            const signatureData = canvas.toDataURL('image/png');
+            document.getElementById('signatureData').value = signatureData;
+            
+            return true;
+        });
+
+        // Window resize handler
+        window.addEventListener('resize', resizeCanvas);
+    </script>
+</body>
+</html>

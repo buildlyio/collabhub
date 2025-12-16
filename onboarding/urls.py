@@ -37,5 +37,20 @@ urlpatterns = [
     path('admin-quiz/<int:quiz_id>/question/add/', views.admin_question_create, name='admin_question_create'),
     path('admin-question/<int:question_id>/edit/', views.admin_question_edit, name='admin_question_edit'),
     path('admin-question/<int:question_id>/delete/', views.admin_question_delete, name='admin_question_delete'),
+    
+    # Customer Portal URLs
+    path('client/login/', views.customer_login, name='customer_login'),
+    path('client/logout/', views.customer_logout, name='customer_logout'),
+    path('client/dashboard/', views.customer_dashboard, name='customer_dashboard'),
+    path('client/developer/<int:developer_id>/', views.customer_developer_detail, name='customer_developer_detail'),
+    path('client/contract/<int:contract_id>/', views.customer_contract_view, name='customer_contract_view'),
+    path('client/contract/<int:contract_id>/sign/', views.customer_contract_sign, name='customer_contract_sign'),
+    
+    # Shareable Token-Based URLs
+    path('client/shared/<str:token>/', views.customer_shared_view, name='customer_shared_view'),
+    path('client/shared/<str:token>/developer/<int:developer_id>/', views.customer_shared_developer_detail, name='customer_shared_developer_detail'),
+    path('client/shared/<str:token>/developer/<int:developer_id>/approve/', views.customer_shared_approve_developer, name='customer_shared_approve_developer'),
+    path('client/shared/<str:token>/developer/<int:developer_id>/reject/', views.customer_shared_reject_developer, name='customer_shared_reject_developer'),
+    path('client/shared/<str:token>/contract/<int:contract_id>/sign/', views.customer_shared_contract_sign, name='customer_shared_contract_sign'),
 ]
 

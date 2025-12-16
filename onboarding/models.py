@@ -309,3 +309,209 @@ class DevelopmentAgencyAdmin(admin.ModelAdmin):
     search_fields = ('agency_name','contact_email')
     list_filter = ('agency_type', 'industries_worked')
     display = 'Development Agencies'
+
+
+# Customer Model for Client Portal
+class Customer(models.Model):
+    """
+    Represents a client/customer who can view assigned developer profiles
+    and sign engagement contracts
+    """
+    company_name = models.CharField(max_length=255)
+    contact_name = models.CharField(max_length=255)
+    contact_email = models.EmailField(unique=True)
+    contact_phone = models.CharField(max_length=20, blank=True)
+    
+    # Authentication (simple username/password for now)
+    username = models.CharField(max_length=100, unique=True)
+    password = models.CharField(max_length=255, help_text="Plain text password (will be hashed)")
+    
+    # Shareable token for passwordless access
+    share_token = models.CharField(max_length=64, unique=True, blank=True, help_text="Unique token for shareable URL")
+    
+    # Assigned developers
+    assigned_developers = models.ManyToManyField(
+        TeamMember, 
+        through='CustomerDeveloperAssignment',
+        related_name='assigned_to_customers'
+    )
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_login = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    notes = models.TextField(blank=True, help_text="Internal notes about this customer")
+    
+    def __str__(self):
+        return f"{self.company_name} ({self.contact_name})"
+    
+    def check_password(self, password):
+        """Simple password check (should use hashing in production)"""
+        return self.password == password
+    
+    def generate_share_token(self):
+        """Generate a unique share token for passwordless access"""
+        import secrets
+        self.share_token = secrets.token_urlsafe(48)
+        self.save()
+        return self.share_token
+    
+    def get_share_url(self, request=None):
+        """Get the shareable URL for this customer"""
+        if not self.share_token:
+            self.generate_share_token()
+        if request:
+            from django.urls import reverse
+            return request.build_absolute_uri(reverse('onboarding:customer_shared_view', kwargs={'token': self.share_token}))
+        return f"/onboarding/client/shared/{self.share_token}/"
+    
+    class Meta:
+        ordering = ['-created_at']
+
+
+# Through model for Customer-Developer relationship with approval status
+class CustomerDeveloperAssignment(models.Model):
+    """
+    Tracks which developers are assigned to which customers
+    and whether the customer has approved/rejected them
+    """
+    APPROVAL_STATUS = [
+        ('pending', 'Pending Review'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    developer = models.ForeignKey(TeamMember, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=APPROVAL_STATUS, default='pending')
+    assigned_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True, help_text="Customer notes about this developer")
+    
+    def __str__(self):
+        return f"{self.customer.company_name} - {self.developer.first_name} {self.developer.last_name} ({self.status})"
+    
+    class Meta:
+        unique_together = ('customer', 'developer')
+        ordering = ['-assigned_at']
+
+
+class CustomerDeveloperAssignmentAdmin(admin.ModelAdmin):
+    list_display = ('customer', 'developer', 'status', 'assigned_at', 'reviewed_at')
+    list_filter = ('status', 'assigned_at')
+    search_fields = ('customer__company_name', 'developer__first_name', 'developer__last_name')
+    readonly_fields = ('assigned_at', 'reviewed_at')
+
+
+class CustomerAdmin(admin.ModelAdmin):
+    list_display = ('company_name', 'contact_name', 'contact_email', 'username', 'has_share_token', 'is_active', 'created_at')
+    search_fields = ('company_name', 'contact_name', 'contact_email', 'username', 'share_token')
+    list_filter = ('is_active', 'created_at')
+    readonly_fields = ('created_at', 'last_login', 'share_token', 'share_url_display')
+    actions = ['generate_share_tokens']
+    
+    def has_share_token(self, obj):
+        return bool(obj.share_token)
+    has_share_token.boolean = True
+    has_share_token.short_description = 'Has Token'
+    
+    def share_url_display(self, obj):
+        if obj.share_token:
+            url = obj.get_share_url()
+            return f'<a href="{url}" target="_blank">{url}</a>'
+        return 'Generate token to create shareable URL'
+    share_url_display.short_description = 'Shareable URL'
+    share_url_display.allow_tags = True
+    
+    def generate_share_tokens(self, request, queryset):
+        count = 0
+        for customer in queryset:
+            if not customer.share_token:
+                customer.generate_share_token()
+                count += 1
+        self.message_user(request, f'Generated share tokens for {count} customer(s).')
+    generate_share_tokens.short_description = 'Generate share tokens'
+    
+    fieldsets = (
+        ('Company Information', {
+            'fields': ('company_name', 'contact_name', 'contact_email', 'contact_phone')
+        }),
+        ('Authentication', {
+            'fields': ('username', 'password', 'is_active')
+        }),
+        ('Shareable Access', {
+            'fields': ('share_token', 'share_url_display'),
+            'description': 'Generate a unique token to create a shareable URL for passwordless access'
+        }),
+        ('Metadata', {
+            'fields': ('notes', 'created_at', 'last_login'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+# Contract Model for Engagement Agreements
+class Contract(models.Model):
+    """
+    Represents an engagement contract between Buildly and a customer
+    for specific developers
+    """
+    CONTRACT_STATUS = [
+        ('draft', 'Draft'),
+        ('pending', 'Pending Signature'),
+        ('signed', 'Signed'),
+        ('expired', 'Expired'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='contracts')
+    developers = models.ManyToManyField(TeamMember, related_name='contracts')
+    
+    # Contract details
+    title = models.CharField(max_length=255)
+    contract_text = models.TextField(help_text="Full contract text")
+    start_date = models.DateField()
+    end_date = models.DateField()
+    hourly_rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    project_rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    
+    # Signature
+    status = models.CharField(max_length=20, choices=CONTRACT_STATUS, default='draft')
+    signature_data = models.TextField(blank=True, help_text="Base64 encoded signature image")
+    signed_by = models.CharField(max_length=255, blank=True)
+    signed_at = models.DateTimeField(null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='contracts_created')
+    
+    def __str__(self):
+        return f"{self.title} - {self.customer.company_name}"
+    
+    class Meta:
+        ordering = ['-created_at']
+
+
+class ContractAdmin(admin.ModelAdmin):
+    list_display = ('title', 'customer', 'status', 'start_date', 'end_date', 'signed_at', 'created_at')
+    search_fields = ('title', 'customer__company_name', 'signed_by')
+    list_filter = ('status', 'start_date', 'signed_at')
+    filter_horizontal = ('developers',)
+    readonly_fields = ('signed_at', 'created_at', 'ip_address')
+    
+    fieldsets = (
+        ('Contract Information', {
+            'fields': ('customer', 'title', 'contract_text', 'developers')
+        }),
+        ('Terms', {
+            'fields': ('start_date', 'end_date', 'hourly_rate', 'project_rate')
+        }),
+        ('Signature', {
+            'fields': ('status', 'signature_data', 'signed_by', 'signed_at', 'ip_address')
+        }),
+        ('Metadata', {
+            'fields': ('created_by', 'created_at'),
+            'classes': ('collapse',)
+        }),
+    )

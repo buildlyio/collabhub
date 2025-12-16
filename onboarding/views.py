@@ -889,3 +889,447 @@ def admin_question_delete(request, question_id):
     }
     return render(request, 'admin_question_confirm_delete.html', context)
 
+
+# ============================================================================
+# CUSTOMER PORTAL VIEWS
+# ============================================================================
+
+def customer_login(request):
+    """Customer login view"""
+    from .models import Customer
+    from django.utils.timezone import now as timezone_now
+    
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        try:
+            customer = Customer.objects.get(username=username, is_active=True)
+            if customer.check_password(password):
+                # Store customer ID in session
+                request.session['customer_id'] = customer.id
+                customer.last_login = timezone_now()
+                customer.save()
+                messages.success(request, f'Welcome, {customer.contact_name}!')
+                return redirect('onboarding:customer_dashboard')
+            else:
+                messages.error(request, 'Invalid username or password.')
+        except Customer.DoesNotExist:
+            messages.error(request, 'Invalid username or password.')
+    
+    return render(request, 'customer_login.html')
+
+
+def customer_logout(request):
+    """Customer logout view"""
+    if 'customer_id' in request.session:
+        del request.session['customer_id']
+    messages.success(request, 'You have been logged out successfully.')
+    return redirect('onboarding:customer_login')
+
+
+def customer_required(view_func):
+    """Decorator to require customer authentication"""
+    def wrapper(request, *args, **kwargs):
+        from .models import Customer
+        customer_id = request.session.get('customer_id')
+        if not customer_id:
+            messages.error(request, 'Please log in to access this page.')
+            return redirect('onboarding:customer_login')
+        try:
+            customer = Customer.objects.get(id=customer_id, is_active=True)
+            request.customer = customer
+            return view_func(request, *args, **kwargs)
+        except Customer.DoesNotExist:
+            del request.session['customer_id']
+            messages.error(request, 'Your session has expired. Please log in again.')
+            return redirect('onboarding:customer_login')
+    return wrapper
+
+
+@customer_required
+def customer_dashboard(request):
+    """Customer dashboard showing assigned developers and contracts"""
+    from .models import Contract
+    
+    customer = request.customer
+    developers = customer.assigned_developers.all()
+    contracts = customer.contracts.all()
+    
+    # Get stats
+    pending_contracts = contracts.filter(status='pending').count()
+    signed_contracts = contracts.filter(status='signed').count()
+    
+    context = {
+        'customer': customer,
+        'developers': developers,
+        'contracts': contracts,
+        'pending_contracts': pending_contracts,
+        'signed_contracts': signed_contracts,
+    }
+    
+    return render(request, 'customer_dashboard.html', context)
+
+
+@customer_required
+def customer_developer_detail(request, developer_id):
+    """Detailed view of a single developer's profile"""
+    customer = request.customer
+    developer = get_object_or_404(TeamMember, id=developer_id)
+    
+    # Verify this developer is assigned to the customer
+    if not customer.assigned_developers.filter(id=developer_id).exists():
+        messages.error(request, 'You do not have access to this developer profile.')
+        return redirect('onboarding:customer_dashboard')
+    
+    # Get quiz answers for assessment results
+    quiz_answers = QuizAnswer.objects.filter(
+        team_member=developer
+    ).select_related('question__quiz').order_by('-submitted_at')
+    
+    # Calculate assessment score
+    total_questions = quiz_answers.count()
+    if total_questions > 0:
+        # For MC questions, use is_correct; for essays, use evaluator_score
+        mc_correct = quiz_answers.filter(
+            question__question_type='multiple_choice',
+            is_correct=True
+        ).count()
+        
+        essay_scores = quiz_answers.filter(
+            question__question_type='essay',
+            evaluator_score__isnull=False
+        )
+        essay_total = sum([answer.evaluator_score for answer in essay_scores])
+        essay_count = essay_scores.count()
+        
+        # Calculate percentage
+        mc_questions = quiz_answers.filter(question__question_type='multiple_choice').count()
+        essay_questions = quiz_answers.filter(question__question_type='essay').count()
+        
+        if mc_questions > 0:
+            mc_percentage = (mc_correct / mc_questions) * 100
+        else:
+            mc_percentage = 0
+            
+        if essay_count > 0:
+            essay_percentage = (essay_total / (essay_count * 10)) * 100  # Assuming 10 is max score
+        else:
+            essay_percentage = 0
+        
+        overall_score = (mc_percentage + essay_percentage) / 2 if (mc_questions + essay_questions) > 0 else 0
+    else:
+        overall_score = 0
+    
+    # Get resources the developer is working on
+    developer_resources = TeamMemberResource.objects.filter(
+        team_member=developer
+    ).select_related('resource')
+    
+    context = {
+        'customer': customer,
+        'developer': developer,
+        'quiz_answers': quiz_answers[:10],  # Recent 10 answers
+        'overall_score': round(overall_score, 1),
+        'total_assessments': quiz_answers.values('question__quiz').distinct().count(),
+        'developer_resources': developer_resources,
+    }
+    
+    return render(request, 'customer_developer_detail.html', context)
+
+
+@customer_required
+def customer_contract_view(request, contract_id):
+    """View a specific contract"""
+    from .models import Contract
+    
+    customer = request.customer
+    contract = get_object_or_404(Contract, id=contract_id, customer=customer)
+    
+    context = {
+        'customer': customer,
+        'contract': contract,
+    }
+    
+    return render(request, 'customer_contract_view.html', context)
+
+
+@customer_required
+def customer_contract_sign(request, contract_id):
+    """Sign a contract with digital signature"""
+    from .models import Contract
+    import base64
+    
+    customer = request.customer
+    contract = get_object_or_404(Contract, id=contract_id, customer=customer)
+    
+    # Only allow signing of pending contracts
+    if contract.status != 'pending':
+        messages.error(request, 'This contract cannot be signed.')
+        return redirect('onboarding:customer_contract_view', contract_id=contract_id)
+    
+    if request.method == 'POST':
+        signature_data = request.POST.get('signature_data')
+        signed_by = request.POST.get('signed_by')
+        
+        if signature_data and signed_by:
+            # Save signature
+            contract.signature_data = signature_data
+            contract.signed_by = signed_by
+            contract.signed_at = timezone_now()
+            contract.status = 'signed'
+            
+            # Get IP address
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                contract.ip_address = x_forwarded_for.split(',')[0]
+            else:
+                contract.ip_address = request.META.get('REMOTE_ADDR')
+            
+            contract.save()
+            
+            messages.success(request, 'Contract signed successfully!')
+            return redirect('onboarding:customer_contract_view', contract_id=contract_id)
+        else:
+            messages.error(request, 'Please provide your signature and name.')
+    
+    context = {
+        'customer': customer,
+        'contract': contract,
+    }
+    
+    return render(request, 'customer_contract_sign.html', context)
+
+
+# ============================================================================
+# SHAREABLE TOKEN-BASED CUSTOMER PORTAL VIEWS
+# ============================================================================
+
+def customer_shared_view(request, token):
+    """
+    Token-based view for customers to review developers and sign contracts
+    No login required - access via unique shareable URL
+    """
+    from .models import Customer, CustomerDeveloperAssignment, Contract
+    
+    try:
+        customer = Customer.objects.get(share_token=token, is_active=True)
+    except Customer.DoesNotExist:
+        messages.error(request, 'Invalid or expired access link.')
+        return redirect('onboarding:customer_login')
+    
+    # Get developer assignments with approval status
+    assignments = CustomerDeveloperAssignment.objects.filter(
+        customer=customer
+    ).select_related('developer')
+    
+    # Get contracts
+    contracts = customer.contracts.all()
+    pending_contracts = contracts.filter(status='pending')
+    signed_contracts = contracts.filter(status='signed')
+    
+    # Calculate stats
+    approved_count = assignments.filter(status='approved').count()
+    rejected_count = assignments.filter(status='rejected').count()
+    pending_count = assignments.filter(status='pending').count()
+    
+    context = {
+        'customer': customer,
+        'assignments': assignments,
+        'contracts': contracts,
+        'pending_contracts': pending_contracts,
+        'signed_contracts': signed_contracts,
+        'approved_count': approved_count,
+        'rejected_count': rejected_count,
+        'pending_count': pending_count,
+        'token': token,
+    }
+    
+    return render(request, 'customer_shared_dashboard.html', context)
+
+
+def customer_shared_developer_detail(request, token, developer_id):
+    """View detailed developer profile via share token"""
+    from .models import Customer, CustomerDeveloperAssignment
+    
+    try:
+        customer = Customer.objects.get(share_token=token, is_active=True)
+    except Customer.DoesNotExist:
+        messages.error(request, 'Invalid or expired access link.')
+        return redirect('onboarding:customer_login')
+    
+    developer = get_object_or_404(TeamMember, id=developer_id)
+    
+    # Verify developer is assigned to this customer
+    try:
+        assignment = CustomerDeveloperAssignment.objects.get(
+            customer=customer,
+            developer=developer
+        )
+    except CustomerDeveloperAssignment.DoesNotExist:
+        messages.error(request, 'You do not have access to this developer profile.')
+        return redirect('onboarding:customer_shared_view', token=token)
+    
+    # Get quiz answers for assessment results
+    quiz_answers = QuizAnswer.objects.filter(
+        team_member=developer
+    ).select_related('question__quiz').order_by('-submitted_at')
+    
+    # Calculate assessment score (same logic as regular view)
+    total_questions = quiz_answers.count()
+    if total_questions > 0:
+        mc_correct = quiz_answers.filter(
+            question__question_type='multiple_choice',
+            is_correct=True
+        ).count()
+        
+        essay_scores = quiz_answers.filter(
+            question__question_type='essay',
+            evaluator_score__isnull=False
+        )
+        essay_total = sum([answer.evaluator_score for answer in essay_scores])
+        essay_count = essay_scores.count()
+        
+        mc_questions = quiz_answers.filter(question__question_type='multiple_choice').count()
+        essay_questions = quiz_answers.filter(question__question_type='essay').count()
+        
+        if mc_questions > 0:
+            mc_percentage = (mc_correct / mc_questions) * 100
+        else:
+            mc_percentage = 0
+            
+        if essay_count > 0:
+            essay_percentage = (essay_total / (essay_count * 10)) * 100
+        else:
+            essay_percentage = 0
+        
+        overall_score = (mc_percentage + essay_percentage) / 2 if (mc_questions + essay_questions) > 0 else 0
+    else:
+        overall_score = 0
+    
+    # Get resources
+    developer_resources = TeamMemberResource.objects.filter(
+        team_member=developer
+    ).select_related('resource')
+    
+    context = {
+        'customer': customer,
+        'developer': developer,
+        'assignment': assignment,
+        'quiz_answers': quiz_answers[:10],
+        'overall_score': round(overall_score, 1),
+        'total_assessments': quiz_answers.values('question__quiz').distinct().count(),
+        'developer_resources': developer_resources,
+        'token': token,
+    }
+    
+    return render(request, 'customer_shared_developer_detail.html', context)
+
+
+def customer_shared_approve_developer(request, token, developer_id):
+    """Approve a developer via share token"""
+    from .models import Customer, CustomerDeveloperAssignment
+    
+    if request.method != 'POST':
+        return redirect('onboarding:customer_shared_view', token=token)
+    
+    try:
+        customer = Customer.objects.get(share_token=token, is_active=True)
+    except Customer.DoesNotExist:
+        messages.error(request, 'Invalid or expired access link.')
+        return redirect('onboarding:customer_login')
+    
+    try:
+        assignment = CustomerDeveloperAssignment.objects.get(
+            customer=customer,
+            developer_id=developer_id
+        )
+        assignment.status = 'approved'
+        assignment.reviewed_at = timezone_now()
+        assignment.notes = request.POST.get('notes', '')
+        assignment.save()
+        messages.success(request, f'{assignment.developer.first_name} {assignment.developer.last_name} has been approved.')
+    except CustomerDeveloperAssignment.DoesNotExist:
+        messages.error(request, 'Developer not found.')
+    
+    return redirect('onboarding:customer_shared_view', token=token)
+
+
+def customer_shared_reject_developer(request, token, developer_id):
+    """Reject a developer via share token"""
+    from .models import Customer, CustomerDeveloperAssignment
+    
+    if request.method != 'POST':
+        return redirect('onboarding:customer_shared_view', token=token)
+    
+    try:
+        customer = Customer.objects.get(share_token=token, is_active=True)
+    except Customer.DoesNotExist:
+        messages.error(request, 'Invalid or expired access link.')
+        return redirect('onboarding:customer_login')
+    
+    try:
+        assignment = CustomerDeveloperAssignment.objects.get(
+            customer=customer,
+            developer_id=developer_id
+        )
+        assignment.status = 'rejected'
+        assignment.reviewed_at = timezone_now()
+        assignment.notes = request.POST.get('notes', '')
+        assignment.save()
+        messages.success(request, f'{assignment.developer.first_name} {assignment.developer.last_name} has been rejected.')
+    except CustomerDeveloperAssignment.DoesNotExist:
+        messages.error(request, 'Developer not found.')
+    
+    return redirect('onboarding:customer_shared_view', token=token)
+
+
+def customer_shared_contract_sign(request, token, contract_id):
+    """Sign contract via share token"""
+    from .models import Customer, Contract
+    import base64
+    
+    try:
+        customer = Customer.objects.get(share_token=token, is_active=True)
+    except Customer.DoesNotExist:
+        messages.error(request, 'Invalid or expired access link.')
+        return redirect('onboarding:customer_login')
+    
+    contract = get_object_or_404(Contract, id=contract_id, customer=customer)
+    
+    if contract.status != 'pending':
+        messages.error(request, 'This contract cannot be signed.')
+        return redirect('onboarding:customer_shared_view', token=token)
+    
+    if request.method == 'POST':
+        signature_data = request.POST.get('signature_data')
+        signed_by = request.POST.get('signed_by')
+        
+        if signature_data and signed_by:
+            contract.signature_data = signature_data
+            contract.signed_by = signed_by
+            contract.signed_at = timezone_now()
+            contract.status = 'signed'
+            
+            # Get IP address
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                contract.ip_address = x_forwarded_for.split(',')[0]
+            else:
+                contract.ip_address = request.META.get('REMOTE_ADDR')
+            
+            contract.save()
+            
+            messages.success(request, 'Contract signed successfully!')
+            return redirect('onboarding:customer_shared_view', token=token)
+        else:
+            messages.error(request, 'Please provide your signature and name.')
+    
+    context = {
+        'customer': customer,
+        'contract': contract,
+        'token': token,
+    }
+    
+    return render(request, 'customer_shared_contract_sign.html', context)
+

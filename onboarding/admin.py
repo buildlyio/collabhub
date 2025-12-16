@@ -15,3 +15,8 @@ admin.site.register(QuizAnswer, QuizAnswerAdmin)
 
 # Register DevelopmentAgency
 admin.site.register(DevelopmentAgency, DevelopmentAgencyAdmin)
+
+# Register Customer and Contract
+admin.site.register(Customer, CustomerAdmin)
+admin.site.register(CustomerDeveloperAssignment, CustomerDeveloperAssignmentAdmin)
+admin.site.register(Contract, ContractAdmin)

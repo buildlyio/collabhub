@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block page_title %}Sign Contract - {{ contract.title }}{% endblock %}
+
+{% block page_content %}
+<div class="max-w-5xl mx-auto">
+    <!-- Back Button -->
+    <div class="mb-6">
+        <a href="{% url 'onboarding:customer_contract_view' contract.id %}"
+           class="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Contract
+        </a>
+    </div>
+
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg p-8 mb-8 text-white">
+        <h1 class="text-3xl md:text-4xl font-bold mb-2">Sign Contract</h1>
+        <p class="text-lg opacity-90">{{ contract.title }}</p>
+    </div>
+
+    {% if messages %}
+    <div class="mb-6">
+        {% for message in messages %}
+        <div class="{% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-green-50 text-green-800 border border-green-200{% endif %} rounded-lg p-4">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Contract Summary -->
+    <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Contract Summary</h2>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+            <div>
+                <p class="text-sm text-gray-600 mb-1">Start Date</p>
+                <p class="font-semibold text-gray-900">{{ contract.start_date|date:"M d, Y" }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600 mb-1">End Date</p>
+                <p class="font-semibold text-gray-900">{{ contract.end_date|date:"M d, Y" }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600 mb-1">Developers</p>
+                <p class="font-semibold text-gray-900">{{ contract.developers.count }}</p>
+            </div>
+            {% if contract.hourly_rate %}
+            <div>
+                <p class="text-sm text-gray-600 mb-1">Rate</p>
+                <p class="font-semibold text-gray-900">${{ contract.hourly_rate }}/hr</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+            <p class="text-sm text-gray-700 whitespace-pre-line">{{ contract.contract_text }}</p>
+        </div>
+    </div>
+
+    <!-- Signature Form -->
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Digital Signature</h2>
+        
+        <form method="post" id="signatureForm" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Name -->
+            <div>
+                <label for="signed_by" class="block text-sm font-medium text-gray-700 mb-2">
+                    Full Name <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="signed_by" id="signed_by" required
+                       value="{{ customer.contact_name }}"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                       placeholder="Enter your full legal name">
+                <p class="mt-1 text-sm text-gray-500">This is the name that will appear on the signed contract</p>
+            </div>
+
+            <!-- Signature Pad -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Signature <span class="text-red-500">*</span>
+                </label>
+                <div class="border-2 border-gray-300 rounded-lg bg-white">
+                    <canvas id="signaturePad" width="800" height="200" class="w-full cursor-crosshair"></canvas>
+                </div>
+                <input type="hidden" name="signature_data" id="signature_data">
+                <div class="mt-2 flex gap-3">
+                    <button type="button" id="clearSignature"
+                            class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors font-semibold">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        Clear Signature
+                    </button>
+                    <p class="text-sm text-gray-500 flex items-center">Draw your signature above using your mouse or finger</p>
+                </div>
+            </div>
+
+            <!-- Agreement Checkbox -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <label class="flex items-start">
+                    <input type="checkbox" id="agreeCheckbox" required
+                           class="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-1">
+                    <span class="ml-3 text-sm text-gray-700">
+                        I have read and agree to the terms and conditions outlined in this engagement contract. 
+                        I understand that by signing this document electronically, I am legally bound to its terms 
+                        as if I had signed a physical copy.
+                    </span>
+                </label>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex gap-4">
+                <button type="submit" id="submitButton" disabled
+                        class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Sign and Submit Contract
+                </button>
+                <a href="{% url 'onboarding:customer_contract_view' contract.id %}"
+                   class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-semibold">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Important Notice -->
+    <div class="mt-8 bg-gray-50 border border-gray-200 rounded-lg p-6">
+        <div class="flex">
+            <svg class="w-6 h-6 text-gray-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Legal Notice</h3>
+                <p class="text-sm text-gray-700">
+                    Your electronic signature is legally binding and has the same validity as a handwritten signature. 
+                    A copy of this signed contract will be stored securely and made available to you for download. 
+                    If you have any questions about the terms, please contact your Buildly representative before signing.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const canvas = document.getElementById('signaturePad');
+    const ctx = canvas.getContext('2d');
+    const clearButton = document.getElementById('clearSignature');
+    const signatureDataInput = document.getElementById('signature_data');
+    const agreeCheckbox = document.getElementById('agreeCheckbox');
+    const submitButton = document.getElementById('submitButton');
+    const form = document.getElementById('signatureForm');
+    
+    let isDrawing = false;
+    let hasDrawn = false;
+    
+    // Set canvas background
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Drawing settings
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    // Mouse/touch event handlers
+    function startDrawing(e) {
+        isDrawing = true;
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX || e.touches[0].clientX) - rect.left;
+        const y = (e.clientY || e.touches[0].clientY) - rect.top;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    }
+    
+    function draw(e) {
+        if (!isDrawing) return;
+        e.preventDefault();
+        hasDrawn = true;
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX || e.touches[0].clientX) - rect.left;
+        const y = (e.clientY || e.touches[0].clientY) - rect.top;
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        updateSubmitButton();
+    }
+    
+    function stopDrawing() {
+        isDrawing = false;
+    }
+    
+    // Mouse events
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+    
+    // Touch events
+    canvas.addEventListener('touchstart', startDrawing);
+    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('touchend', stopDrawing);
+    
+    // Clear button
+    clearButton.addEventListener('click', function() {
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        hasDrawn = false;
+        signatureDataInput.value = '';
+        updateSubmitButton();
+    });
+    
+    // Update submit button state
+    function updateSubmitButton() {
+        submitButton.disabled = !(hasDrawn && agreeCheckbox.checked);
+    }
+    
+    agreeCheckbox.addEventListener('change', updateSubmitButton);
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        if (!hasDrawn) {
+            e.preventDefault();
+            alert('Please provide your signature before submitting.');
+            return false;
+        }
+        
+        if (!agreeCheckbox.checked) {
+            e.preventDefault();
+            alert('Please agree to the terms and conditions before submitting.');
+            return false;
+        }
+        
+        // Save signature as data URL
+        signatureDataInput.value = canvas.toDataURL('image/png');
+    });
+});
+</script>
+{% endblock %}
