@@ -1076,6 +1076,8 @@ def customer_developer_detail(request, developer_id):
         'developer': developer,
         'quiz_answers': quiz_answers[:10],  # Recent 10 answers
         'overall_score': round(overall_score, 1),
+        'essay_score': round(overall_score, 1),
+        'mc_score': 0,
         'total_assessments': quiz_answers.values('question__quiz').distinct().count(),
         'developer_resources': developer_resources,
     }
@@ -1283,6 +1285,8 @@ def customer_shared_developer_detail(request, token, developer_id):
             'assignment': assignment,
             'quiz_answers': quiz_answers[:10],
             'overall_score': round(overall_score, 1),
+            'essay_score': round(overall_score, 1),
+            'mc_score': 0,
             'total_assessments': quiz_answers.values('question__quiz').distinct().count(),
             'developer_resources': developer_resources,
             'token': token,

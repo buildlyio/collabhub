@@ -174,34 +174,19 @@
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Assessment Results</h2>
                 
-                {% if mc_score > 0 or essay_score > 0 %}
-                <div class="space-y-4">
-                    {% if mc_score > 0 %}
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm font-medium text-gray-600">Multiple Choice</span>
-                            <span class="text-sm font-bold text-gray-900">{{ mc_score }}%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-3">
-                            <div class="bg-blue-600 h-3 rounded-full" style="width: {{ mc_score }}%"></div>
-                        </div>
+                {% if overall_score > 0 %}
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-gray-600">Essay Score (graded)</span>
+                        <span class="text-sm font-bold text-gray-900">{{ overall_score }}%</span>
                     </div>
-                    {% endif %}
-                    
-                    {% if essay_score > 0 %}
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm font-medium text-gray-600">Essay Questions</span>
-                            <span class="text-sm font-bold text-gray-900">{{ essay_score }}%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-3">
-                            <div class="bg-green-600 h-3 rounded-full" style="width: {{ essay_score }}%"></div>
-                        </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div class="bg-green-600 h-3 rounded-full" style="width: {{ overall_score }}%"></div>
                     </div>
-                    {% endif %}
+                    <p class="text-xs text-gray-500">Scores are based on graded essay questions. Multiple-choice answers are currently unscored.</p>
                 </div>
                 {% else %}
-                <p class="text-gray-500 text-sm">Assessment not yet completed</p>
+                <p class="text-gray-500 text-sm">Assessment not yet completed or not yet graded.</p>
                 {% endif %}
             </div>
         </div>
@@ -213,32 +198,20 @@
             
             <div class="space-y-6">
                 {% for answer in quiz_answers %}
-                <div class="border-l-4 {% if answer.question.question_type == 'MC' %}{% if answer.is_correct %}border-green-500{% else %}border-red-500{% endif %}{% else %}border-blue-500{% endif %} pl-4 py-2">
-                    <h3 class="font-semibold text-gray-900 mb-2">{{ answer.question.question_text }}</h3>
+                <div class="border-l-4 {% if answer.question.question_type == 'multiple_choice' %}border-blue-500{% else %}border-green-500{% endif %} pl-4 py-2">
+                    <h3 class="font-semibold text-gray-900 mb-2">{{ answer.question.question }}</h3>
                     
-                    {% if answer.question.question_type == 'MC' %}
-                        <p class="text-sm text-gray-700 mb-1"><strong>Answer:</strong> {{ answer.selected_answer }}</p>
-                        {% if answer.is_correct %}
-                        <span class="inline-flex items-center text-sm text-green-600 font-medium">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            Correct
-                        </span>
-                        {% else %}
-                        <span class="inline-flex items-center text-sm text-red-600 font-medium">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                            Incorrect
-                        </span>
-                        {% endif %}
+                    {% if answer.question.question_type == 'multiple_choice' %}
+                        <p class="text-sm text-gray-700 mb-1"><strong>Answer:</strong> {{ answer.answer }}</p>
+                        <p class="text-xs text-gray-500">(Multiple-choice answers are currently unscored)</p>
                     {% else %}
                         <div class="bg-gray-50 rounded p-3 mb-2">
-                            <p class="text-sm text-gray-700">{{ answer.essay_answer }}</p>
+                            <p class="text-sm text-gray-700">{{ answer.answer }}</p>
                         </div>
                         {% if answer.evaluator_score is not None %}
                         <p class="text-sm text-gray-600">Score: <strong>{{ answer.evaluator_score }}/10</strong></p>
+                        {% else %}
+                        <p class="text-xs text-gray-500">Awaiting evaluation</p>
                         {% endif %}
                     {% endif %}
                 </div>
