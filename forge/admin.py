@@ -143,8 +143,8 @@ class ForgeAppAdmin(admin.ModelAdmin):
             'description': 'Enter values as comma-separated lists. Categories can be any text, targets must be: docker, k8s, github-pages, desktop, or web-embed'
         }),
         ('Media', {
-            'fields': ('logo_url', 'screenshots', 'demo_video_url', 'video_type'),
-            'description': 'Add screenshots as JSON array of URLs. Add video URL for YouTube/Vimeo/Loom demos.'
+            'fields': ('logo_url', 'featured_screenshot', 'screenshots', 'demo_video_url', 'video_type'),
+            'description': 'Logo: App icon/logo. Featured Screenshot: Main image shown on marketplace listing. Screenshots: Up to 2 additional images as JSON array. Video: YouTube/Vimeo/Loom demo URL.'
         }),
         ('GitHub Releases', {
             'fields': ('release_info_display',),

@@ -59,8 +59,9 @@ class ForgeApp(models.Model):
     change_date_utc = models.DateTimeField(null=True, blank=True)
     categories = models.JSONField(default=list, blank=True)
     targets = models.JSONField(default=list, blank=True)
-    logo_url = models.URLField(max_length=500, null=True, blank=True)
-    screenshots = models.JSONField(default=list, blank=True, help_text="List of screenshot URLs")
+    logo_url = models.URLField(max_length=500, null=True, blank=True, help_text="App logo (uses default TheForge logo if not provided)")
+    featured_screenshot = models.URLField(max_length=500, null=True, blank=True, help_text="Featured screenshot displayed on marketplace listing")
+    screenshots = models.JSONField(default=list, blank=True, help_text="List of up to 2 additional screenshot URLs")
     
     # Media - Demo Video
     demo_video_url = models.URLField(max_length=500, null=True, blank=True, 
@@ -83,6 +84,11 @@ class ForgeApp(models.Model):
     def __str__(self):
         return f"{self.name} ({self.slug})"
 
+    @property
+    def logo_url_or_default(self):
+        """Return logo URL or default TheForge logo"""
+        return self.logo_url if self.logo_url else '/static/img/forge-default-logo.png'
+    
     @property
     def price_dollars(self):
         """Convert price from cents to dollars"""

@@ -23,7 +23,7 @@
         <!-- Header -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
           <div class="flex items-start justify-between mb-4">
-            <div>
+            <div class="flex-1">
               <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ app.name }}</h1>
               <p class="text-lg text-gray-600">{{ app.summary }}</p>
             </div>
@@ -32,6 +32,40 @@
               <div class="text-sm text-gray-500">One-time purchase</div>
             </div>
           </div>
+          
+          <!-- Logo -->
+          <div class="flex justify-center my-6">
+            <img src="{{ app.logo_url_or_default }}" alt="{{ app.name }} logo" 
+                 class="h-32 w-auto object-contain" 
+                 onerror="this.src='/static/img/forge-default-logo.png'">
+          </div>
+          
+          <!-- Screenshots Gallery -->
+          {% if app.featured_screenshot or app.screenshots %}
+          <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Screenshots</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {% if app.featured_screenshot %}
+              <div class="rounded-lg overflow-hidden border-2 border-purple-200">
+                <img src="{{ app.featured_screenshot }}" alt="{{ app.name }} featured screenshot" 
+                     class="w-full h-64 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                     onclick="window.open(this.src, '_blank')">
+                <div class="bg-purple-50 px-3 py-2 text-xs text-purple-700 font-medium text-center">
+                  Featured Screenshot
+                </div>
+              </div>
+              {% endif %}
+              {% for screenshot in app.screenshots %}
+              <div class="rounded-lg overflow-hidden border border-gray-200">
+                <img src="{{ screenshot }}" alt="{{ app.name }} screenshot {{ forloop.counter }}" 
+                     class="w-full h-64 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                     onclick="window.open(this.src, '_blank')">
+              </div>
+              {% endfor %}
+            </div>
+            <p class="text-xs text-gray-500 mt-2 text-center">Click any image to view full size</p>
+          </div>
+          {% endif %}
 
           <!-- Deployment Options Badge -->
           <div class="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200 mb-4">

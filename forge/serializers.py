@@ -36,7 +36,7 @@ class ForgeAppListSerializer(serializers.ModelSerializer):
         model = ForgeApp
         fields = [
             'id', 'slug', 'name', 'summary', 'price_cents', 'price_dollars',
-            'categories', 'targets', 'logo_url', 'license_type', 'change_date_utc',
+            'categories', 'targets', 'logo_url', 'featured_screenshot', 'license_type', 'change_date_utc',
             'latest_validation_status', 'has_release', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
@@ -63,7 +63,7 @@ class ForgeAppDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'slug', 'name', 'summary', 'price_cents', 'price_dollars',
             'repo_url', 'license_type', 'change_date_utc', 'categories', 'targets',
-            'logo_url', 'screenshots', 'demo_video_url', 'video_type', 'video_embed_url',
+            'logo_url', 'featured_screenshot', 'screenshots', 'demo_video_url', 'video_type', 'video_embed_url',
             'latest_release_name', 'latest_release_tag', 'latest_release_url',
             'has_release', 'latest_validation', 'created_at'
         ]
@@ -78,7 +78,7 @@ class ForgeAppCreateUpdateSerializer(serializers.ModelSerializer):
         fields = [
             'slug', 'name', 'summary', 'price_cents', 'repo_url', 'repo_owner',
             'repo_name', 'license_type', 'change_date_utc', 'categories', 'targets',
-            'logo_url', 'screenshots', 'demo_video_url', 'video_type', 'is_published'
+            'logo_url', 'featured_screenshot', 'screenshots', 'demo_video_url', 'video_type', 'is_published'
         ]
     
     def validate_repo_url(self, value):

@@ -251,13 +251,51 @@ async function loadAppsSimple() {
       let html = '';
       for (let app of data.results) {
         const price = app.price_dollars || (app.price_cents / 100).toFixed(2);
+        const logoUrl = app.logo_url || '/static/img/forge-default-logo.png';
+        const featuredScreenshot = app.featured_screenshot || '';
+        
         html += `
-          <div class="bg-white rounded-lg shadow-md p-6">
-            <h3 class="text-lg font-bold mb-2">${app.name}</h3>
-            <p class="text-sm text-gray-600 mb-2">${app.summary || 'No description'}</p>
-            <div class="text-lg font-bold text-purple-600">$${price}</div>
-            <div class="mt-2 text-xs text-gray-500">Categories: ${app.categories ? app.categories.join(', ') : 'None'}</div>
-            <a href="/marketplace/app/${app.slug}" class="mt-3 block bg-purple-600 text-white text-center py-2 rounded">View Details</a>
+          <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+            <div class="p-6">
+              <h3 class="text-xl font-bold mb-3">${app.name}</h3>
+              
+              <!-- Logo -->
+              <div class="flex justify-center mb-4">
+                <img src="${logoUrl}" alt="${app.name} logo" class="h-20 w-auto object-contain" 
+                     onerror="this.src='/static/img/forge-default-logo.png'">
+              </div>
+              
+              <!-- Featured Screenshot -->
+              ${featuredScreenshot ? `
+                <div class="mb-4 rounded-lg overflow-hidden border border-gray-200">
+                  <img src="${featuredScreenshot}" alt="${app.name} screenshot" 
+                       class="w-full h-48 object-cover" 
+                       onerror="this.style.display='none'">
+                </div>
+              ` : ''}
+              
+              <!-- Description -->
+              <p class="text-sm text-gray-600 mb-4 line-clamp-3">${app.summary || 'No description'}</p>
+              
+              <!-- Price -->
+              <div class="text-2xl font-bold text-purple-600 mb-3">${price == '0.00' ? 'Free' : '$' + price}</div>
+              
+              <!-- Categories -->
+              ${app.categories && app.categories.length > 0 ? `
+                <div class="flex flex-wrap gap-1 mb-3">
+                  ${app.categories.slice(0, 3).map(cat => 
+                    `<span class="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded">${cat}</span>`
+                  ).join('')}
+                  ${app.categories.length > 3 ? `<span class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">+${app.categories.length - 3}</span>` : ''}
+                </div>
+              ` : ''}
+              
+              <!-- View Details Button -->
+              <a href="/marketplace/app/${app.slug}" 
+                 class="block bg-purple-600 hover:bg-purple-700 text-white text-center py-2 px-4 rounded-lg font-medium transition-colors">
+                View Details
+              </a>
+            </div>
           </div>
         `;
       }
@@ -315,13 +353,51 @@ async function loadAppsWithFilters(url) {
       let html = '';
       for (let app of data.results) {
         const price = app.price_dollars || (app.price_cents / 100).toFixed(2);
+        const logoUrl = app.logo_url || '/static/img/forge-default-logo.png';
+        const featuredScreenshot = app.featured_screenshot || '';
+        
         html += `
-          <div class="bg-white rounded-lg shadow-md p-6">
-            <h3 class="text-lg font-bold mb-2">${app.name}</h3>
-            <p class="text-sm text-gray-600 mb-2">${app.summary || 'No description'}</p>
-            <div class="text-lg font-bold text-purple-600">$${price}</div>
-            <div class="mt-2 text-xs text-gray-500">Categories: ${app.categories ? app.categories.join(', ') : 'None'}</div>
-            <a href="/marketplace/app/${app.slug}" class="mt-3 block bg-purple-600 text-white text-center py-2 rounded">View Details</a>
+          <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+            <div class="p-6">
+              <h3 class="text-xl font-bold mb-3">${app.name}</h3>
+              
+              <!-- Logo -->
+              <div class="flex justify-center mb-4">
+                <img src="${logoUrl}" alt="${app.name} logo" class="h-20 w-auto object-contain" 
+                     onerror="this.src='/static/img/forge-default-logo.png'">
+              </div>
+              
+              <!-- Featured Screenshot -->
+              ${featuredScreenshot ? `
+                <div class="mb-4 rounded-lg overflow-hidden border border-gray-200">
+                  <img src="${featuredScreenshot}" alt="${app.name} screenshot" 
+                       class="w-full h-48 object-cover" 
+                       onerror="this.style.display='none'">
+                </div>
+              ` : ''}
+              
+              <!-- Description -->
+              <p class="text-sm text-gray-600 mb-4 line-clamp-3">${app.summary || 'No description'}</p>
+              
+              <!-- Price -->
+              <div class="text-2xl font-bold text-purple-600 mb-3">${price == '0.00' ? 'Free' : '$' + price}</div>
+              
+              <!-- Categories -->
+              ${app.categories && app.categories.length > 0 ? `
+                <div class="flex flex-wrap gap-1 mb-3">
+                  ${app.categories.slice(0, 3).map(cat => 
+                    `<span class="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded">${cat}</span>`
+                  ).join('')}
+                  ${app.categories.length > 3 ? `<span class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">+${app.categories.length - 3}</span>` : ''}
+                </div>
+              ` : ''}
+              
+              <!-- View Details Button -->
+              <a href="/marketplace/app/${app.slug}" 
+                 class="block bg-purple-600 hover:bg-purple-700 text-white text-center py-2 px-4 rounded-lg font-medium transition-colors">
+                View Details
+              </a>
+            </div>
           </div>
         `;
       }
