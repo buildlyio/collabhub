@@ -397,7 +397,7 @@
                         <div class="flex gap-6">
                             <div class="text-center">
                                 <p class="text-2xl font-bold text-green-600">{{ essay_score }}</p>
-                                <p class="text-xs text-gray-600">Avg Essay Score</p>
+                                <p class="text-sm text-gray-600">Avg Essay Score</p>
                             </div>
                         </div>
                     </div>
@@ -449,7 +449,7 @@
                             {% if answer.evaluator_score is not None %}
                                 <div class="flex items-center gap-4">
                                     <p class="text-sm text-gray-600">
-                                        <strong>Score:</strong> {{ answer.evaluator_score }}
+                                        <strong>Score:</strong> {{ answer.evaluator_score }}/4
                                         {% if answer.evaluated_by %} 
                                         <span class="text-xs text-gray-500">by {{ answer.evaluated_by.username }}</span>
                                         {% endif %}

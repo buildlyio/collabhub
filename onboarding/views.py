@@ -1045,26 +1045,25 @@ def customer_developer_detail(request, developer_id):
         team_member=developer
     ).select_related('question__quiz').order_by('-submitted_at')
     
-    # Calculate assessment score
+    # Calculate assessment score (essay evaluator_score is a 0-4 rubric)
     total_questions = quiz_answers.count()
+    mc_total = quiz_answers.filter(question__question_type='multiple_choice').count()
+    essay_total = quiz_answers.filter(question__question_type='essay').count()
+
+    overall_score = 0
     if total_questions > 0:
-        # Note: is_correct field doesn't exist on QuizAnswer model
-        # Only essay questions have evaluator_score for grading
         essay_scores = quiz_answers.filter(
             question__question_type='essay',
             evaluator_score__isnull=False
         )
-        essay_total = sum([answer.evaluator_score for answer in essay_scores])
         essay_count = essay_scores.count()
-        
+
         if essay_count > 0:
-            # evaluator_score is typically 1-10, so percentage is score/10
-            essay_percentage = (essay_total / (essay_count * 10)) * 100
+            avg_score = sum([answer.evaluator_score for answer in essay_scores]) / essay_count
+            essay_percentage = (avg_score / 4) * 100  # Convert 0-4 rubric to percentage
             overall_score = essay_percentage
         else:
             overall_score = 0
-    else:
-        overall_score = 0
     
     # Get resources the developer is working on
     developer_resources = TeamMemberResource.objects.filter(
@@ -1080,6 +1079,9 @@ def customer_developer_detail(request, developer_id):
         'mc_score': 0,
         'total_assessments': quiz_answers.values('question__quiz').distinct().count(),
         'developer_resources': developer_resources,
+        'mc_total': mc_total,
+        'essay_total': essay_total,
+        'total_questions': total_questions,
     }
     
     return render(request, 'customer_developer_detail.html', context)
@@ -1243,29 +1245,26 @@ def customer_shared_developer_detail(request, token, developer_id):
         ).select_related('question__quiz').order_by('-submitted_at')
         logger.info(f"✓ Found {quiz_answers.count()} quiz answers")
         
-        # Step 5: Calculate assessment score
+        # Step 5: Calculate assessment score (essay evaluator_score is 0-4 rubric)
         logger.debug(f"Step 5: Calculating assessment scores")
         total_questions = quiz_answers.count()
+        mc_total = quiz_answers.filter(question__question_type='multiple_choice').count()
+        essay_total = quiz_answers.filter(question__question_type='essay').count()
+        overall_score = 0
         if total_questions > 0:
-            # Note: is_correct field doesn't exist on QuizAnswer model
-            # Only essay questions have evaluator_score for grading
             essay_scores = quiz_answers.filter(
                 question__question_type='essay',
                 evaluator_score__isnull=False
             )
-            essay_total = sum([answer.evaluator_score for answer in essay_scores])
             essay_count = essay_scores.count()
-            
-            essay_questions = quiz_answers.filter(question__question_type='essay').count()
-            
             if essay_count > 0:
-                # evaluator_score is typically 1-10, so percentage is score/10
-                essay_percentage = (essay_total / (essay_count * 10)) * 100
+                avg_score = sum([answer.evaluator_score for answer in essay_scores]) / essay_count
+                essay_percentage = (avg_score / 4) * 100  # 0-4 rubric → percentage
                 overall_score = essay_percentage
-                logger.info(f"✓ Assessment scores - Essay: {essay_percentage:.1f}%, Overall: {overall_score:.1f}% ({essay_count}/{essay_questions} essays graded)")
+                logger.info(f"✓ Assessment scores - Essay: {essay_percentage:.1f}%, Overall: {overall_score:.1f}% ({essay_count}/{essay_total} essays graded)")
             else:
                 overall_score = 0
-                logger.info(f"✓ No graded assessments available ({essay_questions} essay questions answered but not yet graded)")
+                logger.info(f"✓ No graded assessments available ({essay_total} essay questions answered but not yet graded)")
         else:
             overall_score = 0
             logger.info(f"✓ No assessment scores available")
@@ -1290,6 +1289,9 @@ def customer_shared_developer_detail(request, token, developer_id):
             'total_assessments': quiz_answers.values('question__quiz').distinct().count(),
             'developer_resources': developer_resources,
             'token': token,
+            'mc_total': mc_total,
+            'essay_total': essay_total,
+            'total_questions': total_questions,
         }
         logger.info(f"✓ Context prepared, about to render template")
         
@@ -1417,17 +1419,47 @@ def customer_shared_contract_sign(request, token, contract_id):
 @user_passes_test(lambda u: u.is_staff)
 def admin_dashboard(request):
     """Assessment-focused admin dashboard (original)"""
-    # Assessment stats
+    from datetime import timedelta
+    from django.utils import timezone
+    
+    # Assessment stats - use correct 'essay' value
     awaiting_evaluation = QuizAnswer.objects.filter(
-        question__question_type='ES',
+        question__question_type='essay',
         evaluator_score__isnull=True
     ).values('team_member').distinct().count()
     
     total_quizzes = Quiz.objects.count()
+    total_developers = TeamMember.objects.filter(approved=True).count()
+    completed_assessments = TeamMember.objects.filter(has_completed_assessment=True).count()
+    pending_developers = TeamMember.objects.filter(approved=False).count()
+    
+    # User stats
+    total_users = User.objects.count()
+    total_team_members = TeamMember.objects.count()
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    recent_signups_count = TeamMember.objects.filter(user__date_joined__gte=thirty_days_ago).count()
+    
+    # Content stats
+    total_questions = QuizQuestion.objects.count()
+    total_answers = QuizAnswer.objects.count()
+    pending_assessments = TeamMember.objects.filter(has_completed_assessment=False).count()
+    
+    # Recent signups for list
+    recent_signups = TeamMember.objects.select_related('user').order_by('-user__date_joined')[:5]
     
     context = {
         'awaiting_evaluation': awaiting_evaluation,
         'total_quizzes': total_quizzes,
+        'total_developers': total_developers,
+        'completed_assessments': completed_assessments,
+        'pending_developers': pending_developers,
+        'total_users': total_users,
+        'total_team_members': total_team_members,
+        'recent_signups_count': recent_signups_count,
+        'total_questions': total_questions,
+        'total_answers': total_answers,
+        'pending_assessments': pending_assessments,
+        'recent_signups': recent_signups,
     }
     
     return render(request, 'admin_dashboard.html', context)
@@ -1663,15 +1695,15 @@ def admin_developer_profile(request, developer_id):
         scored_essays = essay_questions.exclude(evaluator_score__isnull=True)
         if scored_essays.exists():
             avg_score = scored_essays.aggregate(Avg('evaluator_score'))['evaluator_score__avg']
-            # evaluator_score appears to be 1-4 or 0-10 based on context
-            essay_score = int(avg_score) if avg_score else 0
+            # evaluator_score uses 0-4 rubric; convert to percentage for display
+            essay_score = int((avg_score / 4) * 100) if avg_score else 0
     
     # For overall score, we can only use evaluated answers
     all_evaluated = quiz_answers.exclude(evaluator_score__isnull=True)
     overall_score = 0
     if all_evaluated.exists():
         avg_score = all_evaluated.aggregate(Avg('evaluator_score'))['evaluator_score__avg']
-        overall_score = int(avg_score) if avg_score else 0
+        overall_score = int((avg_score / 4) * 100) if avg_score else 0
     
     # Count total quiz answers for debugging
     total_answers = quiz_answers.count()

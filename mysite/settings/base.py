@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'import_export',
     'storages',
     'django_tables2',
+    'mysite',  # Enable project templatetags (e.g., custom_filters)
     
     # rest
     'rest_framework',
