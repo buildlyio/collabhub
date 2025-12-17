@@ -64,14 +64,16 @@ class TeamMember(models.Model):
     assessment_last_reminded = models.DateTimeField(null=True, blank=True, help_text="Last time reminded about assessment")
 
     def __str__(self):
-        return f'{self.first_name} {self.last_name} - {self.team_member_type}'
+        type_names = ', '.join([t.name for t in self.types.all()])
+        return f'{self.first_name} {self.last_name} - {type_names if type_names else "Team Member"}'
     
     def get_profile_types_display(self):
         """Get comma-separated list of profile types"""
         types = self.profile_types.all()
         if types:
             return ', '.join([t.label for t in types])
-        return self.get_team_member_type_display()
+        type_names = ', '.join([t.name for t in self.types.all()])
+        return type_names if type_names else 'Team Member'
     
     def get_github_username(self):
         """Extract GitHub username from github_account URL"""

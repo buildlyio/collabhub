@@ -27,7 +27,7 @@ A new team member has registered on CollabHub:
 
 Name: {instance.first_name} {instance.last_name}
 Email: {instance.email}
-Type: {instance.get_team_member_type_display() if hasattr(instance, 'get_team_member_type_display') else instance.team_member_type}
+Type: {', '.join([t.name for t in instance.types.all()]) if hasattr(instance, 'types') else 'Team Member'}
 LinkedIn: {instance.linkedin or 'Not provided'}
 GitHub: {instance.github_account or 'Not provided'}
 Experience: {instance.experience_years} years

@@ -137,7 +137,7 @@
                     <div class="flex items-center justify-between">
                         <div class="flex-1">
                             <h3 class="font-semibold text-gray-900">{{ developer.first_name }} {{ developer.last_name }}</h3>
-                            <p class="text-sm text-gray-600">{{ developer.email }} • {{ developer.get_team_member_type_display }}</p>
+                            <p class="text-sm text-gray-600">{{ developer.email }} • {% for type in developer.types.all %}{{ type.name }}{% if not forloop.last %}, {% endif %}{% empty %}Team Member{% endfor %}</p>
                         </div>
                         <div class="text-right">
                             {% if developer.approved %}

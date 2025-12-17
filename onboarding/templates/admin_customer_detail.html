@@ -138,7 +138,7 @@
                         <option value="">Select a developer...</option>
                         {% for dev in available_developers %}
                         <option value="{{ dev.id }}">
-                            {{ dev.first_name }} {{ dev.last_name }} - {{ dev.get_team_member_type_display }}
+                            {{ dev.first_name }} {{ dev.last_name }} - {% for type in dev.types.all %}{{ type.name }}{% if not forloop.last %}, {% endif %}{% empty %}Team Member{% endfor %}
                             {% if dev.has_completed_assessment %}✓ Assessment{% endif %}
                         </option>
                         {% endfor %}
@@ -178,7 +178,7 @@
                                     {% endif %}
                                 </div>
                                 <p class="text-sm text-gray-600 mb-2">
-                                    {{ assignment.developer.email }} • {{ assignment.developer.get_team_member_type_display }}
+                                    {{ assignment.developer.email }} • {% for type in assignment.developer.types.all %}{{ type.name }}{% if not forloop.last %}, {% endif %}{% empty %}Team Member{% endfor %}
                                 </p>
                                 <p class="text-xs text-gray-500">
                                     Assigned: {{ assignment.assigned_at|date:"M d, Y" }}
