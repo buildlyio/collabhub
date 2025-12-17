@@ -40,10 +40,15 @@ class TeamMemberRegistrationForm(UserCreationForm):
         label="Agency Name",
         help_text="If your agency isn't listed above, enter the name here"
     )
+    agency_contact_email = forms.EmailField(
+        required=False,
+        label="Agency contact email",
+        help_text="We'll email this address to invite the agency to register"
+    )
 
     class Meta:
         model = User
-        fields = ['username', 'password1', 'password2', 'team_member_type', 'profile_types', 'first_name', 'last_name', 'email', 'bio', 'linkedin', 'experience_years', 'github_account', 'is_independent', 'agency', 'agency_name_text']
+        fields = ['username', 'password1', 'password2', 'team_member_type', 'profile_types', 'first_name', 'last_name', 'email', 'bio', 'linkedin', 'experience_years', 'github_account', 'is_independent', 'agency', 'agency_name_text', 'agency_contact_email']
 
 from .models import Resource
 
@@ -90,4 +95,15 @@ class DevelopmentAgencyForm(forms.ModelForm):
     
     def clean(self):
         cleaned_data = super().clean()
+        is_independent = cleaned_data.get('is_independent')
+        agency = cleaned_data.get('agency')
+        agency_name_text = cleaned_data.get('agency_name_text')
+        agency_contact_email = cleaned_data.get('agency_contact_email')
+
+        if not is_independent:
+            if not agency and not agency_name_text:
+                raise forms.ValidationError("Please select an agency or enter a new agency name.")
+            if not agency and agency_name_text and not agency_contact_email:
+                raise forms.ValidationError("Please provide an agency contact email so we can invite them to register.")
+
         return cleaned_data

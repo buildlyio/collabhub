@@ -6,6 +6,7 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.models import User
 from django.views.generic import CreateView
 from django.db.models import Q, Count, Avg
+from django.core.mail import send_mail
 from .forms import TeamMemberRegistrationForm, ResourceForm, TeamMemberUpdateForm, DevelopmentAgencyForm
 from .models import TeamMember, Resource, TeamMemberResource,CertificationExam,Quiz, QuizQuestion, QuizAnswer, DevelopmentAgency, TEAM_MEMBER_TYPES, Customer, CustomerDeveloperAssignment, Contract
 from submission.models import SubmissionLink, Submission
@@ -35,6 +36,28 @@ def register(request):
                 agency_name_text=form.cleaned_data.get('agency_name_text', ''),
             )
             team_member.save()
+
+            # If they are not independent and provided a new agency, send invite email
+            if not team_member.is_independent and not team_member.agency and team_member.agency_name_text:
+                agency_contact_email = form.cleaned_data.get('agency_contact_email')
+                if agency_contact_email:
+                    try:
+                        send_mail(
+                            subject=f"Invitation to join Buildly as an agency - {team_member.agency_name_text}",
+                            message=(
+                                f"Hello,\n\n"
+                                f"{team_member.first_name} {team_member.last_name} listed your agency ("
+                                f"{team_member.agency_name_text}) while registering on Buildly.\n\n"
+                                f"Please register your agency here to collaborate: https://collab.buildly.io/onboarding/agency/register/\n\n"
+                                f"If you have questions, reply to this email."
+                            ),
+                            from_email=None,
+                            recipient_list=[agency_contact_email],
+                            fail_silently=True,
+                        )
+                    except Exception:
+                        # Fail silently to avoid blocking registration
+                        pass
             
             # Add profile types if selected
             profile_types = form.cleaned_data.get('profile_types')
