@@ -24,7 +24,13 @@
             <div class="flex items-start justify-between flex-wrap gap-4">
                 <div class="flex-1">
                     <h1 class="text-3xl md:text-4xl font-bold mb-2">{{ developer.first_name }} {{ developer.last_name }}</h1>
-                    <p class="text-lg opacity-90 mb-4">{{ developer.get_team_member_type_display }}</p>
+                    <p class="text-lg opacity-90 mb-4">
+                        {% for type in developer.types.all %}
+                            {{ type.name }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            Team Member
+                        {% endfor %}
+                    </p>
                     
                     <!-- Approval Status -->
                     {% if assignment.status == 'approved' %}
