@@ -11,8 +11,11 @@ EXPOSE 8000
 # 1. Force Python stdout and stderr streams to be unbuffered.
 # 2. Set PORT variable that is used by Gunicorn. This should match "EXPOSE"
 #    command.
+# 3. PYTHONDONTWRITEBYTECODE prevents creation of .pyc files (compiled bytecode)
+#    This ensures fresh bytecode is always generated and prevents cache issues
 ENV PYTHONUNBUFFERED=1 \
-    PORT=8000
+    PORT=8000 \
+    PYTHONDONTWRITEBYTECODE=1
 
 # Install system packages required by Django.
 RUN apt-get update --yes --quiet && apt-get install --yes --quiet --no-install-recommends \
