@@ -3,10 +3,14 @@ Middleware for handling errors and submitting them to GitHub Issues
 """
 import traceback
 import sys
+import logging
 from django.shortcuts import render
 from django.conf import settings
 import requests
 from datetime import datetime
+
+# Set up logging
+logger = logging.getLogger('collabhub.errors')
 
 
 class ErrorHandlerMiddleware:
@@ -39,13 +43,22 @@ class ErrorHandlerMiddleware:
             'timestamp': datetime.now().isoformat(),
         }
         
+        # Log the full error with traceback
+        log_message = f"\n{'='*80}\n❌ EXCEPTION CAUGHT IN MIDDLEWARE\n{'='*80}\nError Type: {error_context['error_type']}\nError Message: {error_context['error_message']}\nPath: {error_context['path']}\nMethod: {error_context['method']}\nUser: {error_context['user']}\nTimestamp: {error_context['timestamp']}\n\nFull Traceback:\n{error_traceback}\n{'='*80}\n"
+        
+        # Print to console (will show in DigitalOcean logs)
+        print(log_message, file=sys.stderr)
+        logger.error(log_message, exc_info=True)
+        
         # Submit to GitHub if configured and not in DEBUG mode
         if not settings.DEBUG and hasattr(settings, 'GITHUB_ERROR_REPO') and hasattr(settings, 'GITHUB_ERROR_TOKEN'):
             try:
                 self.create_github_issue(error_context, error_traceback)
             except Exception as e:
                 # Don't let GitHub submission failures crash the error handler
-                print(f"Failed to create GitHub issue: {e}")
+                error_msg = f"❌ Failed to create GitHub issue: {e}"
+                print(error_msg, file=sys.stderr)
+                logger.error(error_msg, exc_info=True)
         
         # Return user-friendly error page
         return render(request, '500.html', error_context, status=500)

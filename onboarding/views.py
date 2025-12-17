@@ -1185,80 +1185,115 @@ def customer_shared_view(request, token):
 
 def customer_shared_developer_detail(request, token, developer_id):
     """View detailed developer profile via share token"""
+    import logging
     from .models import Customer, CustomerDeveloperAssignment
     
+    logger = logging.getLogger('collabhub.views')
+    logger.info(f"🔍 customer_shared_developer_detail called - token={token}, developer_id={developer_id}")
+    
     try:
+        # Step 1: Get customer by share token
+        logger.debug(f"Step 1: Looking up customer with token={token}")
         customer = Customer.objects.get(share_token=token, is_active=True)
-    except Customer.DoesNotExist:
+        logger.info(f"✓ Found customer: {customer.id} - {customer.name}")
+    except Customer.DoesNotExist as e:
+        logger.warning(f"❌ Customer not found with token={token}: {e}")
         messages.error(request, 'Invalid or expired access link.')
         return redirect('onboarding:customer_login')
     
-    developer = get_object_or_404(TeamMember, id=developer_id)
-    
-    # Verify developer is assigned to this customer
     try:
+        # Step 2: Get developer
+        logger.debug(f"Step 2: Looking up developer with id={developer_id}")
+        developer = get_object_or_404(TeamMember, id=developer_id)
+        logger.info(f"✓ Found developer: {developer.id} - {developer.user.first_name} {developer.user.last_name}")
+    except Exception as e:
+        logger.error(f"❌ Error getting developer {developer_id}: {e}", exc_info=True)
+        raise
+    
+    try:
+        # Step 3: Verify developer is assigned to this customer
+        logger.debug(f"Step 3: Verifying assignment - customer={customer.id}, developer={developer.id}")
         assignment = CustomerDeveloperAssignment.objects.get(
             customer=customer,
             developer=developer
         )
-    except CustomerDeveloperAssignment.DoesNotExist:
+        logger.info(f"✓ Assignment verified")
+    except CustomerDeveloperAssignment.DoesNotExist as e:
+        logger.warning(f"❌ No assignment found for customer={customer.id}, developer={developer.id}: {e}")
         messages.error(request, 'You do not have access to this developer profile.')
         return redirect('onboarding:customer_shared_view', token=token)
     
-    # Get quiz answers for assessment results
-    quiz_answers = QuizAnswer.objects.filter(
-        team_member=developer
-    ).select_related('question__quiz').order_by('-submitted_at')
-    
-    # Calculate assessment score (same logic as regular view)
-    total_questions = quiz_answers.count()
-    if total_questions > 0:
-        mc_correct = quiz_answers.filter(
-            question__question_type='multiple_choice',
-            is_correct=True
-        ).count()
+    try:
+        # Step 4: Get quiz answers for assessment results
+        logger.debug(f"Step 4: Querying quiz answers for developer={developer.id}")
+        quiz_answers = QuizAnswer.objects.filter(
+            team_member=developer
+        ).select_related('question__quiz').order_by('-submitted_at')
+        logger.info(f"✓ Found {quiz_answers.count()} quiz answers")
         
-        essay_scores = quiz_answers.filter(
-            question__question_type='essay',
-            evaluator_score__isnull=False
-        )
-        essay_total = sum([answer.evaluator_score for answer in essay_scores])
-        essay_count = essay_scores.count()
-        
-        mc_questions = quiz_answers.filter(question__question_type='multiple_choice').count()
-        essay_questions = quiz_answers.filter(question__question_type='essay').count()
-        
-        if mc_questions > 0:
-            mc_percentage = (mc_correct / mc_questions) * 100
-        else:
-            mc_percentage = 0
+        # Step 5: Calculate assessment score
+        logger.debug(f"Step 5: Calculating assessment scores")
+        total_questions = quiz_answers.count()
+        if total_questions > 0:
+            mc_correct = quiz_answers.filter(
+                question__question_type='multiple_choice',
+                is_correct=True
+            ).count()
             
-        if essay_count > 0:
-            essay_percentage = (essay_total / (essay_count * 10)) * 100
+            essay_scores = quiz_answers.filter(
+                question__question_type='essay',
+                evaluator_score__isnull=False
+            )
+            essay_total = sum([answer.evaluator_score for answer in essay_scores])
+            essay_count = essay_scores.count()
+            
+            mc_questions = quiz_answers.filter(question__question_type='multiple_choice').count()
+            essay_questions = quiz_answers.filter(question__question_type='essay').count()
+            
+            if mc_questions > 0:
+                mc_percentage = (mc_correct / mc_questions) * 100
+            else:
+                mc_percentage = 0
+                
+            if essay_count > 0:
+                essay_percentage = (essay_total / (essay_count * 10)) * 100
+            else:
+                essay_percentage = 0
+            
+            overall_score = (mc_percentage + essay_percentage) / 2 if (mc_questions + essay_questions) > 0 else 0
+            logger.info(f"✓ Assessment scores - MC: {mc_percentage:.1f}%, Essay: {essay_percentage:.1f}%, Overall: {overall_score:.1f}%")
         else:
-            essay_percentage = 0
+            overall_score = 0
+            logger.info(f"✓ No assessment scores available")
         
-        overall_score = (mc_percentage + essay_percentage) / 2 if (mc_questions + essay_questions) > 0 else 0
-    else:
-        overall_score = 0
-    
-    # Get resources
-    developer_resources = TeamMemberResource.objects.filter(
-        team_member=developer
-    ).select_related('resource')
-    
-    context = {
-        'customer': customer,
-        'developer': developer,
-        'assignment': assignment,
-        'quiz_answers': quiz_answers[:10],
-        'overall_score': round(overall_score, 1),
-        'total_assessments': quiz_answers.values('question__quiz').distinct().count(),
-        'developer_resources': developer_resources,
-        'token': token,
-    }
-    
-    return render(request, 'customer_shared_developer_detail.html', context)
+        # Step 6: Get resources
+        logger.debug(f"Step 6: Getting developer resources")
+        developer_resources = TeamMemberResource.objects.filter(
+            team_member=developer
+        ).select_related('resource')
+        logger.info(f"✓ Found {developer_resources.count()} resources")
+        
+        # Step 7: Build context and render
+        logger.debug(f"Step 7: Building context for template render")
+        context = {
+            'customer': customer,
+            'developer': developer,
+            'assignment': assignment,
+            'quiz_answers': quiz_answers[:10],
+            'overall_score': round(overall_score, 1),
+            'total_assessments': quiz_answers.values('question__quiz').distinct().count(),
+            'developer_resources': developer_resources,
+            'token': token,
+        }
+        logger.info(f"✓ Context prepared, about to render template")
+        
+        response = render(request, 'customer_shared_developer_detail.html', context)
+        logger.info(f"✅ Successfully rendered customer_shared_developer_detail page")
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ Error in customer_shared_developer_detail: {e}", exc_info=True)
+        raise
 
 
 def customer_shared_approve_developer(request, token, developer_id):
