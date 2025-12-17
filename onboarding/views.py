@@ -1025,12 +1025,8 @@ def customer_developer_detail(request, developer_id):
     # Calculate assessment score
     total_questions = quiz_answers.count()
     if total_questions > 0:
-        # For MC questions, use is_correct; for essays, use evaluator_score
-        mc_correct = quiz_answers.filter(
-            question__question_type='multiple_choice',
-            is_correct=True
-        ).count()
-        
+        # Note: is_correct field doesn't exist on QuizAnswer model
+        # Only essay questions have evaluator_score for grading
         essay_scores = quiz_answers.filter(
             question__question_type='essay',
             evaluator_score__isnull=False
@@ -1038,21 +1034,12 @@ def customer_developer_detail(request, developer_id):
         essay_total = sum([answer.evaluator_score for answer in essay_scores])
         essay_count = essay_scores.count()
         
-        # Calculate percentage
-        mc_questions = quiz_answers.filter(question__question_type='multiple_choice').count()
-        essay_questions = quiz_answers.filter(question__question_type='essay').count()
-        
-        if mc_questions > 0:
-            mc_percentage = (mc_correct / mc_questions) * 100
-        else:
-            mc_percentage = 0
-            
         if essay_count > 0:
-            essay_percentage = (essay_total / (essay_count * 10)) * 100  # Assuming 10 is max score
+            # evaluator_score is typically 1-10, so percentage is score/10
+            essay_percentage = (essay_total / (essay_count * 10)) * 100
+            overall_score = essay_percentage
         else:
-            essay_percentage = 0
-        
-        overall_score = (mc_percentage + essay_percentage) / 2 if (mc_questions + essay_questions) > 0 else 0
+            overall_score = 0
     else:
         overall_score = 0
     
@@ -1205,7 +1192,7 @@ def customer_shared_developer_detail(request, token, developer_id):
         # Step 2: Get developer
         logger.debug(f"Step 2: Looking up developer with id={developer_id}")
         developer = get_object_or_404(TeamMember, id=developer_id)
-        logger.info(f"✓ Found developer: {developer.id} - {developer.user.first_name} {developer.user.last_name}")
+        logger.info(f"✓ Found developer: {developer.id} - {developer.first_name} {developer.last_name}")
     except Exception as e:
         logger.error(f"❌ Error getting developer {developer_id}: {e}", exc_info=True)
         raise
@@ -1235,11 +1222,8 @@ def customer_shared_developer_detail(request, token, developer_id):
         logger.debug(f"Step 5: Calculating assessment scores")
         total_questions = quiz_answers.count()
         if total_questions > 0:
-            mc_correct = quiz_answers.filter(
-                question__question_type='multiple_choice',
-                is_correct=True
-            ).count()
-            
+            # Note: is_correct field doesn't exist on QuizAnswer model
+            # Only essay questions have evaluator_score for grading
             essay_scores = quiz_answers.filter(
                 question__question_type='essay',
                 evaluator_score__isnull=False
@@ -1247,21 +1231,16 @@ def customer_shared_developer_detail(request, token, developer_id):
             essay_total = sum([answer.evaluator_score for answer in essay_scores])
             essay_count = essay_scores.count()
             
-            mc_questions = quiz_answers.filter(question__question_type='multiple_choice').count()
             essay_questions = quiz_answers.filter(question__question_type='essay').count()
             
-            if mc_questions > 0:
-                mc_percentage = (mc_correct / mc_questions) * 100
-            else:
-                mc_percentage = 0
-                
             if essay_count > 0:
+                # evaluator_score is typically 1-10, so percentage is score/10
                 essay_percentage = (essay_total / (essay_count * 10)) * 100
+                overall_score = essay_percentage
+                logger.info(f"✓ Assessment scores - Essay: {essay_percentage:.1f}%, Overall: {overall_score:.1f}% ({essay_count}/{essay_questions} essays graded)")
             else:
-                essay_percentage = 0
-            
-            overall_score = (mc_percentage + essay_percentage) / 2 if (mc_questions + essay_questions) > 0 else 0
-            logger.info(f"✓ Assessment scores - MC: {mc_percentage:.1f}%, Essay: {essay_percentage:.1f}%, Overall: {overall_score:.1f}%")
+                overall_score = 0
+                logger.info(f"✓ No graded assessments available ({essay_questions} essay questions answered but not yet graded)")
         else:
             overall_score = 0
             logger.info(f"✓ No assessment scores available")
