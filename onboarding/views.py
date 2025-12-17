@@ -313,6 +313,152 @@ def showcase_agencies(request):
     return render(request, 'agency_showcase.html', context)
 
 
+# Agency Portal Views
+def agency_login(request):
+    """Login view for development agencies"""
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            # Check if user has an associated agency
+            try:
+                agency = DevelopmentAgency.objects.get(user=user)
+                if not agency.is_approved:
+                    messages.error(request, "Your agency account is pending approval. Please contact support.")
+                    return render(request, 'agency_login.html')
+                login(request, user)
+                return redirect('onboarding:agency_dashboard')
+            except DevelopmentAgency.DoesNotExist:
+                messages.error(request, "No agency account found for this user.")
+        else:
+            messages.error(request, "Invalid username or password.")
+    
+    return render(request, 'agency_login.html')
+
+
+def agency_register(request):
+    """Registration view for development agencies with user account creation"""
+    if request.method == 'POST':
+        form = DevelopmentAgencyForm(request.POST, request.FILES)
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        password_confirm = request.POST.get('password_confirm')
+        
+        if password != password_confirm:
+            messages.error(request, "Passwords do not match.")
+            return render(request, 'agency_register.html', {'form': form})
+        
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "Username already exists.")
+            return render(request, 'agency_register.html', {'form': form})
+        
+        if form.is_valid():
+            # Create user account
+            user = User.objects.create_user(
+                username=username,
+                password=password,
+                email=form.cleaned_data['contact_email'],
+                first_name=form.cleaned_data['contact_name']
+            )
+            
+            # Create agency and link to user
+            agency = form.save(commit=False)
+            agency.user = user
+            agency.is_approved = False  # Requires admin approval
+            agency.save()
+            
+            messages.success(request, "Thank you for registering! Your agency account is pending approval. We'll notify you once it's approved.")
+            return redirect('onboarding:agency_login')
+    else:
+        form = DevelopmentAgencyForm()
+    
+    return render(request, 'agency_register.html', {'form': form})
+
+
+@login_required
+def agency_dashboard(request):
+    """Dashboard for agencies to view their developers and assignments"""
+    try:
+        agency = DevelopmentAgency.objects.get(user=request.user)
+    except DevelopmentAgency.DoesNotExist:
+        messages.error(request, "No agency account found.")
+        return redirect('onboarding:agency_login')
+    
+    if not agency.is_approved:
+        messages.warning(request, "Your agency account is pending approval.")
+        return render(request, 'agency_dashboard.html', {'agency': agency, 'pending_approval': True})
+    
+    # Get all developers associated with this agency
+    developers = TeamMember.objects.filter(agency=agency).select_related('user')
+    
+    # Get all customer assignments for agency's developers
+    assignments = CustomerDeveloperAssignment.objects.filter(
+        developer__agency=agency
+    ).select_related('customer', 'developer', 'developer__user').order_by('-assigned_at')
+    
+    # Calculate stats
+    total_developers = developers.count()
+    approved_developers = developers.filter(approved=True).count()
+    pending_developers = total_developers - approved_developers
+    
+    total_assignments = assignments.count()
+    approved_assignments = assignments.filter(status='approved').count()
+    pending_assignments = assignments.filter(status='pending').count()
+    active_customers = assignments.values('customer').distinct().count()
+    
+    context = {
+        'agency': agency,
+        'developers': developers,
+        'assignments': assignments,
+        'total_developers': total_developers,
+        'approved_developers': approved_developers,
+        'pending_developers': pending_developers,
+        'total_assignments': total_assignments,
+        'approved_assignments': approved_assignments,
+        'pending_assignments': pending_assignments,
+        'active_customers': active_customers,
+    }
+    
+    return render(request, 'agency_dashboard.html', context)
+
+
+@login_required
+def agency_edit_profile(request):
+    """Allow agency to update their own information"""
+    try:
+        agency = DevelopmentAgency.objects.get(user=request.user)
+    except DevelopmentAgency.DoesNotExist:
+        messages.error(request, "No agency account found.")
+        return redirect('onboarding:agency_login')
+    
+    if request.method == 'POST':
+        form = DevelopmentAgencyForm(request.POST, request.FILES, instance=agency)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Agency profile updated successfully!")
+            return redirect('onboarding:agency_dashboard')
+    else:
+        form = DevelopmentAgencyForm(instance=agency)
+    
+    context = {
+        'agency': agency,
+        'form': form,
+    }
+    
+    return render(request, 'agency_edit_profile.html', context)
+
+
+@login_required
+def agency_logout(request):
+    """Logout view for agencies"""
+    from django.contrib.auth import logout
+    logout(request)
+    messages.success(request, "You have been logged out successfully.")
+    return redirect('onboarding:agency_login')
+
+
 # Assessment Views
 @login_required
 def assessment_landing(request):

@@ -50,7 +50,8 @@ urlpatterns = [
     
     # Agency URLs (redirecting to onboarding app)
     path('agency_list/', views.agency_list_redirect, name='agency_list'),  # Redirect to onboarding agencies list
-    path('partner/', views.partner_redirect, name='partner'),  # Redirect to agency registration
+    path('partner/', views.partner_redirect, name='partner'),  # Redirect to agency portal (login/register/dashboard)
+    path('agency/', views.partner_redirect, name='agency_portal'),  # Another alias for agency portal
     
     # password reset
     path('password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),

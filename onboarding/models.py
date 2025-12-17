@@ -384,6 +384,9 @@ class DevelopmentAgency(models.Model):
         ('Accelerator/Incubator', 'Accelerator/Incubator'),
     ]
     
+    # User account for agency login
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, help_text="User account for agency login")
+    
     agency_name = models.CharField(max_length=255)
     team_size = models.CharField(max_length=100, blank=True)
     skills = models.TextField(blank=True)
@@ -399,9 +402,20 @@ class DevelopmentAgency(models.Model):
     linkedin_url = models.URLField(blank=True)
     how_they_found_us = models.CharField(max_length=255, blank=True)
     logo = models.ImageField(upload_to='agency-logo', null=True, blank=True)
+    is_approved = models.BooleanField(default=False, help_text="Agency approved to access portal")
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     
     def __str__(self):
         return self.agency_name
+    
+    def get_developers(self):
+        """Get all developers associated with this agency"""
+        return self.team_members.all()
+    
+    def get_assignments(self):
+        """Get all customer assignments for this agency's developers"""
+        from onboarding.models import CustomerDeveloperAssignment
+        return CustomerDeveloperAssignment.objects.filter(developer__agency=self)
 
 
 class DevelopmentAgencyAdmin(admin.ModelAdmin):

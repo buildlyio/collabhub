@@ -213,7 +213,16 @@ def github_complete(request):
 
 def partner_redirect(request):
     """Redirect partners to agency registration"""
-    return redirect('/onboarding/agency_add/')
+    # If user is logged in and has an agency, go to dashboard
+    if request.user.is_authenticated:
+        try:
+            from onboarding.models import DevelopmentAgency
+            agency = DevelopmentAgency.objects.get(user=request.user)
+            return redirect('/onboarding/agency/dashboard/')
+        except:
+            pass
+    # Otherwise go to agency registration
+    return redirect('/onboarding/agency/register/')
 
 
 def agency_list_redirect(request):

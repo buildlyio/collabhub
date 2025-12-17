@@ -19,6 +19,11 @@ urlpatterns = [
     # Agency URLs
     path('agency_add/', views.DevelopmentAgencyCreateView.as_view(), name='agency_add'),
     path('agencies/', views.showcase_agencies, name='agency_list'),
+    path('agency/login/', views.agency_login, name='agency_login'),
+    path('agency/register/', views.agency_register, name='agency_register'),
+    path('agency/dashboard/', views.agency_dashboard, name='agency_dashboard'),
+    path('agency/edit-profile/', views.agency_edit_profile, name='agency_edit_profile'),
+    path('agency/logout/', views.agency_logout, name='agency_logout'),
     
     # Assessment URLs
     path('assessment/', views.assessment_landing, name='assessment_landing'),
