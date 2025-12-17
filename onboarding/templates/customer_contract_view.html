@@ -75,7 +75,7 @@
                 {% for developer in contract.developers.all %}
                 <div class="border border-gray-200 rounded-lg p-4">
                     <p class="font-semibold text-gray-900">{{ developer.first_name }} {{ developer.last_name }}</p>
-                    <p class="text-sm text-gray-600">{% for type in developer.types.all %}{{ type.name }}{% if not forloop.last %}, {% endif %}{% empty %}Team Member{% endfor %}</p>
+                    <p class="text-sm text-gray-600">{% for type in developer.types.all %}{{ type.label }}{% if not forloop.last %}, {% endif %}{% empty %}Team Member{% endfor %}</p>
                 </div>
                 {% endfor %}
             </div>

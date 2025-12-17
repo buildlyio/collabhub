@@ -33,7 +33,7 @@
             <div>
                 <h3 class="text-sm font-medium text-gray-500 mb-1">Role</h3>
                 <span class="inline-block px-3 py-1 text-sm font-semibold rounded-full bg-purple-100 text-purple-800">
-                    {% for type in team_member.types.all %}{{ type.name }}{% if not forloop.last %}, {% endif %}{% empty %}Team Member{% endfor %}
+                    {% for type in team_member.types.all %}{{ type.label }}{% if not forloop.last %}, {% endif %}{% empty %}Team Member{% endfor %}
                 </span>
                 {% if team_member.experience_years %}
                 <p class="text-sm text-gray-600 mt-2">{{ team_member.experience_years }} years experience</p>

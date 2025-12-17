@@ -99,7 +99,7 @@
                         <!-- Role -->
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
-                                {% for type in submission.team_member.types.all %}{{ type.name }}{% if not forloop.last %}, {% endif %}{% empty %}Team Member{% endfor %}
+                                {% for type in submission.team_member.types.all %}{{ type.label }}{% if not forloop.last %}, {% endif %}{% empty %}Team Member{% endfor %}
                             </span>
                         </td>
                         

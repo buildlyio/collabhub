@@ -87,7 +87,8 @@ class ForgeApp(models.Model):
     @property
     def logo_url_or_default(self):
         """Return logo URL or default TheForge logo"""
-        return self.logo_url if self.logo_url else '/static/img/forge-default-logo.png'
+        from django.conf import settings
+        return self.logo_url if self.logo_url else f'{settings.STATIC_URL}img/forge-default-logo.png'
     
     @property
     def price_dollars(self):

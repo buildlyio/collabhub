@@ -20,7 +20,7 @@
         <div class="flex items-start justify-between">
             <div>
                 <h1 class="text-3xl md:text-4xl font-bold mb-2">{{ developer.first_name }} {{ developer.last_name }}</h1>
-                <p class="text-lg opacity-90">{% for type in developer.types.all %}{{ type.name }}{% if not forloop.last %}, {% endif %}{% empty %}Team Member{% endfor %}</p>
+                <p class="text-lg opacity-90">{% for type in developer.types.all %}{{ type.label }}{% if not forloop.last %}, {% endif %}{% empty %}Team Member{% endfor %}</p>
                 <div class="mt-4 flex flex-wrap gap-2">
                     {% if developer.has_completed_assessment %}
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white bg-opacity-20 text-white border border-white border-opacity-30">

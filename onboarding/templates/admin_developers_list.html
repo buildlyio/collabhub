@@ -58,7 +58,7 @@
             <div class="flex items-start justify-between mb-4">
                 <div class="flex-1">
                     <h3 class="text-lg font-bold text-gray-900">{{ dev.first_name }} {{ dev.last_name }}</h3>
-                    <p class="text-sm text-gray-600">{% for type in dev.types.all %}{{ type.name }}{% if not forloop.last %}, {% endif %}{% empty %}Team Member{% endfor %}</p>
+                    <p class="text-sm text-gray-600">{% for type in dev.types.all %}{{ type.label }}{% if not forloop.last %}, {% endif %}{% empty %}Team Member{% endfor %}</p>
                 </div>
                 {% if dev.approved %}
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">

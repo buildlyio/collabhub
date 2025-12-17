@@ -63,8 +63,13 @@ class TeamMember(models.Model):
     assessment_reminder_count = models.IntegerField(default=0, help_text="Number of times reminded to complete assessment")
     assessment_last_reminded = models.DateTimeField(null=True, blank=True, help_text="Last time reminded about assessment")
 
+    @property
+    def types(self):
+        """Alias for profile_types for backward compatibility"""
+        return self.profile_types
+    
     def __str__(self):
-        type_names = ', '.join([t.name for t in self.types.all()])
+        type_names = ', '.join([t.label for t in self.types.all()])
         return f'{self.first_name} {self.last_name} - {type_names if type_names else "Team Member"}'
     
     def get_profile_types_display(self):
@@ -72,7 +77,7 @@ class TeamMember(models.Model):
         types = self.profile_types.all()
         if types:
             return ', '.join([t.label for t in types])
-        type_names = ', '.join([t.name for t in self.types.all()])
+        type_names = ', '.join([t.label for t in self.types.all()])
         return type_names if type_names else 'Team Member'
     
     def get_github_username(self):

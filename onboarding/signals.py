@@ -27,15 +27,15 @@ A new team member has registered on CollabHub:
 
 Name: {instance.first_name} {instance.last_name}
 Email: {instance.email}
-Type: {', '.join([t.name for t in instance.types.all()]) if hasattr(instance, 'types') else 'Team Member'}
+Type: {', '.join([t.label for t in instance.types.all()]) if hasattr(instance, 'types') else 'Team Member'}
 LinkedIn: {instance.linkedin or 'Not provided'}
 GitHub: {instance.github_account or 'Not provided'}
 Experience: {instance.experience_years} years
 Bio: {instance.bio[:200] if instance.bio else 'Not provided'}
 
-Profile Types: {', '.join([t.name for t in instance.types.all()]) if instance.types.exists() else 'None'}
+Profile Types: {', '.join([t.label for t in instance.types.all()]) if instance.types.exists() else 'None'}
 
-Agency: {instance.agency.name if instance.agency else ('Independent' if instance.is_independent else instance.agency_name_text)}
+Agency: {instance.agency.agency_name if instance.agency else ('Independent' if instance.is_independent else instance.agency_name_text)}
 
 Status: Awaiting approval and assessment completion
 

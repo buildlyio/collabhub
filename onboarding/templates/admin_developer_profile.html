@@ -34,7 +34,7 @@
                     <div class="text-lg opacity-90 mb-3">
                         <span>
                             {% for type in developer.types.all %}
-                                {{ type.name }}{% if not forloop.last %}, {% endif %}
+                                {{ type.label }}{% if not forloop.last %}, {% endif %}
                             {% empty %}
                                 No profile type set
                             {% endfor %}

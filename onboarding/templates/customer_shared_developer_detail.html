@@ -26,7 +26,7 @@
                     <h1 class="text-3xl md:text-4xl font-bold mb-2">{{ developer.first_name }} {{ developer.last_name }}</h1>
                     <p class="text-lg opacity-90 mb-4">
                         {% for type in developer.types.all %}
-                            {{ type.name }}{% if not forloop.last %}, {% endif %}
+                            {{ type.label }}{% if not forloop.last %}, {% endif %}
                         {% empty %}
                             Team Member
                         {% endfor %}
