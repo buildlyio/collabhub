@@ -1,6 +1,9 @@
 # Byte-compiled / optimized / DLL files
+# IMPORTANT: Never commit Python cache files - they cause deployment issues
+# .pyc files are compiled Python bytecode and should always be generated fresh
 __pycache__/
 *.py[cod]
+*.pyo
 *$py.class
 
 # C extensions
