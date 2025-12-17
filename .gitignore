@@ -139,5 +139,8 @@ static/
 
 .codegpt
 
-db.sqlite3.env.*
+db.sqlite3
+
+# Environment variable files (never commit credentials)
+.env.*
 test_email.py
