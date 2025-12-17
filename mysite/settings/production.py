@@ -39,13 +39,21 @@ CORS_ORIGIN_WHITELIST = ALLOWED_HOSTS
 # Removed import of local settings as it could not be resolved
 
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"  # new
-DEFAULT_FROM_EMAIL = "admin@buildly.io"
-EMAIL_HOST = "smtp.sendgrid.net"  # new
-EMAIL_HOST_USER = "apikey"  # new
-EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_PASSWORD")  # new
-EMAIL_PORT = 587  # new
-EMAIL_USE_TLS = True  # new
+# Email Configuration - MailerSend
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "admin@buildly.io")
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.mailersend.net")
+EMAIL_HOST_USER = os.environ.get("MAILERSEND_SMTP_USERNAME")
+EMAIL_HOST_PASSWORD = os.environ.get("MAILERSEND_SMTP_PASSWORD")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True").lower() == "true"
+EMAIL_SUBJECT_PREFIX = os.environ.get("EMAIL_SUBJECT_PREFIX", "[Buildly Labs] ")
+
+# Admin notification recipients
+ADMINS = [
+    ('Buildly Admin', 'admin@buildly.io'),
+]
+MANAGERS = ADMINS
 
 AWS_STORAGE_BUCKET_NAME = 'collab'
 AWS_ACCESS_KEY_ID = 'DO00MW9V6QPPJKVCGHYA'
@@ -61,8 +69,6 @@ STATIC_URL = f'https://{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/{AWS_LOCA
 STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage'
 
 AWS_DEFAULT_ACL = 'public-read'
-
-SENDGRID_API_KEY = os.environ.get("SENDGRID")
 
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
