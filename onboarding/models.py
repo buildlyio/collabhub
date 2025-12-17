@@ -405,9 +405,12 @@ class Customer(models.Model):
     contact_email = models.EmailField(unique=True)
     contact_phone = models.CharField(max_length=20, blank=True)
     
-    # Authentication (simple username/password for now)
-    username = models.CharField(max_length=100, unique=True)
-    password = models.CharField(max_length=255, help_text="Plain text password (will be hashed)")
+    # Link to Django User (optional - if set, uses their authentication)
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='customer_profile')
+    
+    # Authentication (simple username/password - optional if user is set)
+    username = models.CharField(max_length=100, unique=True, blank=True)
+    password = models.CharField(max_length=255, blank=True, help_text="Plain text password (will be hashed)")
     
     # Shareable token for passwordless access
     share_token = models.CharField(max_length=64, unique=True, blank=True, help_text="Unique token for shareable URL")
@@ -435,9 +438,17 @@ class Customer(models.Model):
     def generate_share_token(self):
         """Generate a unique share token for passwordless access"""
         import secrets
-        self.share_token = secrets.token_urlsafe(48)
-        self.save()
-        return self.share_token
+        # Try to generate a unique token (with collision retry)
+        max_attempts = 10
+        for _ in range(max_attempts):
+            token = secrets.token_urlsafe(48)
+            # Check if token is unique
+            if not Customer.objects.filter(share_token=token).exists():
+                self.share_token = token
+                self.save()
+                return self.share_token
+        # If all attempts fail (extremely unlikely), raise error
+        raise ValueError("Unable to generate unique share token after multiple attempts")
     
     def get_share_url(self, request=None):
         """Get the shareable URL for this customer"""

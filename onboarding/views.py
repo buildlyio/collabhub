@@ -1776,26 +1776,39 @@ def admin_customer_create(request):
         notes = request.POST.get('notes', '')
         
         if company_name and contact_name and contact_email:
+            # Link to existing user if selected
+            linked_user = None
+            if user_id:
+                try:
+                    linked_user = User.objects.get(id=user_id)
+                except User.DoesNotExist:
+                    pass
+            
+            # Only generate username if no user is linked
+            username = ''
+            if not linked_user:
+                username = contact_email.split('@')[0]
+                base_username = username
+                counter = 1
+                while Customer.objects.filter(username=username).exists():
+                    username = f"{base_username}{counter}"
+                    counter += 1
+            
             customer = Customer.objects.create(
                 company_name=company_name,
                 contact_name=contact_name,
                 contact_email=contact_email,
                 contact_phone=contact_phone,
+                user=linked_user,
+                username=username,
+                password='',
                 is_active=is_active,
                 notes=notes
             )
             
-            # Link to existing user if selected
-            if user_id:
-                try:
-                    user = User.objects.get(id=user_id)
-                    customer.user = user
-                    customer.save()
-                except User.DoesNotExist:
-                    pass
-            
-            customer.generate_share_token()
-            messages.success(request, f'Customer "{company_name}" created successfully!')
+            # Generate shareable token
+            token = customer.generate_share_token()
+            messages.success(request, f'Customer "{company_name}" created successfully with shareable link!')
             return redirect('onboarding:admin_customer_detail', customer_id=customer.id)
         else:
             messages.error(request, 'Please fill in all required fields.')
