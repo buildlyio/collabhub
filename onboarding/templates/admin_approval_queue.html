@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Community Approval Queue{% endblock %}
+{% block page_title %}Community Approval Queue{% endblock %}
+
+{% block page_content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Community Approval Queue</h1>
+            <p class="mt-2 text-gray-600">Review and approve developers to join the Buildly community</p>
+        </div>
+        <a href="{% url 'onboarding:admin_dashboard' %}" class="btn btn-secondary">Back to Admin Dashboard</a>
+    </div>
+
+    {% if pending_developers %}
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-yellow-700">
+                    {{ pending_developers|length }} developer{{ pending_developers|length|pluralize }} waiting for community approval
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Developer</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Experience</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Skills</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GitHub</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for developer in pending_developers %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ developer.first_name }} {{ developer.last_name }}
+                                    </div>
+                                    <div class="text-sm text-gray-500">{{ developer.email }}</div>
+                                    {% if developer.linkedin %}
+                                    <a href="{{ developer.linkedin }}" target="_blank" class="text-xs text-blue-600 hover:text-blue-800">
+                                        LinkedIn →
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {% if developer.team_member_type == 'dev' %}bg-blue-100 text-blue-800
+                                {% elif developer.team_member_type == 'design' %}bg-purple-100 text-purple-800
+                                {% elif developer.team_member_type == 'pm' %}bg-green-100 text-green-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ developer.get_team_member_type_display }}
+                            </span>
+                            {% if not developer.is_independent and developer.agency %}
+                            <div class="mt-1 text-xs text-gray-500">
+                                Agency: {{ developer.agency.name }}
+                            </div>
+                            {% elif not developer.is_independent and developer.agency_name_text %}
+                            <div class="mt-1 text-xs text-gray-500">
+                                Agency: {{ developer.agency_name_text }}
+                            </div>
+                            {% else %}
+                            <div class="mt-1 text-xs text-gray-500">
+                                Independent
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ developer.experience_years }} years
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            {{ developer.skills|default:"Not specified"|truncatewords:10 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if developer.github_account %}
+                            <a href="https://github.com/{{ developer.github_account }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                                @{{ developer.github_account }}
+                            </a>
+                            {% else %}
+                            <span class="text-gray-400">Not provided</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ developer.created_at|date:"M d, Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <form method="post" action="{% url 'onboarding:admin_approve_community' developer.id %}" class="inline">
+                                {% csrf_token %}
+                                <button 
+                                    type="submit" 
+                                    onclick="return confirm('Approve {{ developer.first_name }} {{ developer.last_name }} for community membership?')"
+                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                                >
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Approve
+                                </button>
+                            </form>
+                            <a href="{% url 'onboarding:admin_developer_profile' developer.id %}" class="ml-2 text-indigo-600 hover:text-indigo-900">
+                                View Profile
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h3 class="mt-2 text-lg font-medium text-gray-900">All Caught Up!</h3>
+        <p class="mt-1 text-sm text-gray-500">No developers pending approval at this time.</p>
+        <div class="mt-6">
+            <a href="{% url 'onboarding:admin_developers_list' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200">
+                View All Developers
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

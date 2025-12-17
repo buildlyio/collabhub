@@ -62,6 +62,11 @@ class TeamMember(models.Model):
     assessment_completed_at = models.DateTimeField(null=True, blank=True, help_text="When assessment was completed")
     assessment_reminder_count = models.IntegerField(default=0, help_text="Number of times reminded to complete assessment")
     assessment_last_reminded = models.DateTimeField(null=True, blank=True, help_text="Last time reminded about assessment")
+    
+    # Community approval (Phase 1)
+    community_approval_date = models.DateTimeField(null=True, blank=True, help_text="When approved to Buildly community")
+    community_approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='community_approvals', help_text="Staff member who approved")
+    community_approval_notification_sent = models.BooleanField(default=False, help_text="Notification sent to developer")
 
     @property
     def types(self):
@@ -510,6 +515,10 @@ class CustomerDeveloperAssignment(models.Model):
     reviewed_at = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(blank=True, help_text="Customer notes about this developer")
     
+    # Phase 1: Approval tracking
+    approved_by = models.ForeignKey('CompanyAdmin', on_delete=models.SET_NULL, null=True, blank=True, related_name='developer_approvals', help_text="Company admin who approved")
+    notification_sent = models.BooleanField(default=False, help_text="Notification sent to developer")
+    
     def __str__(self):
         return f"{self.customer.company_name} - {self.developer.first_name} {self.developer.last_name} ({self.status})"
     
@@ -647,23 +656,41 @@ class Contract(models.Model):
         ('cancelled', 'Cancelled'),
     ]
     
+    CONTRACT_TYPE = [
+        ('onboarding', 'Onboarding'),
+        ('engagement', 'Engagement'),
+        ('maintenance', 'Maintenance'),
+    ]
+    
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='contracts')
     developers = models.ManyToManyField(TeamMember, related_name='contracts')
     
     # Contract details
     title = models.CharField(max_length=255)
     contract_text = models.TextField(help_text="Full contract text")
+    contract_type = models.CharField(max_length=20, choices=CONTRACT_TYPE, default='engagement')
     start_date = models.DateField()
     end_date = models.DateField()
     hourly_rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     project_rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     
-    # Signature
+    # Signature (Phase 1)
     status = models.CharField(max_length=20, choices=CONTRACT_STATUS, default='draft')
     signature_data = models.TextField(blank=True, help_text="Base64 encoded signature image")
-    signed_by = models.CharField(max_length=255, blank=True)
+    signed_by = models.CharField(max_length=255, blank=True, help_text="Full name of person who signed")
     signed_at = models.DateTimeField(null=True, blank=True)
+    signature_ip = models.GenericIPAddressField(null=True, blank=True, help_text="IP address of signer")
+    signature_timestamp = models.DateTimeField(null=True, blank=True, help_text="Server timestamp of signature")
     ip_address = models.GenericIPAddressField(null=True, blank=True)
+    
+    # Billing (Phase 4)
+    billing_enabled = models.BooleanField(default=False, help_text="Enable billing for this contract")
+    billing_enabled_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='contracts_billing_enabled')
+    billing_enabled_at = models.DateTimeField(null=True, blank=True)
+    billing_start_date = models.DateField(null=True, blank=True)
+    billing_end_date = models.DateField(null=True, blank=True)
+    billing_frequency = models.CharField(max_length=20, choices=[('monthly', 'Monthly'), ('quarterly', 'Quarterly'), ('custom', 'Custom')], default='monthly')
+    auto_renew = models.BooleanField(default=False)
     
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
@@ -698,3 +725,119 @@ class ContractAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+# ===== Phase 1: Customer Portal Models =====
+
+class CompanyProfile(models.Model):
+    """Extended profile for Customer companies"""
+    customer = models.OneToOneField(Customer, on_delete=models.CASCADE, related_name='company_profile')
+    industry = models.CharField(max_length=100, blank=True)
+    company_size = models.CharField(max_length=100, blank=True)
+    website = models.URLField(blank=True)
+    logo = models.ImageField(upload_to='company-logos/', null=True, blank=True)
+    billing_address = models.TextField(blank=True)
+    tax_id = models.CharField(max_length=50, blank=True)
+    is_labs_customer = models.BooleanField(default=False)
+    labs_account_email = models.EmailField(blank=True)
+    labs_discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.customer.company_name} Profile"
+
+
+class CompanyAdmin(models.Model):
+    """Company admin users with specific roles and permissions"""
+    ROLE_CHOICES = [
+        ('owner', 'Owner'),
+        ('admin', 'Administrator'),
+        ('billing', 'Billing Only'),
+        ('viewer', 'Viewer'),
+    ]
+    
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='admins')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='company_admin_roles')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='viewer')
+    can_approve_developers = models.BooleanField(default=False)
+    can_sign_contracts = models.BooleanField(default=False)
+    can_manage_billing = models.BooleanField(default=False)
+    invited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='company_admin_invitations')
+    invited_at = models.DateTimeField(auto_now_add=True)
+    accepted_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        unique_together = ('customer', 'user')
+        ordering = ['-accepted_at']
+    
+    def __str__(self):
+        return f"{self.user.get_full_name()} - {self.customer.company_name} ({self.role})"
+    
+    def set_permissions_for_role(self):
+        """Auto-set permissions based on role"""
+        if self.role == 'owner':
+            self.can_approve_developers = True
+            self.can_sign_contracts = True
+            self.can_manage_billing = True
+        elif self.role == 'admin':
+            self.can_approve_developers = True
+            self.can_sign_contracts = True
+            self.can_manage_billing = False
+        elif self.role == 'billing':
+            self.can_approve_developers = False
+            self.can_sign_contracts = False
+            self.can_manage_billing = True
+        else:  # viewer
+            self.can_approve_developers = False
+            self.can_sign_contracts = False
+            self.can_manage_billing = False
+
+
+class Notification(models.Model):
+    """In-app notifications for users"""
+    NOTIFICATION_TYPES = [
+        ('community_approved', 'Community Approval'),
+        ('team_approved', 'Team Approval'),
+        ('team_removal_requested', 'Removal Request'),
+        ('team_removal_30day', '30-Day Removal Notice'),
+        ('contract_ready', 'Contract Ready to Sign'),
+        ('contract_signed', 'Contract Signed'),
+        ('billing_enabled', 'Billing Enabled'),
+        ('custom', 'Custom Message'),
+    ]
+    
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES)
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    link_url = models.URLField(blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    related_customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True, related_name='notifications')
+    related_contract = models.ForeignKey(Contract, on_delete=models.SET_NULL, null=True, blank=True, related_name='notifications')
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.title} - {self.recipient.get_full_name()}"
+
+
+class LabsAccount(models.Model):
+    """Labs platform account linked to Buildly TeamMember"""
+    team_member = models.OneToOneField(TeamMember, on_delete=models.CASCADE, related_name='labs_account')
+    labs_username = models.CharField(max_length=255)
+    labs_email = models.EmailField()
+    labs_token = models.TextField(help_text="Encrypted API token for Labs")  # Will be encrypted in utils
+    labs_user_id = models.CharField(max_length=255, unique=True)
+    buildly_profile_linked = models.BooleanField(default=True, help_text="One unified Buildly profile")
+    linked_at = models.DateTimeField(auto_now_add=True)
+    last_sync = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return f"{self.team_member.first_name} {self.team_member.last_name} - Labs: {self.labs_username}"
+    
+    class Meta:
+        ordering = ['-linked_at']

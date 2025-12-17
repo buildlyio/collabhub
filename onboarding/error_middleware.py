@@ -28,6 +28,9 @@ class ErrorHandlerMiddleware:
     
     def process_exception(self, request, exception):
         """Handle exceptions and create GitHub issues"""
+        # In development, let Django show the full traceback
+        if settings.DEBUG:
+            return None
         
         # Get exception details
         exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -50,8 +53,8 @@ class ErrorHandlerMiddleware:
         print(log_message, file=sys.stderr)
         logger.error(log_message, exc_info=True)
         
-        # Submit to GitHub if configured and not in DEBUG mode
-        if (not settings.DEBUG and 
+        # Submit to GitHub if configured (DEBUG already handled above)
+        if (
             hasattr(settings, 'GITHUB_ERROR_REPO') and 
             hasattr(settings, 'GITHUB_ERROR_TOKEN') and
             settings.GITHUB_ERROR_TOKEN):  # Only if token is actually set

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: #f9fafb;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #f59e0b;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .contract-info {
+            background: white;
+            border: 2px solid #f59e0b;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📝 Contract Ready to Sign</h1>
+    </div>
+    <div class="content">
+        <p>Hi {{ admin_name }},</p>
+        
+        <p>A contract is ready for your signature:</p>
+        
+        <div class="contract-info">
+            <h3>{{ contract.title }}</h3>
+            <p><strong>Company:</strong> {{ contract.customer.company_name }}</p>
+            <p><strong>Contract Type:</strong> {{ contract.get_contract_type_display }}</p>
+            <p><strong>Created:</strong> {{ contract.created_at|date:"F d, Y" }}</p>
+            {% if contract.description %}
+            <p><strong>Description:</strong> {{ contract.description }}</p>
+            {% endif %}
+        </div>
+        
+        <p><strong>Next Steps:</strong></p>
+        <ol>
+            <li>Review the contract details carefully</li>
+            <li>Sign electronically with your name and title</li>
+            <li>Download a copy for your records</li>
+        </ol>
+        
+        <a href="{{ sign_url }}" class="button">Review & Sign Contract</a>
+        
+        <p style="color: #666; font-size: 14px;">
+            <em>This contract requires electronic signature. By signing, you agree to the terms and conditions outlined in the contract.</em>
+        </p>
+        
+        <p>If you have any questions about this contract, please contact our team.</p>
+        
+        <p>Best regards,<br>
+        The Buildly Team</p>
+    </div>
+    <div class="footer">
+        <p>&copy; 2024 Buildly. All rights reserved.</p>
+    </div>
+</body>
+</html>

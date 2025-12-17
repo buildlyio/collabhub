@@ -69,5 +69,30 @@ urlpatterns = [
     path('admin/developers/', views.admin_developers_list, name='admin_developers_list'),
     path('admin/developers/<int:developer_id>/', views.admin_developer_profile, name='admin_developer_profile'),
     path('admin/developers/<int:developer_id>/sync-github/', views.sync_github_skills, name='sync_github_skills'),
+    
+    # ==================== PHASE 1: CUSTOMER PORTAL URLs ====================
+    
+    # Labs Authentication
+    path('labs/login/', views.labs_login, name='labs_login'),
+    path('labs/callback/', views.labs_callback, name='labs_callback'),
+    path('labs/unlink/', views.labs_unlink, name='labs_unlink'),
+    
+    # Approval Workflows
+    path('admin/approval-queue/', views.admin_approval_queue, name='admin_approval_queue'),
+    path('admin/approve-community/<int:developer_id>/', views.admin_approve_community, name='admin_approve_community'),
+    path('portal/dashboard/', views.customer_portal_dashboard, name='customer_portal_dashboard'),
+    path('portal/', views.customer_portal_switcher, name='customer_portal_switcher'),
+    path('portal/approve-developer/<int:assignment_id>/', views.customer_approve_developer, name='customer_approve_developer'),
+    path('portal/request-removal/<int:assignment_id>/', views.request_developer_removal, name='request_developer_removal'),
+    
+    # Contract Signing
+    path('contract/<int:contract_id>/sign/', views.contract_sign_form, name='contract_sign_form'),
+    path('contract/<int:contract_id>/sign/submit/', views.contract_sign_submit, name='contract_sign_submit'),
+    path('contract/<int:contract_id>/download/', views.contract_pdf_download, name='contract_pdf_download'),
+    
+    # Notifications
+    path('notifications/', views.notification_center, name='notification_center'),
+    path('notifications/<int:notification_id>/read/', views.notification_mark_read, name='notification_mark_read'),
+    path('api/notifications/unread-count/', views.notification_unread_count, name='notification_unread_count'),
 ]
 

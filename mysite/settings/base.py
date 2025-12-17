@@ -108,6 +108,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'onboarding.context_processors.assessment_status',  # Add assessment status to all templates
+                'onboarding.context_processors.user_roles',  # Add role flags for navigation
             ],
         },
     },
@@ -249,6 +250,16 @@ SOCIAL_AUTH_GITHUB_SCOPE = ['repo', 'user']
 LABS_TOKEN_URL = os.environ.get('LABS_TOKEN_URL', 'https://labs-api.buildly.dev')
 LABS_CLIENT_ID = os.environ.get('LABS_CLIENT_ID')
 LABS_CLIENT_SECRET = os.environ.get('LABS_CLIENT_SECRET')
+LABS_API_BASE_URL = os.environ.get('LABS_API_BASE_URL', 'https://labs.buildly.dev')
+LABS_OAUTH_AUTHORIZE_URL = f"{LABS_API_BASE_URL}/oauth/authorize"
+LABS_OAUTH_TOKEN_URL = f"{LABS_API_BASE_URL}/oauth/token"
+
+# Encryption key for storing sensitive tokens (GitHub, Labs)
+ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')  # Must be 32 url-safe base64-encoded bytes
+
+# Wave Billing Configuration (manual for now, API pending)
+WAVE_GRAPHQL_URL = os.environ.get('WAVE_GRAPHQL_URL', 'https://gql.waveapps.com/graphql/public')
+WAVE_API_TOKEN = os.environ.get('WAVE_API_TOKEN')
 
 # Stripe Configuration
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY')

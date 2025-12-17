@@ -2047,3 +2047,575 @@ def admin_customer_delete(request, customer_id):
     
     return redirect('onboarding:admin_customer_detail', customer_id=customer_id)
 
+
+# ==================== PHASE 1: CUSTOMER PORTAL VIEWS ====================
+
+from django.http import JsonResponse, HttpResponse, FileResponse
+from django.urls import reverse
+from django.conf import settings
+from .models import CompanyProfile, CompanyAdmin, Notification, LabsAccount
+from .utils import (
+    encrypt_token, decrypt_token, send_email,
+    send_community_approval_email, send_team_approval_email,
+    send_contract_ready_email, send_contract_signed_email,
+    send_removal_request_email, generate_contract_pdf,
+    generate_secure_token, get_client_ip
+)
+import requests
+import json
+from datetime import datetime, timedelta
+
+
+# ==================== LABS AUTHENTICATION VIEWS ====================
+
+@login_required
+def labs_login(request):
+    """Initiate Labs OAuth flow"""
+    try:
+        team_member = TeamMember.objects.get(user=request.user)
+    except TeamMember.DoesNotExist:
+        messages.error(request, 'Team member profile not found.')
+        return redirect('onboarding:dashboard')
+    
+    # Build OAuth authorization URL
+    labs_auth_url = settings.LABS_OAUTH_AUTHORIZE_URL
+    client_id = settings.LABS_CLIENT_ID
+    redirect_uri = request.build_absolute_uri(reverse('onboarding:labs_callback'))
+    scope = 'profile projects'
+    state = generate_secure_token()
+    
+    # Store state in session for verification
+    request.session['labs_oauth_state'] = state
+    request.session['labs_oauth_team_member_id'] = team_member.id
+    
+    auth_url = f"{labs_auth_url}?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&scope={scope}&state={state}"
+    
+    return redirect(auth_url)
+
+
+@login_required
+def labs_callback(request):
+    """Handle Labs OAuth callback"""
+    code = request.GET.get('code')
+    state = request.GET.get('state')
+    error = request.GET.get('error')
+    
+    if error:
+        messages.error(request, f'Labs authentication failed: {error}')
+        return redirect('onboarding:dashboard')
+    
+    # Verify state
+    stored_state = request.session.get('labs_oauth_state')
+    if not state or state != stored_state:
+        messages.error(request, 'Invalid OAuth state. Please try again.')
+        return redirect('onboarding:dashboard')
+    
+    # Exchange code for access token
+    token_url = settings.LABS_OAUTH_TOKEN_URL
+    client_id = settings.LABS_CLIENT_ID
+    client_secret = settings.LABS_CLIENT_SECRET
+    redirect_uri = request.build_absolute_uri(reverse('onboarding:labs_callback'))
+    
+    try:
+        response = requests.post(token_url, data={
+            'grant_type': 'authorization_code',
+            'code': code,
+            'redirect_uri': redirect_uri,
+            'client_id': client_id,
+            'client_secret': client_secret,
+        })
+        response.raise_for_status()
+        token_data = response.json()
+        access_token = token_data.get('access_token')
+        
+        if not access_token:
+            raise Exception('No access token in response')
+        
+        # Get user profile from Labs
+        profile_response = requests.get(
+            f"{settings.LABS_API_BASE_URL}/api/me",
+            headers={'Authorization': f'Bearer {access_token}'}
+        )
+        profile_response.raise_for_status()
+        profile_data = profile_response.json()
+        
+        # Get team member
+        team_member_id = request.session.get('labs_oauth_team_member_id')
+        team_member = get_object_or_404(TeamMember, id=team_member_id, user=request.user)
+        
+        # Create or update LabsAccount
+        labs_account, created = LabsAccount.objects.get_or_create(team_member=team_member)
+        labs_account.labs_username = profile_data.get('username')
+        labs_account.labs_email = profile_data.get('email')
+        labs_account.labs_token = encrypt_token(access_token)
+        labs_account.labs_user_id = profile_data.get('id')
+        labs_account.buildly_profile_linked = True
+        labs_account.save()
+        
+        # Update CompanyProfile if customer is Labs customer
+        if hasattr(team_member, 'customer_assignments'):
+            for assignment in team_member.customer_assignments.filter(is_active=True):
+                customer = assignment.customer
+                try:
+                    profile = CompanyProfile.objects.get(customer=customer)
+                    if not profile.is_labs_customer:
+                        profile.is_labs_customer = True
+                        profile.labs_account_email = profile_data.get('email')
+                        profile.save()
+                except CompanyProfile.DoesNotExist:
+                    pass
+        
+        messages.success(request, 'Successfully linked your Buildly Labs account!')
+        
+        # Clean up session
+        del request.session['labs_oauth_state']
+        del request.session['labs_oauth_team_member_id']
+        
+    except Exception as e:
+        messages.error(request, f'Failed to link Labs account: {str(e)}')
+    
+    return redirect('onboarding:dashboard')
+
+
+@login_required
+def labs_unlink(request):
+    """Unlink Labs account"""
+    if request.method != 'POST':
+        return redirect('onboarding:dashboard')
+    
+    try:
+        team_member = TeamMember.objects.get(user=request.user)
+        labs_account = LabsAccount.objects.get(team_member=team_member)
+        labs_account.delete()
+        messages.success(request, 'Successfully unlinked your Labs account.')
+    except (TeamMember.DoesNotExist, LabsAccount.DoesNotExist):
+        messages.error(request, 'No Labs account found to unlink.')
+    
+    return redirect('onboarding:dashboard')
+
+
+# ==================== APPROVAL WORKFLOW VIEWS ====================
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_approval_queue(request):
+    """Admin view of developers pending community approval"""
+    pending_developers = TeamMember.objects.filter(
+        community_approval_date__isnull=True,
+        approved=False,
+        user__is_active=True
+    ).order_by('last_name', 'first_name')
+    
+    return render(request, 'admin_approval_queue.html', {
+        'pending_developers': pending_developers
+    })
+
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_approve_community(request, developer_id):
+    """Approve developer for community"""
+    if request.method != 'POST':
+        return redirect('onboarding:admin_approval_queue')
+    
+    developer = get_object_or_404(TeamMember, id=developer_id)
+    
+    if developer.community_approval_date:
+        messages.warning(request, f'{developer.first_name} {developer.last_name} is already approved.')
+        return redirect('onboarding:admin_approval_queue')
+    
+    # Approve developer
+    developer.community_approval_date = now()
+    developer.community_approved_by = request.user
+    developer.approved = True  # keep legacy flag in sync
+    developer.save(update_fields=['community_approval_date', 'community_approved_by', 'approved'])
+    
+    # Send email notification
+    send_community_approval_email(developer)
+    
+    # Create in-app notification
+    Notification.objects.create(
+        recipient=developer.user,
+        notification_type='community_approved',
+        title='Welcome to Buildly Community!',
+        message=f'Your profile has been approved. You can now be assigned to customer teams.',
+        is_read=False
+    )
+    
+    messages.success(request, f'{developer.first_name} {developer.last_name} approved successfully!')
+    return redirect('onboarding:admin_approval_queue')
+
+
+@login_required
+def customer_portal_dashboard(request):
+    """Customer admin dashboard"""
+    # Determine customer context for company admins or staff
+    company_admin = None
+    customer = None
+    
+    # Company admin access
+    try:
+        company_admin = CompanyAdmin.objects.get(user=request.user, is_active=True)
+        customer = company_admin.customer
+    except CompanyAdmin.DoesNotExist:
+        # Staff access: allow passing ?customer_id=
+        if request.user.is_staff:
+            customer_id = request.GET.get('customer_id')
+            if not customer_id:
+                messages.info(request, 'Select a customer to view their portal.')
+                return redirect('onboarding:customer_portal_switcher')
+            from .models import Customer
+            customer = get_object_or_404(Customer, id=customer_id)
+        else:
+            messages.error(request, 'You do not have customer admin access.')
+            return redirect('onboarding:dashboard')
+    
+    # Get company profile
+    try:
+        company_profile = CompanyProfile.objects.get(customer=customer)
+    except CompanyProfile.DoesNotExist:
+        # Create default profile
+        company_profile = CompanyProfile.objects.create(
+            customer=customer,
+            industry='',
+            website=''
+        )
+    
+    # Get team members
+    team_assignments = CustomerDeveloperAssignment.objects.filter(
+        customer=customer,
+        status='approved'
+    ).select_related('developer').order_by('-assigned_at')
+    
+    # Get pending approvals (if user can approve)
+    pending_approvals = []
+    if company_admin and getattr(company_admin, 'can_approve_developers', False):
+        pending_approvals = CustomerDeveloperAssignment.objects.filter(
+            customer=customer,
+            status='pending'
+        ).select_related('developer')
+    
+    # Get contracts (use status field; 'signed' is a status choice)
+    contracts = Contract.objects.filter(customer=customer).order_by('-created_at')
+    unsigned_contracts = contracts.exclude(status='signed')
+    
+    # Get notifications (Notification uses recipient field)
+    recent_notifications = Notification.objects.filter(
+        recipient=request.user,
+        is_read=False
+    ).order_by('-created_at')[:5]
+    
+    context = {
+        'company_admin': company_admin,
+        'customer': customer,
+        'company_profile': company_profile,
+        'team_assignments': team_assignments,
+        'pending_approvals': pending_approvals,
+        'contracts': contracts,
+        'unsigned_contracts': unsigned_contracts,
+        'recent_notifications': recent_notifications,
+    }
+    
+    return render(request, 'customer_portal_dashboard.html', context)
+
+
+@user_passes_test(lambda u: u.is_staff)
+def customer_portal_switcher(request):
+    """Staff-only: list customers to enter their portal dashboard"""
+    from .models import Customer
+    customers = Customer.objects.all().order_by('company_name')
+    return render(request, 'customer_portal_switcher.html', {
+        'customers': customers,
+    })
+
+
+@login_required
+def customer_approve_developer(request, assignment_id):
+    """Customer admin approves developer assignment"""
+    if request.method != 'POST':
+        return redirect('onboarding:customer_portal_dashboard')
+    
+    # Verify user is company admin
+    try:
+        company_admin = CompanyAdmin.objects.get(user=request.user, is_active=True)
+    except CompanyAdmin.DoesNotExist:
+        messages.error(request, 'You do not have customer admin access.')
+        return redirect('onboarding:dashboard')
+    
+    # Check permission
+    if not company_admin.can_approve_developers:
+        messages.error(request, 'You do not have permission to approve developers.')
+        return redirect('onboarding:customer_portal_dashboard')
+    
+    # Get assignment
+    assignment = get_object_or_404(
+        CustomerDeveloperAssignment,
+        id=assignment_id,
+        customer=company_admin.customer
+    )
+    
+    if assignment.status == 'approved':
+        messages.warning(request, 'This developer is already approved.')
+        return redirect('onboarding:customer_portal_dashboard')
+    
+    # Approve assignment
+    assignment.status = 'approved'
+    assignment.reviewed_at = now()
+    assignment.approved_by = company_admin
+    assignment.save()
+    
+    # Send email notification
+    send_team_approval_email(assignment)
+    
+    # Create in-app notification for developer
+    Notification.objects.create(
+        user=assignment.developer.user,
+        notification_type='team_approved',
+        title=f'Added to {company_admin.customer.company_name} Team',
+        message=f'You have been approved to join the {company_admin.customer.company_name} team!',
+        related_customer=company_admin.customer,
+        is_read=False
+    )
+    
+    messages.success(request, f'{assignment.developer.first_name} {assignment.developer.last_name} approved successfully!')
+    return redirect('onboarding:customer_portal_dashboard')
+
+
+@login_required
+def request_developer_removal(request, assignment_id):
+    """Customer admin requests removal of developer (30-day notice)"""
+    if request.method != 'POST':
+        return redirect('onboarding:customer_portal_dashboard')
+    
+    # Verify user is company admin
+    try:
+        company_admin = CompanyAdmin.objects.get(user=request.user, is_active=True)
+    except CompanyAdmin.DoesNotExist:
+        messages.error(request, 'You do not have customer admin access.')
+        return redirect('onboarding:dashboard')
+    
+    # Get assignment
+    assignment = get_object_or_404(
+        CustomerDeveloperAssignment,
+        id=assignment_id,
+        customer=company_admin.customer
+    )
+    
+    if assignment.status != 'approved':
+        messages.warning(request, 'This developer is not currently active on your team.')
+        return redirect('onboarding:customer_portal_dashboard')
+    
+    # Send email to admin staff
+    send_removal_request_email(
+        company_admin,
+        assignment.developer,
+        company_admin.customer
+    )
+    
+    # Create notification for staff
+    staff_users = User.objects.filter(is_staff=True)
+    for staff_user in staff_users:
+        Notification.objects.create(
+            user=staff_user,
+            notification_type='team_removal_requested',
+            title=f'Removal Request: {assignment.developer.first_name} {assignment.developer.last_name}',
+            message=f'{company_admin.customer.company_name} requested removal of {assignment.developer.first_name} {assignment.developer.last_name} (30-day notice)',
+            related_customer=company_admin.customer,
+            is_read=False
+        )
+    
+    messages.success(request, f'Removal request submitted for {assignment.developer.first_name} {assignment.developer.last_name}. 30-day notice period applies.')
+    return redirect('onboarding:customer_portal_dashboard')
+
+
+# ==================== CONTRACT SIGNING VIEWS ====================
+
+@login_required
+def contract_sign_form(request, contract_id):
+    """Display contract signing form"""
+    contract = get_object_or_404(Contract, id=contract_id)
+    
+    # Verify user has access
+    try:
+        company_admin = CompanyAdmin.objects.get(
+            user=request.user,
+            customer=contract.customer,
+            is_active=True
+        )
+    except CompanyAdmin.DoesNotExist:
+        messages.error(request, 'You do not have access to this contract.')
+        return redirect('onboarding:dashboard')
+    
+    # Check permission
+    if not company_admin.can_sign_contracts:
+        messages.error(request, 'You do not have permission to sign contracts.')
+        return redirect('onboarding:customer_portal_dashboard')
+    
+    if contract.signed:
+        messages.info(request, 'This contract is already signed.')
+        return redirect('onboarding:customer_portal_dashboard')
+    
+    context = {
+        'contract': contract,
+        'company_admin': company_admin,
+        'customer': contract.customer,
+    }
+    
+    return render(request, 'contract_sign_form.html', context)
+
+
+@login_required
+def contract_sign_submit(request, contract_id):
+    """Process contract signature"""
+    if request.method != 'POST':
+        return redirect('onboarding:customer_portal_dashboard')
+    
+    contract = get_object_or_404(Contract, id=contract_id)
+    
+    # Verify user has access
+    try:
+        company_admin = CompanyAdmin.objects.get(
+            user=request.user,
+            customer=contract.customer,
+            is_active=True
+        )
+    except CompanyAdmin.DoesNotExist:
+        messages.error(request, 'You do not have access to this contract.')
+        return redirect('onboarding:dashboard')
+    
+    # Check permission
+    if not company_admin.can_sign_contracts:
+        messages.error(request, 'You do not have permission to sign contracts.')
+        return redirect('onboarding:customer_portal_dashboard')
+    
+    if contract.signed:
+        messages.warning(request, 'This contract is already signed.')
+        return redirect('onboarding:customer_portal_dashboard')
+    
+    # Get signature data
+    signature_name = request.POST.get('signature_name')
+    signature_title = request.POST.get('signature_title')
+    agree_terms = request.POST.get('agree_terms')
+    
+    if not all([signature_name, signature_title, agree_terms]):
+        messages.error(request, 'Please fill in all required fields.')
+        return redirect('onboarding:contract_sign_form', contract_id=contract_id)
+    
+    # Sign contract
+    contract.signed = True
+    contract.signed_by = company_admin.user
+    contract.signed_date = now()
+    contract.signature_name = signature_name
+    contract.signature_title = signature_title
+    contract.signature_ip = get_client_ip(request)
+    contract.signature_timestamp = now()
+    contract.save()
+    
+    # Generate PDF
+    pdf_buffer = generate_contract_pdf(contract)
+    
+    # Save PDF to contract (if you have a FileField on Contract model)
+    # contract.signed_pdf.save(f'contract_{contract.id}_signed.pdf', pdf_buffer)
+    
+    # Send confirmation email
+    send_contract_signed_email(contract, company_admin)
+    
+    # Create notification
+    Notification.objects.create(
+        user=company_admin.user,
+        notification_type='contract_signed',
+        title='Contract Signed Successfully',
+        message=f'Contract "{contract.title}" has been signed.',
+        related_contract=contract,
+        related_customer=contract.customer,
+        is_read=False
+    )
+    
+    # Notify staff
+    staff_users = User.objects.filter(is_staff=True)
+    for staff_user in staff_users:
+        Notification.objects.create(
+            user=staff_user,
+            notification_type='contract_signed',
+            title=f'Contract Signed: {contract.customer.company_name}',
+            message=f'{contract.customer.company_name} signed "{contract.title}"',
+            related_contract=contract,
+            related_customer=contract.customer,
+            is_read=False
+        )
+    
+    messages.success(request, 'Contract signed successfully! A copy has been sent to your email.')
+    return redirect('onboarding:customer_portal_dashboard')
+
+
+@login_required
+def contract_pdf_download(request, contract_id):
+    """Download signed contract PDF"""
+    contract = get_object_or_404(Contract, id=contract_id)
+    
+    # Verify user has access
+    try:
+        company_admin = CompanyAdmin.objects.get(
+            user=request.user,
+            customer=contract.customer,
+            is_active=True
+        )
+    except CompanyAdmin.DoesNotExist:
+        # Check if staff
+        if not request.user.is_staff:
+            messages.error(request, 'You do not have access to this contract.')
+            return redirect('onboarding:dashboard')
+    
+    if not contract.signed:
+        messages.error(request, 'This contract is not yet signed.')
+        return redirect('onboarding:customer_portal_dashboard')
+    
+    # Generate PDF
+    pdf_buffer = generate_contract_pdf(contract)
+    
+    # Return as download
+    response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="contract_{contract.id}_signed.pdf"'
+    
+    return response
+
+
+# ==================== NOTIFICATION VIEWS ====================
+
+@login_required
+def notification_center(request):
+    """View all notifications"""
+    notifications = Notification.objects.filter(
+        user=request.user
+    ).order_by('-created_at')
+    
+    # Mark as read if requested
+    if request.GET.get('mark_read') == 'all':
+        notifications.filter(is_read=False).update(is_read=True)
+        messages.success(request, 'All notifications marked as read.')
+        return redirect('onboarding:notification_center')
+    
+    context = {
+        'notifications': notifications,
+        'unread_count': notifications.filter(is_read=False).count()
+    }
+    
+    return render(request, 'notification_center.html', context)
+
+
+@login_required
+def notification_mark_read(request, notification_id):
+    """Mark single notification as read"""
+    if request.method != 'POST':
+        return redirect('onboarding:notification_center')
+    
+    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+    notification.is_read = True
+    notification.save()
+    
+    return JsonResponse({'success': True})
+
+
+@login_required
+def notification_unread_count(request):
+    """API endpoint for unread notification count"""
+    count = Notification.objects.filter(user=request.user, is_read=False).count()
+    return JsonResponse({'count': count})

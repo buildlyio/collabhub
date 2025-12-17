@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: #f9fafb;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎉 Welcome to Buildly Community!</h1>
+    </div>
+    <div class="content">
+        <p>Hi {{ developer.first_name }},</p>
+        
+        <p>Great news! Your profile has been approved to join the Buildly community.</p>
+        
+        <p><strong>What's next?</strong></p>
+        <ul>
+            <li>You can now be assigned to customer teams</li>
+            <li>Complete your profile to showcase your skills</li>
+            <li>Link your Buildly Labs account for unified access</li>
+            <li>Start collaborating on exciting projects!</li>
+        </ul>
+        
+        <a href="{{ dashboard_url }}" class="button">Go to Dashboard</a>
+        
+        <p>If you have any questions, feel free to reach out to our team.</p>
+        
+        <p>Best regards,<br>
+        The Buildly Team</p>
+    </div>
+    <div class="footer">
+        <p>&copy; 2024 Buildly. All rights reserved.</p>
+    </div>
+</body>
+</html>

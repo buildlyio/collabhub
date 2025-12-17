@@ -105,6 +105,22 @@
             <button class="text-white font-semibold hover:text-blue-200 transition focus:outline-none px-2 py-2">Dashboard</button>
             <ul class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
               <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/onboarding/dashboard">My Dashboard</a></li>
+              {% if is_company_admin %}
+              <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0 flex items-center" href="/onboarding/portal/dashboard/">
+                <svg class="w-4 h-4 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M5 11h14M7 15h10" />
+                </svg>
+                Customer Portal
+              </a></li>
+              {% endif %}
+              {% if user.is_staff and not is_company_admin %}
+              <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0 flex items-center" href="/onboarding/portal/">
+                <svg class="w-4 h-4 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M5 11h14M7 15h10" />
+                </svg>
+                Customer Portal
+              </a></li>
+              {% endif %}
               {% if user.is_superuser %}
               <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0 flex items-center" href="/onboarding/admin-dashboard/">
                 <svg class="w-4 h-4 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -112,15 +128,21 @@
                 </svg>
                 Admin Dashboard
               </a></li>
+              <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/onboarding/admin/approval-queue/">Community Approval Queue</a></li>
+              <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/onboarding/admin/customers/">Customers</a></li>
               {% endif %}
               <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/onboarding/resources">Resources</a></li>
               <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/onboarding/upload_resource">Upload Resource</a></li>
+              {% if has_notifications %}
+              <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/onboarding/notifications/">Notifications</a></li>
+              {% endif %}
             </ul>
           </li>
           <li class="dropdown-trigger relative">
             <button class="text-white font-semibold hover:text-blue-200 transition focus:outline-none px-2 py-2">Account</button>
             <ul class="dropdown-menu absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
               <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/edit_profile">Edit Profile</a></li>
+              <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/onboarding/labs/login/">Link Labs Account</a></li>
               <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/logout">Logout</a></li>
             </ul>
           </li>

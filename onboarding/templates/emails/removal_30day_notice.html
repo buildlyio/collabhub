@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: #f9fafb;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+        }
+        .notice-box {
+            background: #fffbeb;
+            border: 2px solid #f59e0b;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📢 30-Day Removal Notice</h1>
+    </div>
+    <div class="content">
+        <p>Hi {{ developer.first_name }},</p>
+        
+        <p>This is to inform you that your assignment with {{ company_name }} will be ending:</p>
+        
+        <div class="notice-box">
+            <h3>Notice Details</h3>
+            <p><strong>Company:</strong> {{ company_name }}</p>
+            <p><strong>Notice Date:</strong> {{ notice_date|date:"F d, Y" }}</p>
+            <p><strong>Last Day:</strong> {{ removal_date|date:"F d, Y" }}</p>
+            <p><strong>Days Remaining:</strong> {{ days_remaining }} days</p>
+        </div>
+        
+        <p><strong>Important Information:</strong></p>
+        <ul>
+            <li>You will maintain full access until {{ removal_date|date:"F d, Y" }}</li>
+            <li>Please ensure all project work is documented and handed off</li>
+            <li>Complete any pending tasks or deliverables</li>
+            <li>Your Buildly community membership remains active</li>
+            <li>You can still be assigned to other customer teams</li>
+        </ul>
+        
+        <p><strong>Next Steps:</strong></p>
+        <ol>
+            <li>Coordinate with your team lead for project handoffs</li>
+            <li>Document any ongoing work and procedures</li>
+            <li>Complete final billing submissions if applicable</li>
+            <li>Update your availability status in your profile</li>
+        </ol>
+        
+        <p>If you have any questions about this transition, please contact your team administrator or our support team.</p>
+        
+        <p>Thank you for your contributions to the team!</p>
+        
+        <p>Best regards,<br>
+        The Buildly Team</p>
+    </div>
+    <div class="footer">
+        <p>&copy; 2024 Buildly. All rights reserved.</p>
+    </div>
+</body>
+</html>

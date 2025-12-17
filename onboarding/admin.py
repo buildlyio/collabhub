@@ -20,3 +20,9 @@ admin.site.register(DevelopmentAgency, DevelopmentAgencyAdmin)
 admin.site.register(Customer, CustomerAdmin)
 admin.site.register(CustomerDeveloperAssignment, CustomerDeveloperAssignmentAdmin)
 admin.site.register(Contract, ContractAdmin)
+
+# Register Phase 1 Portal Models
+admin.site.register(CompanyProfile)
+admin.site.register(CompanyAdmin)
+admin.site.register(Notification)
+admin.site.register(LabsAccount)

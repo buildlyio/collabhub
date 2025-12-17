@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: #f9fafb;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .company-badge {
+            background: #e0e7ff;
+            color: #4338ca;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: bold;
+        }
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎊 You've Been Added to a Team!</h1>
+    </div>
+    <div class="content">
+        <p>Hi {{ developer.first_name }},</p>
+        
+        <p>Congratulations! You've been approved to join the team at:</p>
+        
+        <p style="text-align: center;">
+            <span class="company-badge">{{ company_name }}</span>
+        </p>
+        
+        <p><strong>What this means:</strong></p>
+        <ul>
+            <li>You now have access to the team's projects and resources</li>
+            <li>View Labs projects at {{ labs_url }}</li>
+            <li>Access custom training materials</li>
+            <li>Collaborate with team members</li>
+        </ul>
+        
+        <a href="{{ dashboard_url }}" class="button">View Team Dashboard</a>
+        
+        <p>Please review any contracts or agreements that may need your attention.</p>
+        
+        <p>Best regards,<br>
+        The Buildly Team</p>
+    </div>
+    <div class="footer">
+        <p>&copy; 2024 Buildly. All rights reserved.</p>
+    </div>
+</body>
+</html>
