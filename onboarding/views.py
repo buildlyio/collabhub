@@ -1562,31 +1562,38 @@ def admin_developer_profile(request, developer_id):
         messages.success(request, f"Developer approval {status} successfully.")
         return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
     
-    # Get quiz answers
+    # Get quiz answers - using all() to ensure queryset is evaluated
     quiz_answers = QuizAnswer.objects.filter(
         team_member=developer
     ).select_related('question', 'question__quiz').order_by('-submitted_at')
     
-    # Calculate scores
-    mc_questions = quiz_answers.filter(question__question_type='MC')
-    essay_questions = quiz_answers.filter(question__question_type='ES')
+    # Calculate scores - note: question_type is 'multiple_choice' or 'essay', not 'MC' or 'ES'
+    mc_questions = quiz_answers.filter(question__question_type='multiple_choice')
+    essay_questions = quiz_answers.filter(question__question_type='essay')
     
     mc_score = 0
-    if mc_questions.exists():
-        correct_count = mc_questions.filter(is_correct=True).count()
-        mc_score = int((correct_count / mc_questions.count()) * 100)
+    mc_total = mc_questions.count()
+    # Note: MC questions don't have an is_correct field, they're just stored as text answers
+    # So MC score calculation would need to compare against correct answers or be manually evaluated
     
     essay_score = 0
-    if essay_questions.exists():
+    essay_total = essay_questions.count()
+    if essay_total > 0:
         scored_essays = essay_questions.exclude(evaluator_score__isnull=True)
         if scored_essays.exists():
             avg_score = scored_essays.aggregate(Avg('evaluator_score'))['evaluator_score__avg']
-            essay_score = int((avg_score / 10) * 100)
+            # evaluator_score appears to be 1-4 or 0-10 based on context
+            essay_score = int(avg_score) if avg_score else 0
     
+    # For overall score, we can only use evaluated answers
+    all_evaluated = quiz_answers.exclude(evaluator_score__isnull=True)
     overall_score = 0
-    if mc_score > 0 or essay_score > 0:
-        scores = [s for s in [mc_score, essay_score] if s > 0]
-        overall_score = int(sum(scores) / len(scores))
+    if all_evaluated.exists():
+        avg_score = all_evaluated.aggregate(Avg('evaluator_score'))['evaluator_score__avg']
+        overall_score = int(avg_score) if avg_score else 0
+    
+    # Count total quiz answers for debugging
+    total_answers = quiz_answers.count()
     
     # Get learning resources
     resources = TeamMemberResource.objects.filter(
@@ -1607,6 +1614,9 @@ def admin_developer_profile(request, developer_id):
         'resources': resources,
         'assignments': assignments,
         'total_assessments': quiz_answers.values('question__quiz').distinct().count(),
+        'total_answers': total_answers,
+        'mc_total': mc_total,
+        'essay_total': essay_total,
     }
     
     return render(request, 'admin_developer_profile.html', context)
