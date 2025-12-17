@@ -1,59 +1,75 @@
 # Production Deployment Guide
 
-## Current Status (as of 2025-12-17)
+## Current Status (as of 2025-12-17 18:45 UTC)
 
-### Recent Fixes Committed:
-1. ✅ Fixed all FieldError issues from `get_team_member_type_display()` method
-   - Replaced with iteration through `types.all()` ManyToMany field
-   - Added `@property types` to TeamMember model as backward compatibility alias
-   - Updated 10+ templates
+### Issues Resolved ✅
+- All code fixes have been deployed
+- Migrations 0008-0016 have been applied in production
+- Static files have been collected
 
-2. ✅ Fixed STATIC_URL for Forge marketplace logo
-   - Updated forge/models.py to use Django STATIC_URL
-   - Updated marketplace templates to use STATIC_URL template tag
+### Outstanding Issues ⚠️
 
-3. ✅ Added error handling to TeamMember model methods
-   - `types` property has fallback handling
-   - `__str__()` and `get_profile_types_display()` have error handling
-
-4. ✅ Created comprehensive smoke test suite
-   - 15 tests covering pages, forms, templates, APIs, and database integrity
-   - Pre-push git hook to run tests before deployment
-   - Tests included in codebase
-
-## Known Issues in Production
-
-### 1. FieldError on Customer Developer Detail Page
+#### 1. FieldError on Customer Developer Detail Page (PRODUCTION BUG)
 - **URL**: https://collab.buildly.io/onboarding/client/shared/[token]/developer/[id]/
-- **Status**: Fixed in code commit `d39b908`
-- **Root Cause**: Production has old code without the `types` property fixes
-- **Solution**: Deploy latest code from main branch
+- **Status**: Code is fixed, but ~~Python process not restarted~~ issue persists
+- **Root Cause**: Old Python bytecode (.pyc files) still in memory
+- **Evidence**: 
+  - Smoke tests pass locally ✅
+  - Code is correct ✅
+  - Migration 0016 applied successfully ✅
+  - But production still throws FieldError
+- **Solution**: 
+  1. Force app container restart in DigitalOcean App Platform
+  2. Clear Python cache and restart gunicorn workers
+  3. Or: Run `find . -type d -name __pycache__ -exec rm -r {} +` before restart
 
-### 2. Forge Logo Not Displaying
-- **URL**: Marketplace and app detail pages
-- **Status**: Fixed in code commit `d39b908`
-- **Root Cause**: Using `/static/` hardcoded paths instead of STATIC_URL
-- **Solution**: Deploy latest code and run `python manage.py collectstatic`
-
-### 3. MailerSend Environment Variables Missing
-- **Status**: Not configured in DigitalOcean App Platform
-- **Required Vars**:
+#### 2. GitHub Issue Submission Failing (404 Error)
+- **Status**: Configuration missing
+- **Error**: `Failed to create GitHub issue: 404 - {"message":"Not Found"...}`
+- **Root Cause**: GITHUB_ERROR_TOKEN environment variable not set in DigitalOcean
+- **Required Vars to Add**:
   ```
-  EMAIL_HOST=smtp.mailersend.net
-  EMAIL_PORT=587
-  EMAIL_USE_TLS=True
-  DEFAULT_FROM_EMAIL=admin@buildly.io
-  MAILERSEND_SMTP_USERNAME=MS_Yh4iLk@buildly.io
-  MAILERSEND_SMTP_PASSWORD=mssp.xdkL53K.3vz9dleke7qlkj50.YtSrOOd
-  EMAIL_SUBJECT_PREFIX=[Buildly Labs]
+  GITHUB_ERROR_REPO=greglind/collabhub
+  GITHUB_ERROR_TOKEN=[your-github-token]
   ```
-- **Solution**: Add these to DigitalOcean App Platform environment variables
+- **Solution**: 
+  1. Generate new GitHub personal access token: https://github.com/settings/tokens
+  2. Select scopes: `repo` (full control of private repositories)
+  3. Add to DigitalOcean App Platform environment variables
+  4. Restart the app
 
-### 4. GitHub Error Token Invalid
-- **Status**: Getting 401 errors when creating issues
-- **Solution**: Generate new GitHub personal access token with `repo` scope
 
 ## Deployment Steps
+
+### IMMEDIATE ACTION REQUIRED - Fix Production 404 Error
+
+To fix the FieldError that's still appearing in production:
+
+**Option 1: Force Container Restart (Recommended)**
+```bash
+# In DigitalOcean App Platform console:
+1. Go to Components → squid-app → Restart
+2. This will clear Python bytecode and restart the process
+3. Test: https://collab.buildly.io/onboarding/client/shared/[token]/developer/[id]/
+```
+
+**Option 2: Manual Cache Clear (if restart unavailable)**
+```bash
+doctl apps exec [app-id] --command "find . -type d -name __pycache__ -delete && find . -name '*.pyc' -delete"
+doctl apps exec [app-id] --restart
+```
+
+### Setup GitHub Error Reporting
+
+1. Go to: https://github.com/settings/tokens/new
+2. Create token with name: `CollabHub Error Reporter`
+3. Select scope: `repo` (full control)
+4. Copy the token
+5. In DigitalOcean App Platform:
+   - Go to Settings → Environment
+   - Add: `GITHUB_ERROR_TOKEN=[token-you-just-created]`
+   - Add: `GITHUB_ERROR_REPO=greglind/collabhub`
+   - Deploy
 
 ### Step 1: Deploy Code
 ```bash
