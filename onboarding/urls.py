@@ -25,9 +25,12 @@ urlpatterns = [
     path('assessment/quiz/', views.take_assessment, name='take_assessment'),
     path('assessment/complete/', views.assessment_complete, name='assessment_complete'),
     
-    # Admin URLs
+    # Admin URLs (Assessment Dashboard)
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('admin-assessments/', views.admin_assessment_reports, name='admin_assessment_reports'),
+    
+    # Admin URLs (Customer Management Dashboard)
+    path('admin-customers-dashboard/', views.admin_customer_dashboard, name='admin_customer_dashboard'),
     path('admin-assessment/<int:team_member_id>/review/', views.admin_assessment_review, name='admin_assessment_review'),
     path('admin-quizzes/', views.admin_quiz_list, name='admin_quiz_list'),
     path('admin-quiz/create/', views.admin_quiz_create, name='admin_quiz_create'),
@@ -52,5 +55,13 @@ urlpatterns = [
     path('client/shared/<str:token>/developer/<int:developer_id>/approve/', views.customer_shared_approve_developer, name='customer_shared_approve_developer'),
     path('client/shared/<str:token>/developer/<int:developer_id>/reject/', views.customer_shared_reject_developer, name='customer_shared_reject_developer'),
     path('client/shared/<str:token>/contract/<int:contract_id>/sign/', views.customer_shared_contract_sign, name='customer_shared_contract_sign'),
+    
+    # Custom Admin Dashboard URLs (Staff Only)
+    path('admin/customers/', views.admin_customers_list, name='admin_customers_list'),
+    path('admin/customers/new/', views.admin_customer_create, name='admin_customer_create'),
+    path('admin/customers/<int:customer_id>/', views.admin_customer_detail, name='admin_customer_detail'),
+    path('admin/customers/<int:customer_id>/delete/', views.admin_customer_delete, name='admin_customer_delete'),
+    path('admin/developers/', views.admin_developers_list, name='admin_developers_list'),
+    path('admin/developers/<int:developer_id>/', views.admin_developer_profile, name='admin_developer_profile'),
 ]
 

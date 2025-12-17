@@ -3,11 +3,17 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import TeamMember
+from .models import TeamMember, TeamMemberType, DevelopmentAgency
 from .models import TEAM_MEMBER_TYPES
 
 class TeamMemberRegistrationForm(UserCreationForm):
     team_member_type = forms.ChoiceField(choices=[(key, value) for key, value in TEAM_MEMBER_TYPES if key != 'Everyone'])
+    profile_types = forms.ModelMultipleChoiceField(
+        queryset=TeamMemberType.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        help_text='Select all that apply (optional, uses team_member_type if none selected)'
+    )
     first_name = forms.CharField(max_length=100)
     last_name = forms.CharField(max_length=100)
     email = forms.EmailField()
@@ -15,10 +21,29 @@ class TeamMemberRegistrationForm(UserCreationForm):
     linkedin = forms.URLField(required=False)
     experience_years = forms.IntegerField(required=False)
     github_account = forms.URLField(required=False)
+    
+    # Agency fields
+    is_independent = forms.BooleanField(
+        required=False,
+        initial=True,
+        label="I am an independent developer"
+    )
+    agency = forms.ModelChoiceField(
+        queryset=DevelopmentAgency.objects.all(),
+        required=False,
+        empty_label="Select registered agency (if applicable)",
+        help_text="Select your agency if it's registered on our platform"
+    )
+    agency_name_text = forms.CharField(
+        max_length=255,
+        required=False,
+        label="Agency Name",
+        help_text="If your agency isn't listed above, enter the name here"
+    )
 
     class Meta:
         model = User
-        fields = ['username', 'password1', 'password2', 'team_member_type', 'first_name', 'last_name', 'email', 'bio', 'linkedin', 'experience_years', 'github_account']
+        fields = ['username', 'password1', 'password2', 'team_member_type', 'profile_types', 'first_name', 'last_name', 'email', 'bio', 'linkedin', 'experience_years', 'github_account', 'is_independent', 'agency', 'agency_name_text']
 
 from .models import Resource
 

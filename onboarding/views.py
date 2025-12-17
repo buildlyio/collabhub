@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.views.generic import CreateView
 from django.db.models import Q, Count, Avg
 from .forms import TeamMemberRegistrationForm, ResourceForm, TeamMemberUpdateForm, DevelopmentAgencyForm
-from .models import TeamMember, Resource, TeamMemberResource,CertificationExam,Quiz, QuizQuestion, QuizAnswer, DevelopmentAgency, TEAM_MEMBER_TYPES
+from .models import TeamMember, Resource, TeamMemberResource,CertificationExam,Quiz, QuizQuestion, QuizAnswer, DevelopmentAgency, TEAM_MEMBER_TYPES, Customer, CustomerDeveloperAssignment, Contract
 from submission.models import SubmissionLink, Submission
 from django.contrib import messages
 from django.utils.timezone import now
@@ -30,8 +30,17 @@ def register(request):
                 linkedin=form.cleaned_data.get('linkedin'),
                 experience_years=form.cleaned_data.get('experience_years'),
                 github_account=form.cleaned_data.get('github_account'),
+                is_independent=form.cleaned_data.get('is_independent', True),
+                agency=form.cleaned_data.get('agency'),
+                agency_name_text=form.cleaned_data.get('agency_name_text', ''),
             )
             team_member.save()
+            
+            # Add profile types if selected
+            profile_types = form.cleaned_data.get('profile_types')
+            if profile_types:
+                team_member.profile_types.set(profile_types)
+            
             username = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password1')
             user = authenticate(username=username, password=password)
@@ -1332,4 +1341,329 @@ def customer_shared_contract_sign(request, token, contract_id):
     }
     
     return render(request, 'customer_shared_contract_sign.html', context)
+
+
+# ============================================================
+# CUSTOM ADMIN DASHBOARD VIEWS
+# ============================================================
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_dashboard(request):
+    """Assessment-focused admin dashboard (original)"""
+    # Assessment stats
+    awaiting_evaluation = QuizAnswer.objects.filter(
+        question__question_type='ES',
+        evaluator_score__isnull=True
+    ).values('team_member').distinct().count()
+    
+    total_quizzes = Quiz.objects.count()
+    
+    context = {
+        'awaiting_evaluation': awaiting_evaluation,
+        'total_quizzes': total_quizzes,
+    }
+    
+    return render(request, 'admin_dashboard.html', context)
+
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_customer_dashboard(request):
+    """Customer management admin dashboard (new)"""
+    customers = Customer.objects.all().order_by('-created_at')
+    developers = TeamMember.objects.filter(approved=True).order_by('-id')
+    
+    # Stats
+    total_customers = customers.count()
+    active_customers = customers.filter(is_active=True).count()
+    total_developers = developers.count()
+    pending_assignments = CustomerDeveloperAssignment.objects.filter(status='pending').count()
+    
+    context = {
+        'customers': customers[:10],  # Recent 10
+        'developers': developers[:10],  # Recent 10
+        'total_customers': total_customers,
+        'active_customers': active_customers,
+        'total_developers': total_developers,
+        'pending_assignments': pending_assignments,
+    }
+    
+    return render(request, 'admin_dashboard_custom.html', context)
+
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_customers_list(request):
+    """List all customers with search and filter"""
+    customers = Customer.objects.all().order_by('-created_at')
+    
+    # Search
+    search_query = request.GET.get('search', '')
+    if search_query:
+        customers = customers.filter(
+            Q(company_name__icontains=search_query) |
+            Q(contact_name__icontains=search_query) |
+            Q(contact_email__icontains=search_query)
+        )
+    
+    # Filter by active status
+    status_filter = request.GET.get('status', '')
+    if status_filter == 'active':
+        customers = customers.filter(is_active=True)
+    elif status_filter == 'inactive':
+        customers = customers.filter(is_active=False)
+    
+    # Add assignment counts
+    for customer in customers:
+        assignments = CustomerDeveloperAssignment.objects.filter(customer=customer)
+        customer.total_devs = assignments.count()
+        customer.approved_devs = assignments.filter(status='approved').count()
+        customer.pending_devs = assignments.filter(status='pending').count()
+        customer.rejected_devs = assignments.filter(status='rejected').count()
+    
+    context = {
+        'customers': customers,
+        'search_query': search_query,
+        'status_filter': status_filter,
+    }
+    
+    return render(request, 'admin_customers_list.html', context)
+
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_customer_detail(request, customer_id):
+    """View and edit customer details, assign developers"""
+    customer = get_object_or_404(Customer, id=customer_id)
+    
+    # Get all assignments
+    assignments = CustomerDeveloperAssignment.objects.filter(customer=customer).select_related('developer')
+    
+    # Get available developers (approved and not yet assigned)
+    assigned_dev_ids = assignments.values_list('developer_id', flat=True)
+    available_developers = TeamMember.objects.filter(approved=True).exclude(id__in=assigned_dev_ids)
+    
+    # Get contracts
+    contracts = Contract.objects.filter(customer=customer).order_by('-created_at')
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'update_customer':
+            customer.company_name = request.POST.get('company_name', customer.company_name)
+            customer.contact_name = request.POST.get('contact_name', customer.contact_name)
+            customer.contact_email = request.POST.get('contact_email', customer.contact_email)
+            customer.contact_phone = request.POST.get('contact_phone', customer.contact_phone)
+            customer.is_active = request.POST.get('is_active') == 'on'
+            customer.notes = request.POST.get('notes', customer.notes)
+            customer.save()
+            messages.success(request, 'Customer updated successfully!')
+            return redirect('onboarding:admin_customer_detail', customer_id=customer.id)
+        
+        elif action == 'assign_developer':
+            developer_id = request.POST.get('developer_id')
+            if developer_id:
+                developer = get_object_or_404(TeamMember, id=developer_id)
+                assignment, created = CustomerDeveloperAssignment.objects.get_or_create(
+                    customer=customer,
+                    developer=developer
+                )
+                if created:
+                    messages.success(request, f'Assigned {developer.first_name} {developer.last_name} to {customer.company_name}')
+                else:
+                    messages.warning(request, f'{developer.first_name} {developer.last_name} is already assigned')
+                return redirect('onboarding:admin_customer_detail', customer_id=customer.id)
+        
+        elif action == 'remove_assignment':
+            assignment_id = request.POST.get('assignment_id')
+            if assignment_id:
+                assignment = get_object_or_404(CustomerDeveloperAssignment, id=assignment_id, customer=customer)
+                dev_name = f"{assignment.developer.first_name} {assignment.developer.last_name}"
+                assignment.delete()
+                messages.success(request, f'Removed {dev_name} from {customer.company_name}')
+                return redirect('onboarding:admin_customer_detail', customer_id=customer.id)
+        
+        elif action == 'generate_token':
+            customer.generate_share_token()
+            messages.success(request, 'Shareable link generated!')
+            return redirect('onboarding:admin_customer_detail', customer_id=customer.id)
+        
+        elif action == 'regenerate_token':
+            customer.generate_share_token()
+            messages.warning(request, 'Shareable link regenerated! Old link is now invalid.')
+            return redirect('onboarding:admin_customer_detail', customer_id=customer.id)
+    
+    # Generate share URL if token exists
+    share_url = None
+    if customer.share_token:
+        share_url = request.build_absolute_uri(
+            f"/onboarding/client/shared/{customer.share_token}/"
+        )
+    
+    context = {
+        'customer': customer,
+        'assignments': assignments,
+        'available_developers': available_developers,
+        'contracts': contracts,
+        'share_url': share_url,
+    }
+    
+    return render(request, 'admin_customer_detail.html', context)
+
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_developers_list(request):
+    """List all developers with search and filter"""
+    developers = TeamMember.objects.all().order_by('-id')
+    
+    # Search
+    search_query = request.GET.get('search', '')
+    if search_query:
+        developers = developers.filter(
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(email__icontains=search_query)
+        )
+    
+    # Filter by approval status
+    approval_filter = request.GET.get('approval', '')
+    if approval_filter == 'approved':
+        developers = developers.filter(approved=True)
+    elif approval_filter == 'pending':
+        developers = developers.filter(approved=False)
+    
+    # Filter by team member type
+    type_filter = request.GET.get('type', '')
+    if type_filter:
+        developers = developers.filter(team_member_type=type_filter)
+    
+    # Add assignment count
+    for dev in developers:
+        dev.assignment_count = CustomerDeveloperAssignment.objects.filter(developer=dev).count()
+    
+    context = {
+        'developers': developers,
+        'search_query': search_query,
+        'approval_filter': approval_filter,
+        'type_filter': type_filter,
+        'team_member_types': TEAM_MEMBER_TYPES,
+    }
+    
+    return render(request, 'admin_developers_list.html', context)
+
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_developer_profile(request, developer_id):
+    """View full developer profile with assessment results"""
+    developer = get_object_or_404(TeamMember, id=developer_id)
+    
+    # Handle approval toggle
+    if request.method == 'POST' and request.POST.get('action') == 'toggle_approval':
+        developer.approved = not developer.approved
+        developer.save()
+        status = "approved" if developer.approved else "revoked"
+        messages.success(request, f"Developer approval {status} successfully.")
+        return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
+    
+    # Get quiz answers
+    quiz_answers = QuizAnswer.objects.filter(
+        team_member=developer
+    ).select_related('question', 'question__quiz').order_by('-submitted_at')
+    
+    # Calculate scores
+    mc_questions = quiz_answers.filter(question__question_type='MC')
+    essay_questions = quiz_answers.filter(question__question_type='ES')
+    
+    mc_score = 0
+    if mc_questions.exists():
+        correct_count = mc_questions.filter(is_correct=True).count()
+        mc_score = int((correct_count / mc_questions.count()) * 100)
+    
+    essay_score = 0
+    if essay_questions.exists():
+        scored_essays = essay_questions.exclude(evaluator_score__isnull=True)
+        if scored_essays.exists():
+            avg_score = scored_essays.aggregate(Avg('evaluator_score'))['evaluator_score__avg']
+            essay_score = int((avg_score / 10) * 100)
+    
+    overall_score = 0
+    if mc_score > 0 or essay_score > 0:
+        scores = [s for s in [mc_score, essay_score] if s > 0]
+        overall_score = int(sum(scores) / len(scores))
+    
+    # Get learning resources
+    resources = TeamMemberResource.objects.filter(
+        team_member=developer
+    ).select_related('resource').order_by('-id')
+    
+    # Get customer assignments
+    assignments = CustomerDeveloperAssignment.objects.filter(
+        developer=developer
+    ).select_related('customer').order_by('-assigned_at')
+    
+    context = {
+        'developer': developer,
+        'quiz_answers': quiz_answers,
+        'mc_score': mc_score,
+        'essay_score': essay_score,
+        'overall_score': overall_score,
+        'resources': resources,
+        'assignments': assignments,
+        'total_assessments': quiz_answers.values('question__quiz').distinct().count(),
+    }
+    
+    return render(request, 'admin_developer_profile.html', context)
+
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_customer_create(request):
+    """Create a new customer"""
+    if request.method == 'POST':
+        company_name = request.POST.get('company_name')
+        contact_name = request.POST.get('contact_name')
+        contact_email = request.POST.get('contact_email')
+        contact_phone = request.POST.get('contact_phone', '')
+        user_id = request.POST.get('user_id', '')
+        is_active = request.POST.get('is_active') == 'on'
+        notes = request.POST.get('notes', '')
+        
+        if company_name and contact_name and contact_email:
+            customer = Customer.objects.create(
+                company_name=company_name,
+                contact_name=contact_name,
+                contact_email=contact_email,
+                contact_phone=contact_phone,
+                is_active=is_active,
+                notes=notes
+            )
+            
+            # Link to existing user if selected
+            if user_id:
+                try:
+                    user = User.objects.get(id=user_id)
+                    customer.user = user
+                    customer.save()
+                except User.DoesNotExist:
+                    pass
+            
+            customer.generate_share_token()
+            messages.success(request, f'Customer "{company_name}" created successfully!')
+            return redirect('onboarding:admin_customer_detail', customer_id=customer.id)
+        else:
+            messages.error(request, 'Please fill in all required fields.')
+    
+    # Pass all users for the dropdown
+    users = User.objects.all().order_by('username')
+    return render(request, 'admin_customer_create.html', {'users': users})
+
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_customer_delete(request, customer_id):
+    """Delete a customer"""
+    customer = get_object_or_404(Customer, id=customer_id)
+    
+    if request.method == 'POST':
+        company_name = customer.company_name
+        customer.delete()
+        messages.success(request, f'Customer "{company_name}" deleted successfully!')
+        return redirect('onboarding:admin_customers_list')
+    
+    return redirect('onboarding:admin_customer_detail', customer_id=customer_id)
 

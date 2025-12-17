@@ -25,9 +25,22 @@ TEAM_MEMBER_TYPES = [
     ('community-design-agency', 'Community Member Design Agency'),
 ]
 
+class TeamMemberType(models.Model):
+    """Model to store profile types for many-to-many relationship"""
+    key = models.CharField(max_length=50, unique=True)
+    label = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return self.label
+    
+    class Meta:
+        ordering = ['label']
+
+
 class TeamMember(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    team_member_type = models.CharField(max_length=50, choices=TEAM_MEMBER_TYPES)
+    team_member_type = models.CharField(max_length=50, choices=TEAM_MEMBER_TYPES)  # Keep for backward compatibility
+    profile_types = models.ManyToManyField(TeamMemberType, blank=True, related_name='team_members', help_text="Multiple profile types")
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField()
@@ -39,6 +52,11 @@ class TeamMember(models.Model):
     google_calendar_embed_code = models.TextField(blank=True)  # Stores the embed code
     approved = models.BooleanField(default=False)
     
+    # Agency relationship
+    is_independent = models.BooleanField(default=True, help_text="Is this an independent developer?")
+    agency = models.ForeignKey('DevelopmentAgency', on_delete=models.SET_NULL, null=True, blank=True, related_name='team_members', help_text="Associated agency if not registered on platform")
+    agency_name_text = models.CharField(max_length=255, blank=True, help_text="Agency name if not registered on platform")
+    
     # Assessment tracking
     has_completed_assessment = models.BooleanField(default=False, help_text="Has completed Developer Level Assessment")
     assessment_completed_at = models.DateTimeField(null=True, blank=True, help_text="When assessment was completed")
@@ -47,6 +65,13 @@ class TeamMember(models.Model):
 
     def __str__(self):
         return f'{self.first_name} {self.last_name} - {self.team_member_type}'
+    
+    def get_profile_types_display(self):
+        """Get comma-separated list of profile types"""
+        types = self.profile_types.all()
+        if types:
+            return ', '.join([t.label for t in types])
+        return self.get_team_member_type_display()
 
 
 class TeamMemberAdmin(admin.ModelAdmin):
@@ -403,34 +428,87 @@ class CustomerDeveloperAssignmentAdmin(admin.ModelAdmin):
     readonly_fields = ('assigned_at', 'reviewed_at')
 
 
+class CustomerDeveloperAssignmentInline(admin.TabularInline):
+    """Inline admin for managing developer assignments within Customer admin"""
+    model = CustomerDeveloperAssignment
+    extra = 1
+    fields = ('developer', 'developer_profile_link', 'status', 'assigned_at', 'reviewed_at', 'notes')
+    readonly_fields = ('developer_profile_link', 'assigned_at', 'reviewed_at')
+    
+    def developer_profile_link(self, obj):
+        if obj.developer:
+            from django.urls import reverse
+            from django.utils.html import format_html
+            url = reverse('admin:onboarding_teammember_change', args=[obj.developer.id])
+            return format_html(
+                '<a href="{}" target="_blank">📋 View Full Profile</a>',
+                url
+            )
+        return '-'
+    developer_profile_link.short_description = 'Profile'
+
+
 class CustomerAdmin(admin.ModelAdmin):
-    list_display = ('company_name', 'contact_name', 'contact_email', 'username', 'has_share_token', 'is_active', 'created_at')
+    list_display = ('company_name', 'contact_name', 'contact_email', 'username', 'has_share_token', 'developer_count', 'is_active', 'created_at')
     search_fields = ('company_name', 'contact_name', 'contact_email', 'username', 'share_token')
     list_filter = ('is_active', 'created_at')
-    readonly_fields = ('created_at', 'last_login', 'share_token', 'share_url_display')
-    actions = ['generate_share_tokens']
+    readonly_fields = ('created_at', 'last_login', 'share_url_display')
+    actions = ['generate_share_tokens', 'regenerate_share_tokens']
+    inlines = [CustomerDeveloperAssignmentInline]
     
     def has_share_token(self, obj):
         return bool(obj.share_token)
     has_share_token.boolean = True
     has_share_token.short_description = 'Has Token'
     
+    def developer_count(self, obj):
+        count = obj.assigned_developers.count()
+        if count == 0:
+            return '-'
+        approved = CustomerDeveloperAssignment.objects.filter(customer=obj, status='approved').count()
+        pending = CustomerDeveloperAssignment.objects.filter(customer=obj, status='pending').count()
+        rejected = CustomerDeveloperAssignment.objects.filter(customer=obj, status='rejected').count()
+        return f'{count} total (✓{approved} ⏳{pending} ✗{rejected})'
+    developer_count.short_description = 'Developers'
+    
     def share_url_display(self, obj):
+        from django.utils.html import format_html
         if obj.share_token:
             url = obj.get_share_url()
-            return f'<a href="{url}" target="_blank">{url}</a>'
-        return 'Generate token to create shareable URL'
+            return format_html(
+                '<div style="margin: 10px 0;">'
+                '<strong>Shareable Link:</strong><br>'
+                '<a href="{}" target="_blank" style="color: #0066cc; font-size: 14px;">{}</a><br>'
+                '<small style="color: #666;">Send this link to the customer - no login required</small>'
+                '</div>',
+                url, url
+            )
+        return format_html(
+            '<span style="color: #cc6600;">⚠️ No token yet - use "Generate share token" action below</span>'
+        )
     share_url_display.short_description = 'Shareable URL'
-    share_url_display.allow_tags = True
     
     def generate_share_tokens(self, request, queryset):
+        """Generate tokens for customers that don't have one"""
         count = 0
         for customer in queryset:
             if not customer.share_token:
                 customer.generate_share_token()
                 count += 1
-        self.message_user(request, f'Generated share tokens for {count} customer(s).')
-    generate_share_tokens.short_description = 'Generate share tokens'
+        if count > 0:
+            self.message_user(request, f'✅ Generated share tokens for {count} customer(s).')
+        else:
+            self.message_user(request, 'All selected customers already have share tokens.', level='warning')
+    generate_share_tokens.short_description = '🔗 Generate share token (for customers without one)'
+    
+    def regenerate_share_tokens(self, request, queryset):
+        """Regenerate tokens for all selected customers (invalidates old links)"""
+        count = 0
+        for customer in queryset:
+            customer.generate_share_token()
+            count += 1
+        self.message_user(request, f'🔄 Regenerated share tokens for {count} customer(s). Old links are now invalid.')
+    regenerate_share_tokens.short_description = '🔄 Regenerate share token (invalidates old link)'
     
     fieldsets = (
         ('Company Information', {
@@ -440,14 +518,22 @@ class CustomerAdmin(admin.ModelAdmin):
             'fields': ('username', 'password', 'is_active')
         }),
         ('Shareable Access', {
-            'fields': ('share_token', 'share_url_display'),
-            'description': 'Generate a unique token to create a shareable URL for passwordless access'
+            'fields': ('share_url_display',),
+            'description': 'Use the action dropdown below to generate or regenerate a shareable link. '
+                          'The customer can click this link to view assigned developers, approve/reject them, '
+                          'and sign contracts - no login required.'
         }),
         ('Metadata', {
             'fields': ('notes', 'created_at', 'last_login'),
             'classes': ('collapse',)
         }),
     )
+    
+    def save_model(self, request, obj, form, change):
+        """Auto-generate share token on first save if not exists"""
+        super().save_model(request, obj, form, change)
+        if not obj.share_token:
+            obj.generate_share_token()
 
 
 # Contract Model for Engagement Agreements

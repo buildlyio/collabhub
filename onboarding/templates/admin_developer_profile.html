@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+
+{% block page_title %}{{ developer.first_name }} {{ developer.last_name }} - Developer Profile{% endblock %}
+
+{% block page_content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-6">
+        <a href="{% url 'onboarding:admin_developers_list' %}" class="text-blue-600 hover:text-blue-800 font-medium mb-2 inline-block">
+            ← Back to Developers
+        </a>
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg p-8 text-white">
+            <div class="flex items-start gap-6 flex-wrap">
+                <!-- Profile Image -->
+                <div class="flex-shrink-0">
+                    {% if developer.github_account %}
+                        {% with github_username=developer.github_account|cut:"https://github.com/"|cut:"/" %}
+                        <img src="https://github.com/{{ github_username }}.png" 
+                             alt="{{ developer.first_name }} {{ developer.last_name }}" 
+                             class="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
+                             onerror="this.src='https://ui-avatars.com/api/?name={{ developer.first_name }}+{{ developer.last_name }}&size=128&background=6366f1&color=fff'">
+                        {% endwith %}
+                    {% else %}
+                        <img src="https://ui-avatars.com/api/?name={{ developer.first_name }}+{{ developer.last_name }}&size=128&background=6366f1&color=fff" 
+                             alt="{{ developer.first_name }} {{ developer.last_name }}" 
+                             class="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover">
+                    {% endif %}
+                </div>
+                
+                <!-- Profile Info -->
+                <div class="flex-1 min-w-0">
+                    <h1 class="text-3xl md:text-4xl font-bold mb-2">{{ developer.first_name }} {{ developer.last_name }}</h1>
+                    <div class="text-lg opacity-90 mb-3">
+                        <span>{{ developer.get_profile_types_display }}</span>
+                        {% if developer.experience_years %}<span> • {{ developer.experience_years }} years experience</span>{% endif %}
+                    </div>
+                    
+                    <!-- Agency/Independent Status -->
+                    <div class="mb-3">
+                        {% if developer.is_independent %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white bg-opacity-20">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                            Independent
+                        </span>
+                        {% else %}
+                            {% if developer.agency %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white bg-opacity-20">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                </svg>
+                                Agency: <a href="#" class="underline hover:no-underline ml-1">{{ developer.agency.agency_name }}</a>
+                                <span class="ml-2 text-xs">(✓ Registered)</span>
+                            </span>
+                            {% elif developer.agency_name_text %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white bg-opacity-20">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                </svg>
+                                Agency: {{ developer.agency_name_text }}
+                            </span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Social Links -->
+                    <div class="flex flex-wrap gap-3 mb-4">
+                        <a href="mailto:{{ developer.email }}" class="inline-flex items-center px-3 py-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                            Email
+                        </a>
+                        {% if developer.linkedin %}
+                        <a href="{{ developer.linkedin }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                            </svg>
+                            LinkedIn
+                        </a>
+                        {% endif %}
+                        {% if developer.github_account %}
+                        <a href="{{ developer.github_account }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                            </svg>
+                            GitHub
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Status Badge -->
+                    <div class="flex items-center gap-3">
+                        {% if developer.approved %}
+                        <span class="inline-flex items-center px-4 py-2 rounded-lg bg-green-500 text-white font-semibold">
+                            ✓ Approved
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-4 py-2 rounded-lg bg-yellow-500 text-white font-semibold">
+                            ⏳ Pending Approval
+                        </span>
+                        {% endif %}
+                        
+                        <!-- Approval Toggle Button -->
+                        <form method="POST" action="{% url 'onboarding:admin_developer_profile' developer.id %}" class="inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="toggle_approval">
+                            {% if developer.approved %}
+                            <button type="submit" class="px-3 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition">
+                                Revoke Approval
+                            </button>
+                            {% else %}
+                            <button type="submit" class="px-3 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition">
+                                Approve Developer
+                            </button>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Overall Score -->
+                {% if overall_score > 0 %}
+                <div class="bg-white bg-opacity-20 rounded-lg p-6 text-center flex-shrink-0">
+                    <p class="text-sm opacity-75 mb-1">Overall Score</p>
+                    <p class="text-5xl font-bold">{{ overall_score }}%</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bio Section -->
+    {% if developer.bio %}
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Biography</h2>
+        <p class="text-gray-700 leading-relaxed whitespace-pre-wrap">{{ developer.bio }}</p>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <!-- Left Column - Assessment Scores -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Assessment Breakdown</h2>
+                {% if mc_score > 0 or essay_score > 0 %}
+                <div class="space-y-4">
+                    {% if mc_score > 0 %}
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-600">Multiple Choice</span>
+                            <span class="text-sm font-bold text-gray-900">{{ mc_score }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="bg-blue-600 h-3 rounded-full" style="width: {{ mc_score }}%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if essay_score > 0 %}
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-600">Essay Questions</span>
+                            <span class="text-sm font-bold text-gray-900">{{ essay_score }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="bg-green-600 h-3 rounded-full" style="width: {{ essay_score }}%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm">No assessment scores available</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right Column - Details -->
+        <div class="lg:col-span-2">
+            <!-- Customer Assignments -->
+            {% if assignments %}
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Customer Assignments ({{ assignments.count }})</h2>
+                <div class="space-y-3">
+                    {% for assignment in assignments %}
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <a href="{% url 'onboarding:admin_customer_detail' assignment.customer.id %}" 
+                                   class="text-lg font-semibold text-blue-600 hover:text-blue-800">
+                                    {{ assignment.customer.company_name }}
+                                </a>
+                                <p class="text-sm text-gray-600">{{ assignment.customer.contact_name }}</p>
+                            </div>
+                            {% if assignment.status == 'approved' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                ✓ Approved
+                            </span>
+                            {% elif assignment.status == 'rejected' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                ✗ Rejected
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                ⏳ Pending
+                            </span>
+                            {% endif %}
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">
+                            Assigned: {{ assignment.assigned_at|date:"M d, Y" }}
+                            {% if assignment.reviewed_at %} • Reviewed: {{ assignment.reviewed_at|date:"M d, Y" }}{% endif %}
+                        </p>
+                        {% if assignment.notes %}
+                        <p class="text-sm text-gray-700 mt-2 bg-gray-50 rounded p-2">{{ assignment.notes }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Learning Resources -->
+            {% if resources %}
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Completed Learning Resources ({{ resources.count }})</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for resource in resources %}
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900 mb-1">{{ resource.resource.name }}</h3>
+                                {% if resource.resource.descr %}
+                                <p class="text-sm text-gray-600 mb-2">{{ resource.resource.descr|truncatewords:15 }}</p>
+                                {% endif %}
+                            </div>
+                            {% if resource.completed %}
+                            <svg class="w-6 h-6 text-green-500 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Assessment Summary -->
+            {% if quiz_answers %}
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Assessment Summary</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <!-- Total Questions -->
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600 mb-1">Total Questions</p>
+                                <p class="text-3xl font-bold text-gray-900">{{ quiz_answers.count }}</p>
+                            </div>
+                            <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <!-- Multiple Choice -->
+                    {% with mc_count=quiz_answers|length %}
+                    {% if mc_count > 0 %}
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600 mb-1">Multiple Choice</p>
+                                <p class="text-3xl font-bold text-gray-900">{{ mc_score }}%</p>
+                                <p class="text-xs text-gray-500 mt-1">Score</p>
+                            </div>
+                            <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                    
+                    <!-- Essay Questions -->
+                    {% if essay_score > 0 %}
+                    <div class="bg-purple-50 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600 mb-1">Essay Questions</p>
+                                <p class="text-3xl font-bold text-gray-900">{{ essay_score }}%</p>
+                                <p class="text-xs text-gray-500 mt-1">Avg Score</p>
+                            </div>
+                            <svg class="w-10 h-10 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Assessment Date -->
+                {% if developer.assessment_completed_at %}
+                <div class="border-t border-gray-200 pt-4 mb-4">
+                    <p class="text-sm text-gray-600">
+                        <strong>Last Assessment Completed:</strong> {{ developer.assessment_completed_at|date:"F d, Y \a\t g:i A" }}
+                    </p>
+                    {% if total_assessments > 1 %}
+                    <p class="text-sm text-gray-600 mt-1">
+                        <strong>Total Assessments Taken:</strong> {{ total_assessments }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- View Details Button -->
+                <div class="border-t border-gray-200 pt-4">
+                    <button onclick="toggleAssessmentDetails()" 
+                            class="w-full flex items-center justify-between px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded-lg text-blue-700 font-medium transition">
+                        <span>View Detailed Answers</span>
+                        <svg id="detailsChevron" class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Detailed Assessment Answers (Hidden by default) -->
+                <div id="assessmentDetails" class="hidden mt-4 border-t border-gray-200 pt-4">
+                    <h3 class="font-semibold text-gray-900 mb-3">All Assessment Answers</h3>
+                    <div class="space-y-4">
+                        {% for answer in quiz_answers %}
+                        <div class="border-l-4 {% if answer.question.question_type == 'MC' %}{% if answer.is_correct %}border-green-500{% else %}border-red-500{% endif %}{% else %}border-blue-500{% endif %} pl-4 py-2 bg-gray-50 rounded-r">
+                            <h4 class="font-semibold text-gray-900 mb-2">{{ answer.question.question_text }}</h4>
+                            
+                            {% if answer.question.question_type == 'MC' %}
+                                <p class="text-sm text-gray-700 mb-1"><strong>Answer:</strong> {{ answer.selected_answer }}</p>
+                                {% if answer.is_correct %}
+                                <span class="inline-flex items-center text-sm text-green-600 font-medium">
+                                    ✓ Correct
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center text-sm text-red-600 font-medium">
+                                    ✗ Incorrect
+                                </span>
+                                {% endif %}
+                            {% else %}
+                                <div class="bg-white rounded p-3 mb-2">
+                                    <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ answer.essay_answer }}</p>
+                                </div>
+                                {% if answer.evaluator_score is not None %}
+                                <p class="text-sm text-gray-600">Score: <strong>{{ answer.evaluator_score }}/10</strong></p>
+                                {% if answer.evaluator_notes %}
+                                <p class="text-sm text-gray-600 mt-1"><strong>Evaluator Notes:</strong> {{ answer.evaluator_notes }}</p>
+                                {% endif %}
+                                {% else %}
+                                <p class="text-sm text-gray-500 italic">Not yet evaluated</p>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleAssessmentDetails() {
+    const details = document.getElementById('assessmentDetails');
+    const chevron = document.getElementById('detailsChevron');
+    
+    if (details.classList.contains('hidden')) {
+        details.classList.remove('hidden');
+        chevron.classList.add('rotate-180');
+    } else {
+        details.classList.add('hidden');
+        chevron.classList.remove('rotate-180');
+    }
+}
+</script>
+{% endblock %}
