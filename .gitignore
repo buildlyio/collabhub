@@ -139,4 +139,5 @@ static/
 
 .codegpt
 
-db.sqlite3
+db.sqlite3.env.*
+test_email.py
