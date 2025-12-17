@@ -405,12 +405,9 @@ class Customer(models.Model):
     contact_email = models.EmailField(unique=True)
     contact_phone = models.CharField(max_length=20, blank=True)
     
-    # Link to Django User (optional - if set, uses their authentication)
-    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='customer_profile')
-    
-    # Authentication (simple username/password - optional if user is set)
-    username = models.CharField(max_length=100, unique=True, blank=True)
-    password = models.CharField(max_length=255, blank=True, help_text="Plain text password (will be hashed)")
+    # Authentication (simple username/password)
+    username = models.CharField(max_length=100, unique=True)
+    password = models.CharField(max_length=255, help_text="Plain text password (will be hashed)")
     
     # Shareable token for passwordless access
     share_token = models.CharField(max_length=64, unique=True, blank=True, help_text="Unique token for shareable URL")

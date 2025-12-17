@@ -482,17 +482,28 @@ def admin_dashboard(request):
     
     # User stats
     total_users = User.objects.count()
-    recent_signups = TeamMember.objects.filter(
+    total_team_members = TeamMember.objects.count()
+    
+    # Get ALL recent signups (not just [:10]) for accurate count
+    recent_signups_queryset = TeamMember.objects.filter(
         user__date_joined__gte=thirty_days_ago
-    ).order_by('-user__date_joined')[:10]
+    ).select_related('user').order_by('-user__date_joined')
+    
+    recent_signups_count = recent_signups_queryset.count()
+    recent_signups = recent_signups_queryset[:10]  # Just top 10 for display
     
     # Assessment stats
     completed_assessments = TeamMember.objects.filter(has_completed_assessment=True).count()
     pending_assessments = TeamMember.objects.filter(has_completed_assessment=False).count()
-    recent_completions = TeamMember.objects.filter(
+    
+    # Get ALL recent completions for accurate count
+    recent_completions_queryset = TeamMember.objects.filter(
         has_completed_assessment=True,
         assessment_completed_at__isnull=False
-    ).order_by('-assessment_completed_at')[:10]
+    ).order_by('-assessment_completed_at')
+    
+    recent_completions_count = recent_completions_queryset.count()
+    recent_completions = recent_completions_queryset[:10]  # Just top 10 for display
     
     # Quiz stats
     total_quizzes = Quiz.objects.count()
@@ -510,21 +521,21 @@ def admin_dashboard(request):
         count=Count('team_members')
     ).order_by('-count')[:10]
     
-    # Count recent signups correctly
-    recent_signups_count = recent_signups.count()
-    
     context = {
         'total_users': total_users,
+        'total_team_members': total_team_members,
         'recent_signups': recent_signups,
         'recent_signups_count': recent_signups_count,
         'completed_assessments': completed_assessments,
         'pending_assessments': pending_assessments,
         'recent_completions': recent_completions,
+        'recent_completions_count': recent_completions_count,
         'total_quizzes': total_quizzes,
         'total_questions': total_questions,
         'total_answers': total_answers,
         'awaiting_evaluation': awaiting_evaluation,
         'type_distribution': type_distribution,
+        'thirty_days_ago': thirty_days_ago,  # For debugging
     }
     
     return render(request, 'admin_dashboard.html', context)
@@ -1771,35 +1782,23 @@ def admin_customer_create(request):
         contact_name = request.POST.get('contact_name')
         contact_email = request.POST.get('contact_email')
         contact_phone = request.POST.get('contact_phone', '')
-        user_id = request.POST.get('user_id', '')
         is_active = request.POST.get('is_active') == 'on'
         notes = request.POST.get('notes', '')
         
         if company_name and contact_name and contact_email:
-            # Link to existing user if selected
-            linked_user = None
-            if user_id:
-                try:
-                    linked_user = User.objects.get(id=user_id)
-                except User.DoesNotExist:
-                    pass
-            
-            # Only generate username if no user is linked
-            username = ''
-            if not linked_user:
-                username = contact_email.split('@')[0]
-                base_username = username
-                counter = 1
-                while Customer.objects.filter(username=username).exists():
-                    username = f"{base_username}{counter}"
-                    counter += 1
+            # Generate unique username from email
+            username = contact_email.split('@')[0]
+            base_username = username
+            counter = 1
+            while Customer.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
             
             customer = Customer.objects.create(
                 company_name=company_name,
                 contact_name=contact_name,
                 contact_email=contact_email,
                 contact_phone=contact_phone,
-                user=linked_user,
                 username=username,
                 password='',
                 is_active=is_active,
@@ -1813,9 +1812,7 @@ def admin_customer_create(request):
         else:
             messages.error(request, 'Please fill in all required fields.')
     
-    # Pass all users for the dropdown
-    users = User.objects.all().order_by('username')
-    return render(request, 'admin_customer_create.html', {'users': users})
+    return render(request, 'admin_customer_create.html', {})
 
 
 @user_passes_test(lambda u: u.is_staff)

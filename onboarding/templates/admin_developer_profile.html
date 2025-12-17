@@ -32,7 +32,13 @@
                 <div class="flex-1 min-w-0">
                     <h1 class="text-3xl md:text-4xl font-bold mb-2">{{ developer.first_name }} {{ developer.last_name }}</h1>
                     <div class="text-lg opacity-90 mb-3">
-                        <span>{{ developer.get_profile_types_display }}</span>
+                        <span>
+                            {% for type in developer.types.all %}
+                                {{ type.name }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                No profile type set
+                            {% endfor %}
+                        </span>
                         {% if developer.experience_years %}<span> • {{ developer.experience_years }} years experience</span>{% endif %}
                     </div>
                     
