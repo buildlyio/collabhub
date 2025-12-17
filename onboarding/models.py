@@ -66,19 +66,29 @@ class TeamMember(models.Model):
     @property
     def types(self):
         """Alias for profile_types for backward compatibility"""
-        return self.profile_types
+        try:
+            return self.profile_types
+        except:
+            # Fallback if field doesn't exist yet (during migration)
+            from django.db.models import ManyToManyField
+            return self.profile_types
     
     def __str__(self):
-        type_names = ', '.join([t.label for t in self.types.all()])
+        try:
+            type_names = ', '.join([t.label for t in self.profile_types.all()])
+        except:
+            type_names = ''
         return f'{self.first_name} {self.last_name} - {type_names if type_names else "Team Member"}'
     
     def get_profile_types_display(self):
         """Get comma-separated list of profile types"""
-        types = self.profile_types.all()
-        if types:
-            return ', '.join([t.label for t in types])
-        type_names = ', '.join([t.label for t in self.types.all()])
-        return type_names if type_names else 'Team Member'
+        try:
+            types = self.profile_types.all()
+            if types:
+                return ', '.join([t.label for t in types])
+        except:
+            pass
+        return 'Team Member'
     
     def get_github_username(self):
         """Extract GitHub username from github_account URL"""
