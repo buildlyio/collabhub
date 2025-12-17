@@ -1725,6 +1725,17 @@ def admin_customer_detail(request, customer_id):
                 messages.success(request, f'Removed {dev_name} from {customer.company_name}')
                 return redirect('onboarding:admin_customer_detail', customer_id=customer.id)
         
+        elif action == 'update_assignment_status':
+            assignment_id = request.POST.get('assignment_id')
+            new_status = request.POST.get('status')
+            if assignment_id and new_status in ['pending', 'approved', 'rejected']:
+                assignment = get_object_or_404(CustomerDeveloperAssignment, id=assignment_id, customer=customer)
+                assignment.status = new_status
+                assignment.reviewed_at = now() if new_status in ['approved', 'rejected'] else None
+                assignment.save(update_fields=['status', 'reviewed_at'])
+                messages.success(request, f'Updated assignment status to {new_status}')
+                return redirect('onboarding:admin_customer_detail', customer_id=customer.id)
+        
         elif action == 'generate_token':
             customer.generate_share_token()
             messages.success(request, 'Shareable link generated!')
@@ -1751,6 +1762,114 @@ def admin_customer_detail(request, customer_id):
     }
     
     return render(request, 'admin_customer_detail.html', context)
+
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_contract_create(request, customer_id):
+    """Create a new contract for a customer"""
+    customer = get_object_or_404(Customer, id=customer_id)
+    
+    # Get approved developers for this customer
+    approved_assignments = CustomerDeveloperAssignment.objects.filter(
+        customer=customer,
+        status='approved'
+    ).select_related('developer')
+    
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        contract_text = request.POST.get('contract_text')
+        contract_type = request.POST.get('contract_type', 'engagement')
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        hourly_rate = request.POST.get('hourly_rate') or None
+        project_rate = request.POST.get('project_rate') or None
+        developer_ids = request.POST.getlist('developers')
+        
+        contract = Contract.objects.create(
+            customer=customer,
+            title=title,
+            contract_text=contract_text,
+            contract_type=contract_type,
+            start_date=start_date,
+            end_date=end_date,
+            hourly_rate=hourly_rate,
+            project_rate=project_rate,
+            status='draft',
+            created_by=request.user
+        )
+        
+        # Add developers
+        if developer_ids:
+            developers = TeamMember.objects.filter(id__in=developer_ids)
+            contract.developers.set(developers)
+        
+        messages.success(request, f'Contract "{title}" created successfully!')
+        return redirect('onboarding:admin_customer_detail', customer_id=customer.id)
+    
+    context = {
+        'customer': customer,
+        'approved_assignments': approved_assignments,
+        'contract_types': Contract.CONTRACT_TYPE,
+    }
+    
+    return render(request, 'admin_contract_create.html', context)
+
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_contract_edit(request, contract_id):
+    """Edit an existing contract"""
+    contract = get_object_or_404(Contract, id=contract_id)
+    customer = contract.customer
+    
+    # Get approved developers for this customer
+    approved_assignments = CustomerDeveloperAssignment.objects.filter(
+        customer=customer,
+        status='approved'
+    ).select_related('developer')
+    
+    if request.method == 'POST':
+        contract.title = request.POST.get('title', contract.title)
+        contract.contract_text = request.POST.get('contract_text', contract.contract_text)
+        contract.contract_type = request.POST.get('contract_type', contract.contract_type)
+        contract.start_date = request.POST.get('start_date', contract.start_date)
+        contract.end_date = request.POST.get('end_date', contract.end_date)
+        contract.hourly_rate = request.POST.get('hourly_rate') or None
+        contract.project_rate = request.POST.get('project_rate') or None
+        contract.status = request.POST.get('status', contract.status)
+        
+        developer_ids = request.POST.getlist('developers')
+        if developer_ids:
+            developers = TeamMember.objects.filter(id__in=developer_ids)
+            contract.developers.set(developers)
+        
+        contract.save()
+        messages.success(request, f'Contract "{contract.title}" updated successfully!')
+        return redirect('onboarding:admin_customer_detail', customer_id=customer.id)
+    
+    context = {
+        'contract': contract,
+        'customer': customer,
+        'approved_assignments': approved_assignments,
+        'contract_types': Contract.CONTRACT_TYPE,
+        'contract_statuses': Contract.CONTRACT_STATUS,
+    }
+    
+    return render(request, 'admin_contract_edit.html', context)
+
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_contract_delete(request, contract_id):
+    """Delete a contract"""
+    if request.method != 'POST':
+        return redirect('onboarding:admin_customers_list')
+    
+    contract = get_object_or_404(Contract, id=contract_id)
+    customer_id = contract.customer.id
+    contract_title = contract.title
+    
+    contract.delete()
+    messages.success(request, f'Contract "{contract_title}" deleted successfully!')
+    return redirect('onboarding:admin_customer_detail', customer_id=customer_id)
 
 
 @user_passes_test(lambda u: u.is_staff)

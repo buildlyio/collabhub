@@ -190,16 +190,38 @@
                                 </div>
                                 {% endif %}
                             </div>
-                            <div class="flex gap-2 ml-4">
+                            <div class="flex flex-col gap-2 ml-4">
                                 <a href="{% url 'onboarding:admin_developer_profile' assignment.developer.id %}" target="_blank"
-                                   class="px-3 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 text-sm font-medium">
+                                   class="px-3 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 text-sm font-medium text-center">
                                     📋 View Profile
                                 </a>
+                                <div class="flex gap-2">
+                                    <form method="POST" class="inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="update_assignment_status">
+                                        <input type="hidden" name="assignment_id" value="{{ assignment.id }}">
+                                        <input type="hidden" name="status" value="approved">
+                                        <button type="submit" class="px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 text-xs font-medium"
+                                                {% if assignment.status == 'approved' %}disabled class="opacity-50 cursor-not-allowed"{% endif %}>
+                                            ✓ Approve
+                                        </button>
+                                    </form>
+                                    <form method="POST" class="inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="update_assignment_status">
+                                        <input type="hidden" name="assignment_id" value="{{ assignment.id }}">
+                                        <input type="hidden" name="status" value="rejected">
+                                        <button type="submit" class="px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-xs font-medium"
+                                                {% if assignment.status == 'rejected' %}disabled class="opacity-50 cursor-not-allowed"{% endif %}>
+                                            ✗ Reject
+                                        </button>
+                                    </form>
+                                </div>
                                 <form method="POST" onsubmit="return confirm('Remove this developer assignment?');">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="remove_assignment">
                                     <input type="hidden" name="assignment_id" value="{{ assignment.id }}">
-                                    <button type="submit" class="px-3 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-sm font-medium">
+                                    <button type="submit" class="w-full px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-xs font-medium">
                                         🗑 Remove
                                     </button>
                                 </form>
@@ -219,31 +241,69 @@
             </div>
 
             <!-- Contracts -->
-            {% if contracts %}
             <div class="bg-white rounded-lg shadow mt-6">
-                <div class="p-6 border-b border-gray-200">
+                <div class="p-6 border-b border-gray-200 flex items-center justify-between">
                     <h2 class="text-lg font-bold text-gray-900">Contracts ({{ contracts.count }})</h2>
+                    <a href="{% url 'onboarding:admin_contract_create' customer.id %}"
+                       class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium text-sm">
+                        + New Contract
+                    </a>
                 </div>
                 <div class="divide-y divide-gray-200">
                     {% for contract in contracts %}
-                    <div class="p-4">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h3 class="font-semibold text-gray-900">{{ contract.title }}</h3>
-                                <p class="text-sm text-gray-600">{{ contract.start_date|date:"M d, Y" }} - {{ contract.end_date|date:"M d, Y" }}</p>
+                    <div class="p-4 hover:bg-gray-50">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h3 class="font-semibold text-gray-900">{{ contract.title }}</h3>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                        {% if contract.status == 'signed' %}bg-green-100 text-green-800
+                                        {% elif contract.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ contract.get_status_display }}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-1">
+                                    {{ contract.get_contract_type_display }} • {{ contract.start_date|date:"M d, Y" }} - {{ contract.end_date|date:"M d, Y" }}
+                                </p>
+                                {% if contract.hourly_rate or contract.project_rate %}
+                                <p class="text-sm text-gray-500">
+                                    {% if contract.hourly_rate %}${{ contract.hourly_rate }}/hr{% endif %}
+                                    {% if contract.hourly_rate and contract.project_rate %} • {% endif %}
+                                    {% if contract.project_rate %}${{ contract.project_rate }} project rate{% endif %}
+                                </p>
+                                {% endif %}
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Developers: {{ contract.developers.count }}
+                                    {% if contract.signed_at %} • Signed {{ contract.signed_at|date:"M d, Y" }}{% endif %}
+                                </p>
                             </div>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                {% if contract.status == 'signed' %}bg-green-100 text-green-800
-                                {% elif contract.status == 'pending' %}bg-yellow-100 text-yellow-800
-                                {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                {{ contract.get_status_display }}
-                            </span>
+                            <div class="flex gap-2 ml-4">
+                                <a href="{% url 'onboarding:admin_contract_edit' contract.id %}"
+                                   class="px-3 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 text-sm font-medium">
+                                    ✏️ Edit
+                                </a>
+                                <form method="POST" action="{% url 'onboarding:admin_contract_delete' contract.id %}"
+                                      onsubmit="return confirm('Delete this contract? This action cannot be undone.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="px-3 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-sm font-medium">
+                                        🗑 Delete
+                                    </button>
+                                </form>
+                            </div>
                         </div>
+                    </div>
+                    {% empty %}
+                    <div class="p-12 text-center text-gray-500">
+                        <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <p class="text-lg font-medium">No contracts yet</p>
+                        <p class="text-sm mt-1">Create a contract to formalize the engagement with this customer</p>
                     </div>
                     {% endfor %}
                 </div>
             </div>
-            {% endif %}
         </div>
     </div>
 </div>
