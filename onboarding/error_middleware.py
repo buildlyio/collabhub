@@ -70,7 +70,7 @@ class ErrorHandlerMiddleware:
     
     def create_github_issue(self, error_context, traceback_text):
         """
-        Create a GitHub issue for the error
+        Create a GitHub issue for the error, or comment on existing issue if duplicate
         
         Requires these settings:
         - GITHUB_ERROR_REPO: Repository in format "owner/repo"
@@ -79,18 +79,67 @@ class ErrorHandlerMiddleware:
         repo = settings.GITHUB_ERROR_REPO
         token = settings.GITHUB_ERROR_TOKEN
         
-        # Build issue title and body
+        headers = {
+            'Authorization': f'token {token}',
+            'Accept': 'application/vnd.github.v3+json',
+        }
+        
+        # Build issue title (used for searching)
         title = f"🐛 {error_context['error_type']}: {error_context['error_message'][:80]}"
         
-        body = f"""## Error Details
+        # Search for existing open issues with same error
+        search_query = f"is:issue is:open repo:{repo} {error_context['error_type']} in:title"
+        search_url = f"https://api.github.com/search/issues"
+        search_params = {'q': search_query}
         
-**Error Type:** `{error_context['error_type']}`
-**Error Message:** {error_context['error_message']}
-
+        search_response = requests.get(search_url, headers=headers, params=search_params)
+        
+        existing_issue = None
+        if search_response.status_code == 200:
+            issues = search_response.json().get('items', [])
+            # Look for exact match on error message
+            for issue in issues:
+                if error_context['error_message'][:80] in issue['title']:
+                    existing_issue = issue
+                    break
+        
+        occurrence_info = f"""
+### Occurrence Details
 **URL:** `{error_context['path']}`
 **Method:** `{error_context['method']}`
 **User:** {error_context['user'].username if error_context['user'] and error_context['user'].is_authenticated else 'Anonymous'}
 **Timestamp:** {error_context['timestamp']}
+"""
+        
+        if existing_issue:
+            # Add comment to existing issue
+            comment_body = f"""## Error Occurred Again
+
+{occurrence_info}
+
+<details>
+<summary>Traceback</summary>
+
+```python
+{traceback_text}
+```
+</details>
+"""
+            comment_url = existing_issue['comments_url']
+            comment_response = requests.post(comment_url, json={'body': comment_body}, headers=headers)
+            
+            if comment_response.status_code == 201:
+                print(f"✓ Added comment to existing GitHub issue: {existing_issue['html_url']}")
+            else:
+                print(f"❌ Failed to comment on issue: {comment_response.status_code}")
+        else:
+            # Create new issue
+            body = f"""## Error Details
+        
+**Error Type:** `{error_context['error_type']}`
+**Error Message:** {error_context['error_message']}
+
+{occurrence_info}
 
 ## Traceback
 
@@ -101,24 +150,18 @@ class ErrorHandlerMiddleware:
 ---
 *This issue was automatically created by the error handler middleware.*
 """
-        
-        # Create the issue
-        url = f"https://api.github.com/repos/{repo}/issues"
-        headers = {
-            'Authorization': f'token {token}',
-            'Accept': 'application/vnd.github.v3+json',
-        }
-        
-        data = {
-            'title': title,
-            'body': body,
-            'labels': ['bug', 'auto-generated', 'production-error'],
-        }
-        
-        response = requests.post(url, json=data, headers=headers)
-        
-        if response.status_code == 201:
-            issue_url = response.json().get('html_url')
-            print(f"GitHub issue created: {issue_url}")
-        else:
-            print(f"Failed to create GitHub issue: {response.status_code} - {response.text}")
+            
+            create_url = f"https://api.github.com/repos/{repo}/issues"
+            data = {
+                'title': title,
+                'body': body,
+                'labels': ['bug', 'auto-generated', 'production-error'],
+            }
+            
+            response = requests.post(create_url, json=data, headers=headers)
+            
+            if response.status_code == 201:
+                issue_url = response.json().get('html_url')
+                print(f"✓ GitHub issue created: {issue_url}")
+            else:
+                print(f"❌ Failed to create GitHub issue: {response.status_code} - {response.text}")
