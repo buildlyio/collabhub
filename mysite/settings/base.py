@@ -88,6 +88,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
     'onboarding.middleware.AssessmentRequiredMiddleware',  # Enforce assessment completion
+    'onboarding.error_middleware.ErrorHandlerMiddleware',  # Global error handling with GitHub issue creation
 ]
 
 ROOT_URLCONF = 'mysite.urls'

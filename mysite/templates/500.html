@@ -2,7 +2,7 @@
 <html class="no-js">
     <head>
         <meta charset="utf-8" />
-        <title>Internal Server Error</title>
+        <title>Internal Server Error | CollabHub</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -10,34 +10,102 @@
             html, body { font-family: 'Inter', Arial, sans-serif; }
         </style>
     </head>
-    <body class="bg-gray-50">
+    <body class="bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <div class="min-h-screen flex items-center justify-center">
-            <div class="max-w-md w-full text-center px-4">
-                <div class="mb-8">
-                    <h1 class="text-9xl font-bold text-red-600">500</h1>
-                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Internal Server Error</h2>
-                    <p class="text-gray-600 mb-8">
-                        Sorry, something went wrong on our end. Our team has been notified and is working to fix the issue.
-                    </p>
+            <div class="max-w-2xl w-full text-center px-4">
+                <!-- Error Icon -->
+                <div class="mb-8 relative">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="w-32 h-32 bg-red-100 rounded-full animate-pulse"></div>
+                    </div>
+                    <svg class="relative mx-auto h-32 w-32 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3l-7.732-13.5c-.77-1.333-1.964-1.333-2.732 0L3.732 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
                 </div>
                 
-                <div class="space-y-4">
-                    <a href="/" class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                        Go Home
-                    </a>
-                    <div>
-                        <a href="javascript:history.back()" class="text-blue-600 hover:text-blue-500">
-                            ← Try Again
+                <!-- Error Message -->
+                <div class="mb-8">
+                    <h1 class="text-7xl font-bold text-gray-900 mb-2">Oops!</h1>
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">Something went wrong</h2>
+                    <p class="text-gray-600 text-lg mb-2">
+                        We've encountered an unexpected error. Don't worry - our team has been automatically notified and will investigate the issue.
+                    </p>
+                    {% if error_type %}
+                    <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg inline-block">
+                        <p class="text-sm text-red-800">
+                            <span class="font-semibold">Error:</span> {{ error_type }}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="space-y-4 mb-8">
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <a href="/" class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-lg">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                            </svg>
+                            Go to Homepage
+                        </a>
+                        <button onclick="history.back()" class="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                            </svg>
+                            Go Back
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Navigation</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <a href="/onboarding/dashboard" class="text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded transition">
+                            Dashboard
+                        </a>
+                        <a href="/onboarding/resources/" class="text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded transition">
+                            Resources
+                        </a>
+                        <a href="/onboarding/profile/" class="text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded transition">
+                            Profile
+                        </a>
+                        {% if user.is_superuser %}
+                        <a href="/onboarding/admin-dashboard/" class="text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded transition">
+                            Admin Dashboard
+                        </a>
+                        {% endif %}
+                        <a href="/onboarding/logout" class="text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 p-2 rounded transition">
+                            Logout
+                        </a>
+                        <a href="/onboarding/register" class="text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 p-2 rounded transition">
+                            Register
                         </a>
                     </div>
                 </div>
                 
-                <div class="mt-12">
-                    <svg class="mx-auto h-24 w-24 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                    </svg>
+                <!-- Support Info -->
+                <div class="text-sm text-gray-500">
+                    <p class="mb-2">Need help? Contact us:</p>
+                    <a href="mailto:support@buildly.io" class="text-blue-600 hover:text-blue-800 font-medium">
+                        support@buildly.io
+                    </a>
+                    {% if timestamp %}
+                    <p class="mt-4 text-xs text-gray-400">
+                        Error occurred at {{ timestamp }}
+                    </p>
+                    {% endif %}
                 </div>
             </div>
         </div>
+        
+        <script>
+            // Auto-reload after 30 seconds if user takes no action
+            setTimeout(function() {
+                if (confirm('This page has been idle for 30 seconds. Would you like to return to the homepage?')) {
+                    window.location.href = '/';
+                }
+            }, 30000);
+        </script>
     </body>
 </html>

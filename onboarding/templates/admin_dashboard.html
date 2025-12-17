@@ -92,7 +92,7 @@
                 <div class="h-px bg-gray-200"></div>
                 <div class="flex justify-between items-center">
                     <span class="text-gray-600">New (30 days)</span>
-                    <span class="text-xl font-semibold text-green-600">{{ recent_signups|length }}</span>
+                    <span class="text-xl font-semibold text-green-600">{{ recent_signups_count }}</span>
                 </div>
             </div>
         </div>
@@ -173,9 +173,15 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ tm.email }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
-                                {{ tm.get_team_member_type_display }}
+                            {% for type in tm.types.all %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 mr-1">
+                                {{ type.name }}
                             </span>
+                            {% empty %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+                                No Type
+                            </span>
+                            {% endfor %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if tm.has_completed_assessment %}
@@ -248,9 +254,15 @@
                             <div class="text-sm text-gray-500">{{ tm.email }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
-                                {{ tm.get_team_member_type_display }}
+                            {% for type in tm.types.all %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 mr-1">
+                                {{ type.name }}
                             </span>
+                            {% empty %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+                                No Type
+                            </span>
+                            {% endfor %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                             {{ tm.assessment_completed_at|date:"M d, Y g:i A" }}

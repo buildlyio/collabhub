@@ -505,14 +505,18 @@ def admin_dashboard(request):
         evaluator_score__isnull=True
     ).count()
     
-    # Team member type distribution
-    type_distribution = TeamMember.objects.values('team_member_type').annotate(
-        count=Count('id')
+    # Team member type distribution - using the ManyToMany 'types' field
+    type_distribution = TeamMemberType.objects.annotate(
+        count=Count('team_members')
     ).order_by('-count')[:10]
+    
+    # Count recent signups correctly
+    recent_signups_count = recent_signups.count()
     
     context = {
         'total_users': total_users,
         'recent_signups': recent_signups,
+        'recent_signups_count': recent_signups_count,
         'completed_assessments': completed_assessments,
         'pending_assessments': pending_assessments,
         'recent_completions': recent_completions,
@@ -681,6 +685,9 @@ def admin_quiz_list(request):
     
     # Get additional stats for each quiz
     quiz_stats = []
+    total_questions = 0
+    total_participants = 0
+    
     for quiz in quizzes:
         mc_questions = QuizQuestion.objects.filter(
             quiz=quiz,
@@ -699,9 +706,18 @@ def admin_quiz_list(request):
             'total_questions': quiz.question_count,
             'participants': quiz.participant_count,
         })
+        
+        total_questions += quiz.question_count
+        total_participants += quiz.participant_count
+    
+    # Calculate average questions per quiz
+    avg_questions_per_quiz = round(total_questions / len(quiz_stats)) if quiz_stats else 0
     
     context = {
         'quiz_stats': quiz_stats,
+        'total_questions': total_questions,
+        'total_participants': total_participants,
+        'avg_questions_per_quiz': avg_questions_per_quiz,
     }
     
     return render(request, 'admin_quiz_list.html', context)
@@ -906,7 +922,6 @@ def admin_question_delete(request, question_id):
 def customer_login(request):
     """Customer login view"""
     from .models import Customer
-    from django.utils.timezone import now as timezone_now
     
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -917,7 +932,7 @@ def customer_login(request):
             if customer.check_password(password):
                 # Store customer ID in session
                 request.session['customer_id'] = customer.id
-                customer.last_login = timezone_now()
+                customer.last_login = now()
                 customer.save()
                 messages.success(request, f'Welcome, {customer.contact_name}!')
                 return redirect('onboarding:customer_dashboard')
@@ -1085,7 +1100,7 @@ def customer_contract_sign(request, contract_id):
             # Save signature
             contract.signature_data = signature_data
             contract.signed_by = signed_by
-            contract.signed_at = timezone_now()
+            contract.signed_at = now()
             contract.status = 'signed'
             
             # Get IP address
@@ -1254,7 +1269,7 @@ def customer_shared_approve_developer(request, token, developer_id):
             developer_id=developer_id
         )
         assignment.status = 'approved'
-        assignment.reviewed_at = timezone_now()
+        assignment.reviewed_at = now()
         assignment.notes = request.POST.get('notes', '')
         assignment.save()
         messages.success(request, f'{assignment.developer.first_name} {assignment.developer.last_name} has been approved.')
@@ -1283,7 +1298,7 @@ def customer_shared_reject_developer(request, token, developer_id):
             developer_id=developer_id
         )
         assignment.status = 'rejected'
-        assignment.reviewed_at = timezone_now()
+        assignment.reviewed_at = now()
         assignment.notes = request.POST.get('notes', '')
         assignment.save()
         messages.success(request, f'{assignment.developer.first_name} {assignment.developer.last_name} has been rejected.')
@@ -1317,7 +1332,7 @@ def customer_shared_contract_sign(request, token, contract_id):
         if signature_data and signed_by:
             contract.signature_data = signature_data
             contract.signed_by = signed_by
-            contract.signed_at = timezone_now()
+            contract.signed_at = now()
             contract.status = 'signed'
             
             # Get IP address
@@ -1562,6 +1577,20 @@ def admin_developer_profile(request, developer_id):
         messages.success(request, f"Developer approval {status} successfully.")
         return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
     
+    # Handle skill level updates
+    if request.method == 'POST' and request.POST.get('action') == 'update_skills':
+        from onboarding.models import TechnologySkill
+        for tech in ['javascript', 'python', 'typescript', 'nodejs', 'kubernetes', 'git', 'bash']:
+            skill_level = request.POST.get(f'skill_{tech}')
+            if skill_level:
+                TechnologySkill.objects.update_or_create(
+                    team_member=developer,
+                    technology=tech,
+                    defaults={'skill_level': int(skill_level)}
+                )
+        messages.success(request, "Technology skills updated successfully.")
+        return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
+    
     # Get quiz answers - using all() to ensure queryset is evaluated
     quiz_answers = QuizAnswer.objects.filter(
         team_member=developer
@@ -1605,6 +1634,16 @@ def admin_developer_profile(request, developer_id):
         developer=developer
     ).select_related('customer').order_by('-assigned_at')
     
+    # Get technology skills
+    from onboarding.models import TechnologySkill
+    tech_skills = TechnologySkill.objects.filter(team_member=developer).order_by('technology')
+    
+    # Create dict of existing skills for easy lookup
+    skills_dict = {skill.technology: skill for skill in tech_skills}
+    
+    # Primary technologies we want to track
+    primary_techs = ['javascript', 'python', 'typescript', 'nodejs', 'kubernetes', 'git', 'bash']
+    
     context = {
         'developer': developer,
         'quiz_answers': quiz_answers,
@@ -1617,9 +1656,111 @@ def admin_developer_profile(request, developer_id):
         'total_answers': total_answers,
         'mc_total': mc_total,
         'essay_total': essay_total,
+        'tech_skills': tech_skills,
+        'skills_dict': skills_dict,
+        'primary_techs': primary_techs,
     }
     
     return render(request, 'admin_developer_profile.html', context)
+
+
+@user_passes_test(lambda u: u.is_staff)
+def sync_github_skills(request, developer_id):
+    """Sync technology skills from GitHub"""
+    import requests
+    from django.utils import timezone
+    from onboarding.models import TechnologySkill
+    
+    developer = get_object_or_404(TeamMember, id=developer_id)
+    github_username = developer.get_github_username()
+    
+    if not github_username:
+        messages.error(request, "No GitHub account linked for this developer.")
+        return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
+    
+    try:
+        # Get repos from GitHub API
+        response = requests.get(f'https://api.github.com/users/{github_username}/repos', timeout=10)
+        response.raise_for_status()
+        repos = response.json()
+        
+        # Technology mapping
+        tech_mapping = {
+            'javascript': ['JavaScript'],
+            'python': ['Python'],
+            'typescript': ['TypeScript'],
+            'bash': ['Shell'],
+        }
+        
+        # Count repos per technology
+        tech_counts = {tech: 0 for tech in tech_mapping.keys()}
+        tech_counts['nodejs'] = 0
+        tech_counts['kubernetes'] = 0
+        tech_counts['git'] = len(repos)  # All repos use git
+        
+        for repo in repos:
+            if repo.get('language'):
+                lang = repo['language']
+                for tech, langs in tech_mapping.items():
+                    if lang in langs:
+                        tech_counts[tech] += 1
+            
+            # Check for Node.js (look for package.json indicator)
+            if repo.get('language') == 'JavaScript':
+                tech_counts['nodejs'] += 1
+            
+            # Check for Kubernetes (repos with k8s in name or description)
+            repo_name = repo.get('name', '').lower()
+            repo_desc = repo.get('description', '').lower() if repo.get('description') else ''
+            if 'kubernetes' in repo_name or 'k8s' in repo_name or 'kubernetes' in repo_desc:
+                tech_counts['kubernetes'] += 1
+        
+        # Calculate skill levels (1-5 scale)
+        def calculate_level(count):
+            if count == 0:
+                return 0
+            elif count <= 2:
+                return 2
+            elif count <= 5:
+                return 3
+            elif count <= 10:
+                return 4
+            else:
+                return 5
+        
+        # Update or create TechnologySkill records
+        updated_count = 0
+        for tech, count in tech_counts.items():
+            if count > 0:
+                calculated_level = calculate_level(count)
+                skill, created = TechnologySkill.objects.get_or_create(
+                    team_member=developer,
+                    technology=tech,
+                    defaults={
+                        'skill_level': calculated_level,
+                        'github_calculated_level': calculated_level,
+                        'github_repos_count': count,
+                        'last_github_sync': timezone.now()
+                    }
+                )
+                if not created:
+                    # Update GitHub data but keep manual skill_level if set
+                    skill.github_calculated_level = calculated_level
+                    skill.github_repos_count = count
+                    skill.last_github_sync = timezone.now()
+                    # Only update skill_level if not manually set (i.e., if it matches old calculated level)
+                    if skill.skill_level == skill.github_calculated_level or skill.skill_level <= 1:
+                        skill.skill_level = calculated_level
+                    skill.save()
+                updated_count += 1
+        
+        messages.success(request, f"Successfully synced skills from GitHub! Updated {updated_count} technologies.")
+    except requests.RequestException as e:
+        messages.error(request, f"Failed to fetch GitHub data: {str(e)}")
+    except Exception as e:
+        messages.error(request, f"Error syncing GitHub skills: {str(e)}")
+    
+    return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
 
 
 @user_passes_test(lambda u: u.is_staff)

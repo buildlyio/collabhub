@@ -50,9 +50,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600 mb-1">Total Questions</p>
-                    <p class="text-3xl font-bold text-blue-600">
-                        {% for stat in quiz_stats %}{{ stat.total_questions }}{% if not forloop.last %} + {% endif %}{% endfor %}
-                    </p>
+                    <p class="text-3xl font-bold text-blue-600">{{ total_questions }}</p>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,9 +64,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600 mb-1">Total Participants</p>
-                    <p class="text-3xl font-bold text-purple-600">
-                        {% for stat in quiz_stats %}{{ stat.participants }}{% if not forloop.last %} + {% endif %}{% endfor %}
-                    </p>
+                    <p class="text-3xl font-bold text-purple-600">{{ total_participants }}</p>
                 </div>
                 <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                     <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,11 +78,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600 mb-1">Avg Questions/Quiz</p>
-                    <p class="text-3xl font-bold text-orange-600">
-                        {% if quiz_stats %}
-                        {% widthratio quiz_stats|length 1 quiz_stats|length %}
-                        {% else %}0{% endif %}
-                    </p>
+                    <p class="text-3xl font-bold text-orange-600">{{ avg_questions_per_quiz }}</p>
                 </div>
                 <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
                     <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

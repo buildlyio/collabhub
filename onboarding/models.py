@@ -72,6 +72,64 @@ class TeamMember(models.Model):
         if types:
             return ', '.join([t.label for t in types])
         return self.get_team_member_type_display()
+    
+    def get_github_username(self):
+        """Extract GitHub username from github_account URL"""
+        if self.github_account:
+            return self.github_account.rstrip('/').split('/')[-1]
+        return None
+
+
+class TechnologySkill(models.Model):
+    """Model to store developer's skill levels in various technologies"""
+    SKILL_LEVEL_CHOICES = [
+        (1, '1 - Beginner'),
+        (2, '2 - Elementary'),
+        (3, '3 - Intermediate'),
+        (4, '4 - Advanced'),
+        (5, '5 - Expert'),
+    ]
+    
+    TECHNOLOGY_CHOICES = [
+        ('javascript', 'JavaScript'),
+        ('python', 'Python'),
+        ('typescript', 'TypeScript'),
+        ('nodejs', 'Node.js'),
+        ('kubernetes', 'Kubernetes'),
+        ('git', 'Git'),
+        ('bash', 'Bash/Shell'),
+        ('react', 'React'),
+        ('vue', 'Vue.js'),
+        ('angular', 'Angular'),
+        ('django', 'Django'),
+        ('flask', 'Flask'),
+        ('docker', 'Docker'),
+        ('aws', 'AWS'),
+        ('azure', 'Azure'),
+        ('gcp', 'Google Cloud'),
+    ]
+    
+    team_member = models.ForeignKey(TeamMember, on_delete=models.CASCADE, related_name='tech_skills')
+    technology = models.CharField(max_length=50, choices=TECHNOLOGY_CHOICES)
+    skill_level = models.IntegerField(choices=SKILL_LEVEL_CHOICES, default=1)
+    github_calculated_level = models.IntegerField(null=True, blank=True, help_text="Skill level calculated from GitHub data")
+    github_repos_count = models.IntegerField(default=0, help_text="Number of repos using this technology")
+    github_lines_count = models.IntegerField(default=0, help_text="Approximate lines of code in this technology")
+    last_github_sync = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True, help_text="Additional notes about experience")
+    
+    class Meta:
+        unique_together = ['team_member', 'technology']
+        ordering = ['-skill_level', 'technology']
+    
+    def __str__(self):
+        return f'{self.team_member.first_name} {self.team_member.last_name} - {self.get_technology_display()}: {self.skill_level}'
+
+
+class TechnologySkillAdmin(admin.ModelAdmin):
+    list_display = ('team_member', 'technology', 'skill_level', 'github_calculated_level', 'github_repos_count', 'last_github_sync')
+    list_filter = ('technology', 'skill_level')
+    search_fields = ('team_member__first_name', 'team_member__last_name')
 
 
 class TeamMemberAdmin(admin.ModelAdmin):

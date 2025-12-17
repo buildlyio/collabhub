@@ -63,5 +63,6 @@ urlpatterns = [
     path('admin/customers/<int:customer_id>/delete/', views.admin_customer_delete, name='admin_customer_delete'),
     path('admin/developers/', views.admin_developers_list, name='admin_developers_list'),
     path('admin/developers/<int:developer_id>/', views.admin_developer_profile, name='admin_developer_profile'),
+    path('admin/developers/<int:developer_id>/sync-github/', views.sync_github_skills, name='sync_github_skills'),
 ]
 
