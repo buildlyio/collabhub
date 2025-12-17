@@ -37,10 +37,14 @@ DEFAULT_FROM_EMAIL=admin@buildly.io
 EMAIL_HOST=smtp.mailersend.net
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
-MAILERSEND_SMTP_USERNAME=MS_Yh4iLk@buildly.io
-MAILERSEND_SMTP_PASSWORD=mssp.xdkL53K.3vz9dleke7qlkj50.YtSrOOd
+MAILERSEND_SMTP_USERNAME=[your-mailersend-smtp-username]
+MAILERSEND_SMTP_PASSWORD=[your-mailersend-smtp-password]
 EMAIL_SUBJECT_PREFIX=NO REPLY: Buildly Labs -
 ```
+
+⚠️ **SECURITY NOTE**: Never commit actual credentials to git. Get values from:
+- MailerSend Dashboard → Email → SMTP → Create SMTP User
+- Store in DigitalOcean App Platform environment variables only
 
 ### Email Notifications Now Working:
 
