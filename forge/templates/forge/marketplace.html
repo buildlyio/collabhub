@@ -251,7 +251,7 @@ async function loadAppsSimple() {
       let html = '';
       for (let app of data.results) {
         const price = app.price_dollars || (app.price_cents / 100).toFixed(2);
-        const logoUrl = app.logo_url || '/static/img/forge-default-logo.png';
+        const logoUrl = app.logo_url || '{{ STATIC_URL }}img/forge-default-logo.png';
         const featuredScreenshot = app.featured_screenshot || '';
         
         html += `
@@ -262,7 +262,7 @@ async function loadAppsSimple() {
               <!-- Logo -->
               <div class="flex justify-center mb-4">
                 <img src="${logoUrl}" alt="${app.name} logo" class="h-20 w-auto object-contain" 
-                     onerror="this.src='/static/img/forge-default-logo.png'">
+                     onerror="this.src='{{ STATIC_URL }}img/forge-default-logo.png'">
               </div>
               
               <!-- Featured Screenshot -->
@@ -353,7 +353,7 @@ async function loadAppsWithFilters(url) {
       let html = '';
       for (let app of data.results) {
         const price = app.price_dollars || (app.price_cents / 100).toFixed(2);
-        const logoUrl = app.logo_url || '/static/img/forge-default-logo.png';
+        const logoUrl = app.logo_url || '{{ STATIC_URL }}img/forge-default-logo.png';
         const featuredScreenshot = app.featured_screenshot || '';
         
         html += `
@@ -364,7 +364,7 @@ async function loadAppsWithFilters(url) {
               <!-- Logo -->
               <div class="flex justify-center mb-4">
                 <img src="${logoUrl}" alt="${app.name} logo" class="h-20 w-auto object-contain" 
-                     onerror="this.src='/static/img/forge-default-logo.png'">
+                     onerror="this.src='{{ STATIC_URL }}img/forge-default-logo.png'">
               </div>
               
               <!-- Featured Screenshot -->
