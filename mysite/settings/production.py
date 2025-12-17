@@ -23,8 +23,8 @@ DATABASES = {
 DEBUG = False
 
 # GitHub Error Reporting Configuration
-GITHUB_ERROR_REPO = os.environ.get('GITHUB_ERROR_REPO', 'greglind/collabhub')  # Format: owner/repo
-GITHUB_ERROR_TOKEN = os.environ.get('GITHUB_ERROR_TOKEN', '')  # GitHub personal access token
+GITHUB_ERROR_REPO = os.environ.get('GITHUB_ERROR_REPO', 'buildlyio/collabhub')  # Format: owner/repo
+GITHUB_ERROR_TOKEN = os.environ.get('GITHUB_ERROR_TOKEN', None)  # GitHub personal access token (set in DO env vars)
 
 # ALLOWED_HOSTS = ['squid-app-sejn2.ondigitalocean.app', '127.0.0.1', '[::1]','punchlist.buildly.io','collab.buildly.io','market.buildly.io','localhost:3000']
 try:

@@ -51,7 +51,10 @@ class ErrorHandlerMiddleware:
         logger.error(log_message, exc_info=True)
         
         # Submit to GitHub if configured and not in DEBUG mode
-        if not settings.DEBUG and hasattr(settings, 'GITHUB_ERROR_REPO') and hasattr(settings, 'GITHUB_ERROR_TOKEN'):
+        if (not settings.DEBUG and 
+            hasattr(settings, 'GITHUB_ERROR_REPO') and 
+            hasattr(settings, 'GITHUB_ERROR_TOKEN') and
+            settings.GITHUB_ERROR_TOKEN):  # Only if token is actually set
             try:
                 self.create_github_issue(error_context, error_traceback)
             except Exception as e:
@@ -59,6 +62,8 @@ class ErrorHandlerMiddleware:
                 error_msg = f"❌ Failed to create GitHub issue: {e}"
                 print(error_msg, file=sys.stderr)
                 logger.error(error_msg, exc_info=True)
+        elif not settings.DEBUG and not settings.GITHUB_ERROR_TOKEN:
+            logger.info("ℹ️ GitHub error reporting not configured (GITHUB_ERROR_TOKEN not set)")
         
         # Return user-friendly error page
         return render(request, '500.html', error_context, status=500)
