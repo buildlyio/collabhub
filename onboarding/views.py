@@ -1195,7 +1195,7 @@ def customer_shared_developer_detail(request, token, developer_id):
         # Step 1: Get customer by share token
         logger.debug(f"Step 1: Looking up customer with token={token}")
         customer = Customer.objects.get(share_token=token, is_active=True)
-        logger.info(f"✓ Found customer: {customer.id} - {customer.name}")
+        logger.info(f"✓ Found customer: {customer.id} - {customer.company_name}")
     except Customer.DoesNotExist as e:
         logger.warning(f"❌ Customer not found with token={token}: {e}")
         messages.error(request, 'Invalid or expired access link.')
