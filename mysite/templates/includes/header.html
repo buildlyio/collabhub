@@ -98,13 +98,15 @@
     <nav id="navbar">
       <ul class="flex items-center gap-4">
         <li><a class="text-white font-semibold hover:text-blue-200 transition" href="/">Home</a></li>
-        <li><a class="text-white font-semibold hover:text-blue-200 transition" href="/marketplace/">The Forge</a></li>        
+        <li><a class="text-white font-semibold hover:text-blue-200 transition" href="/marketplace/">The Forge</a></li>
+        <li><a class="text-white font-semibold hover:text-blue-200 transition" href="{% url 'onboarding:verification_home' %}">Verify</a></li>
         {% if user.is_authenticated %}
           <!-- Links for authenticated users -->
           <li class="dropdown-trigger relative">
             <button class="text-white font-semibold hover:text-blue-200 transition focus:outline-none px-2 py-2">Dashboard</button>
             <ul class="dropdown-menu absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
               <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/onboarding/dashboard">My Dashboard</a></li>
+              <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="{% url 'onboarding:developer_certificates' %}">My Certificates</a></li>
               {% if is_company_admin %}
               <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0 flex items-center" href="/onboarding/portal/dashboard/">
                 <svg class="w-4 h-4 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -112,6 +114,7 @@
                 </svg>
                 Customer Portal
               </a></li>
+              <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="/onboarding/dashboard#contracts">Contracts</a></li>
               {% endif %}
               {% if user.is_staff and not is_company_admin %}
               <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0 flex items-center" href="/onboarding/portal/">
@@ -120,6 +123,7 @@
                 </svg>
                 Customer Portal
               </a></li>
+              <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0" href="{% url 'onboarding:admin_certification_levels' %}">Certification Levels</a></li>
               {% endif %}
               {% if user.is_superuser %}
               <li><a class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors border-b border-gray-100 last:border-b-0 flex items-center" href="/onboarding/admin-dashboard/">
