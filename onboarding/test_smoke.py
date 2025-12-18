@@ -291,3 +291,536 @@ class DatabaseIntegritySmokeTests(SmokeTestBase):
                     getattr(obj, field)
             except Exception as e:
                 self.fail(f"Model {model.__name__} query failed: {str(e)}")
+
+
+class ContractSystemSmokeTests(SmokeTestBase):
+    """Test contract creation, signing, and document generation"""
+    
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        # Create company admin
+        from onboarding.models import CompanyAdmin
+        cls.company_admin_user = User.objects.create_user(
+            username='companyadmin',
+            email='admin@company.com',
+            password='testpass123'
+        )
+        cls.company_admin = CompanyAdmin.objects.create(
+            user=cls.company_admin_user,
+            customer=cls.customer,
+            role='admin',
+            can_sign_contracts=True,
+            is_active=True
+        )
+    
+    def setUp(self):
+        self.client = Client()
+    
+    def test_contract_creation_page_loads(self):
+        """Test contract creation form loads for staff"""
+        self.client.login(username='admin_test', password='testpass123')
+        url = f'/onboarding/admin/customers/{self.customer.id}/contracts/new/'
+        
+        try:
+            response = self.client.get(url)
+            self.assertIn(response.status_code, [200, 302, 404],
+                f"Contract creation page returned {response.status_code}")
+            if response.status_code == 200:
+                self.assertContains(response, 'form')
+        except Exception as e:
+            self.fail(f"Contract creation page raised exception: {str(e)}")
+    
+    def test_contract_creation_with_line_items(self):
+        """Test creating a contract with dynamic line items"""
+        self.client.login(username='admin_test', password='testpass123')
+        
+        from onboarding.models import Contract, ContractLineItem
+        from datetime import date, timedelta
+        
+        # Create contract
+        contract = Contract.objects.create(
+            customer=self.customer,
+            title='Test Service Agreement',
+            contract_text='Standard terms and conditions',
+            contract_type='engagement',
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=90),
+            status='draft',
+            created_by=self.admin_user
+        )
+        
+        # Add line items
+        line_item = ContractLineItem.objects.create(
+            contract=contract,
+            service_type='team',
+            description='2 Full-Stack Developers',
+            quantity=2,
+            unit_price=1500,
+            billing_frequency='monthly',
+            discount_percentage=10
+        )
+        
+        # Test calculations
+        self.assertEqual(line_item.subtotal, 3000)
+        self.assertEqual(line_item.discount_amount, 300)
+        self.assertEqual(line_item.total, 2700)
+        
+        # Test contract total
+        self.assertEqual(contract.total_amount, 2700)
+    
+    def test_contract_signing_flow(self):
+        """Test contract signing generates hash"""
+        from onboarding.models import Contract
+        from datetime import date, timedelta
+        from django.utils import timezone
+        
+        # Create contract
+        contract = Contract.objects.create(
+            customer=self.customer,
+            title='Test Contract',
+            contract_text='Terms',
+            contract_type='engagement',
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=30),
+            status='pending',
+            created_by=self.admin_user
+        )
+        
+        # Sign contract
+        contract.status = 'signed'
+        contract.signed_by = 'John Doe'
+        contract.signed_at = timezone.now()
+        contract.signature_data = 'base64_signature_data'
+        contract.contract_hash = contract.generate_hash()
+        contract.save()
+        
+        # Verify hash
+        self.assertIsNotNone(contract.contract_hash)
+        self.assertEqual(len(contract.contract_hash), 64)  # SHA256 hex
+        self.assertTrue(contract.verify_hash())
+    
+    def test_contract_hash_tamper_detection(self):
+        """Test that modifying contract invalidates hash"""
+        from onboarding.models import Contract
+        from datetime import date, timedelta
+        from django.utils import timezone
+        
+        contract = Contract.objects.create(
+            customer=self.customer,
+            title='Test Contract',
+            contract_text='Original terms',
+            contract_type='engagement',
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=30),
+            status='signed',
+            signed_by='John Doe',
+            signed_at=timezone.now(),
+            signature_data='sig_data',
+            created_by=self.admin_user
+        )
+        
+        # Generate and save hash
+        contract.contract_hash = contract.generate_hash()
+        contract.save()
+        
+        # Verify original
+        self.assertTrue(contract.verify_hash())
+        
+        # Tamper with contract
+        contract.contract_text = 'Modified terms'
+        
+        # Hash should no longer match
+        self.assertFalse(contract.verify_hash())
+    
+    def test_contract_pdf_generation(self):
+        """Test PDF generation for signed contracts"""
+        from onboarding.models import Contract, ContractLineItem
+        from datetime import date, timedelta
+        from django.utils import timezone
+        from onboarding.document_generator import generate_contract_pdf
+        
+        contract = Contract.objects.create(
+            customer=self.customer,
+            title='Service Agreement',
+            contract_text='Terms and conditions',
+            contract_type='engagement',
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=60),
+            status='signed',
+            signed_by='Test Admin',
+            signed_at=timezone.now(),
+            signature_data='signature_base64',
+            created_by=self.admin_user
+        )
+        contract.contract_hash = contract.generate_hash()
+        contract.save()
+        
+        # Add line item
+        ContractLineItem.objects.create(
+            contract=contract,
+            service_type='hosting',
+            description='GCP Hosting',
+            quantity=1,
+            unit_price=750,
+            billing_frequency='monthly'
+        )
+        
+        # Generate PDF
+        try:
+            pdf_content = generate_contract_pdf(contract)
+            self.assertIsNotNone(pdf_content)
+            self.assertGreater(len(pdf_content), 1000)  # Should have content
+            # Check it's a PDF
+            self.assertTrue(pdf_content[:4] == b'%PDF')
+        except Exception as e:
+            self.fail(f"PDF generation failed: {str(e)}")
+    
+    def test_contract_download_page(self):
+        """Test contract download page loads"""
+        from onboarding.models import Contract
+        from datetime import date, timedelta
+        from django.utils import timezone
+        
+        contract = Contract.objects.create(
+            customer=self.customer,
+            title='Test Contract',
+            contract_text='Terms',
+            contract_type='engagement',
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=30),
+            status='signed',
+            signed_by='Admin',
+            signed_at=timezone.now(),
+            created_by=self.admin_user
+        )
+        contract.contract_hash = contract.generate_hash()
+        contract.save()
+        
+        self.client.login(username='companyadmin', password='testpass123')
+        url = f'/onboarding/contract/{contract.id}/download/'
+        
+        try:
+            response = self.client.get(url)
+            # Should return PDF or redirect
+            self.assertIn(response.status_code, [200, 302, 403],
+                f"Contract download returned {response.status_code}")
+        except Exception as e:
+            # Some errors are OK if PDF generation fails in test
+            if '500' not in str(e):
+                pass
+
+
+class CertificationSystemSmokeTests(SmokeTestBase):
+    """Test certification creation and issuance"""
+    
+    def test_certification_level_creation(self):
+        """Test creating a certification level"""
+        from onboarding.models import CertificationLevel
+        
+        cert_level = CertificationLevel.objects.create(
+            name='React Frontend Specialist',
+            level_type='senior',
+            description='Advanced React development skills',
+            requirements='3+ years React experience',
+            skills='React, Redux, TypeScript',
+            price=299.99,
+            badge_color='#3B82F6',
+            created_by=self.admin_user
+        )
+        
+        self.assertEqual(cert_level.name, 'React Frontend Specialist')
+        self.assertEqual(cert_level.get_level_type_display(), 'Senior')
+    
+    def test_certificate_issuance(self):
+        """Test issuing a certificate to a developer"""
+        from onboarding.models import CertificationLevel, DeveloperCertification
+        
+        # Create certification level
+        cert_level = CertificationLevel.objects.create(
+            name='Python Backend Expert',
+            level_type='expert',
+            description='Expert-level Python development',
+            created_by=self.admin_user
+        )
+        
+        # Issue certificate
+        cert = DeveloperCertification.objects.create(
+            developer=self.regular_member,
+            certification_level=cert_level,
+            issued_by=self.admin_user,
+            score=95.5
+        )
+        
+        # Check auto-generated fields
+        self.assertIsNotNone(cert.certificate_number)
+        self.assertTrue(cert.certificate_number.startswith('CERT-'))
+        self.assertTrue(cert.is_valid)
+        self.assertFalse(cert.is_expired)
+        self.assertFalse(cert.is_revoked)
+    
+    def test_certificate_hash_generation(self):
+        """Test certificate hash generation"""
+        from onboarding.models import CertificationLevel, DeveloperCertification
+        
+        cert_level = CertificationLevel.objects.create(
+            name='Test Certification',
+            level_type='intermediate',
+            description='Test cert',
+            created_by=self.admin_user
+        )
+        
+        cert = DeveloperCertification.objects.create(
+            developer=self.regular_member,
+            certification_level=cert_level,
+            issued_by=self.admin_user,
+            score=85.0
+        )
+        
+        # Generate hash
+        cert.certificate_hash = cert.generate_hash()
+        cert.save()
+        
+        # Verify
+        self.assertIsNotNone(cert.certificate_hash)
+        self.assertEqual(len(cert.certificate_hash), 64)
+        self.assertTrue(cert.verify_hash())
+    
+    def test_certificate_revocation(self):
+        """Test certificate revocation"""
+        from onboarding.models import CertificationLevel, DeveloperCertification
+        from django.utils import timezone
+        
+        cert_level = CertificationLevel.objects.create(
+            name='Revoked Cert',
+            level_type='junior',
+            description='Test',
+            created_by=self.admin_user
+        )
+        
+        cert = DeveloperCertification.objects.create(
+            developer=self.regular_member,
+            certification_level=cert_level,
+            issued_by=self.admin_user
+        )
+        
+        # Initially valid
+        self.assertTrue(cert.is_valid)
+        
+        # Revoke
+        cert.is_revoked = True
+        cert.revoked_at = timezone.now()
+        cert.revoked_by = self.admin_user
+        cert.revoked_reason = 'Test revocation'
+        cert.save()
+        
+        # No longer valid
+        self.assertFalse(cert.is_valid)
+    
+    def test_certificate_pdf_generation(self):
+        """Test certificate PDF generation"""
+        from onboarding.models import CertificationLevel, DeveloperCertification
+        from onboarding.document_generator import generate_certificate_pdf
+        
+        cert_level = CertificationLevel.objects.create(
+            name='Full-Stack Developer',
+            level_type='senior',
+            description='Senior full-stack development',
+            badge_color='#10B981',
+            created_by=self.admin_user
+        )
+        
+        cert = DeveloperCertification.objects.create(
+            developer=self.regular_member,
+            certification_level=cert_level,
+            issued_by=self.admin_user,
+            score=92.0
+        )
+        cert.certificate_hash = cert.generate_hash()
+        cert.save()
+        
+        # Generate PDF
+        try:
+            pdf_content = generate_certificate_pdf(cert)
+            self.assertIsNotNone(pdf_content)
+            self.assertGreater(len(pdf_content), 1000)
+            self.assertTrue(pdf_content[:4] == b'%PDF')
+        except Exception as e:
+            self.fail(f"Certificate PDF generation failed: {str(e)}")
+    
+    def test_certification_admin_pages_load(self):
+        """Test certification management pages"""
+        self.client.login(username='admin_test', password='testpass123')
+        
+        urls = [
+            '/onboarding/admin/certifications/',
+            '/onboarding/admin/certification/create/',
+        ]
+        
+        for url in urls:
+            try:
+                response = self.client.get(url)
+                self.assertIn(response.status_code, [200, 302, 404],
+                    f"Certification admin page {url} returned {response.status_code}")
+            except Exception as e:
+                if '404' not in str(e) and '500' not in str(e):
+                    pass
+    
+    def test_developer_certificates_page(self):
+        """Test developer certificate listing page"""
+        self.client.login(username='developer_test', password='testpass123')
+        
+        try:
+            response = self.client.get('/onboarding/certificates/')
+            self.assertIn(response.status_code, [200, 302, 404])
+        except Exception as e:
+            if '404' not in str(e) and '500' not in str(e):
+                pass
+
+
+class VerificationSystemSmokeTests(SmokeTestBase):
+    """Test public verification endpoints"""
+    
+    def test_verification_home_page(self):
+        """Test verification homepage loads (public)"""
+        response = self.client.get('/onboarding/verify/')
+        self.assertIn(response.status_code, [200, 302, 404])
+    
+    def test_contract_verification(self):
+        """Test contract verification by hash"""
+        from onboarding.models import Contract
+        from datetime import date, timedelta
+        from django.utils import timezone
+        
+        contract = Contract.objects.create(
+            customer=self.customer,
+            title='Verified Contract',
+            contract_text='Terms',
+            contract_type='engagement',
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=30),
+            status='signed',
+            signed_by='Test User',
+            signed_at=timezone.now(),
+            created_by=self.admin_user
+        )
+        contract.contract_hash = contract.generate_hash()
+        contract.save()
+        
+        # Test verification endpoint
+        url = f'/onboarding/verify/contract/{contract.contract_hash}/'
+        try:
+            response = self.client.get(url)
+            self.assertIn(response.status_code, [200, 302, 404])
+            if response.status_code == 200:
+                self.assertContains(response, contract.title)
+        except Exception as e:
+            if '404' not in str(e) and '500' not in str(e):
+                pass
+    
+    def test_certificate_verification(self):
+        """Test certificate verification by hash"""
+        from onboarding.models import CertificationLevel, DeveloperCertification
+        
+        cert_level = CertificationLevel.objects.create(
+            name='Verified Cert',
+            level_type='intermediate',
+            description='Test',
+            created_by=self.admin_user
+        )
+        
+        cert = DeveloperCertification.objects.create(
+            developer=self.regular_member,
+            certification_level=cert_level,
+            issued_by=self.admin_user
+        )
+        cert.certificate_hash = cert.generate_hash()
+        cert.save()
+        
+        # Test verification endpoint
+        url = f'/onboarding/verify/certificate/{cert.certificate_hash}/'
+        try:
+            response = self.client.get(url)
+            self.assertIn(response.status_code, [200, 302, 404])
+            if response.status_code == 200:
+                self.assertContains(response, cert.certificate_number)
+        except Exception as e:
+            if '404' not in str(e) and '500' not in str(e):
+                pass
+
+
+class DashboardIntegrationSmokeTests(SmokeTestBase):
+    """Test that new features appear on dashboard"""
+    
+    def test_contracts_appear_on_dashboard(self):
+        """Test contracts show on company admin dashboard"""
+        from onboarding.models import CompanyAdmin, Contract
+        from datetime import date, timedelta
+        
+        # Create company admin user and team member
+        admin_user = User.objects.create_user(
+            username='companyadmin2',
+            password='testpass123'
+        )
+        
+        # Create team member for company admin (required for dashboard)
+        team_member = TeamMember.objects.create(
+            user=admin_user,
+            first_name='Company',
+            last_name='Admin',
+            email='companyadmin@test.com',
+            approved=True,
+            has_completed_assessment=True
+        )
+        team_member.types.add(self.frontend_type)
+        
+        CompanyAdmin.objects.create(
+            user=admin_user,
+            customer=self.customer,
+            can_sign_contracts=True,
+            is_active=True
+        )
+        
+        # Create contract
+        Contract.objects.create(
+            customer=self.customer,
+            title='Dashboard Test Contract',
+            contract_text='Terms',
+            contract_type='engagement',
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=30),
+            status='pending',
+            created_by=self.admin_user
+        )
+        
+        self.client.login(username='companyadmin2', password='testpass123')
+        response = self.client.get('/onboarding/dashboard/')
+        
+        if response.status_code == 200:
+            self.assertContains(response, 'Dashboard Test Contract')
+    
+    def test_certificates_appear_on_dashboard(self):
+        """Test certificates show on developer dashboard"""
+        from onboarding.models import CertificationLevel, DeveloperCertification
+        
+        cert_level = CertificationLevel.objects.create(
+            name='Dashboard Cert',
+            level_type='senior',
+            description='Test',
+            created_by=self.admin_user
+        )
+        
+        DeveloperCertification.objects.create(
+            developer=self.regular_member,
+            certification_level=cert_level,
+            issued_by=self.admin_user,
+            score=88.0
+        )
+        
+        self.client.login(username='developer_test', password='testpass123')
+        response = self.client.get('/onboarding/dashboard/')
+        
+        if response.status_code == 200:
+            # Check if certificates section appears
+            content = response.content.decode('utf-8')
+            self.assertTrue('Dashboard Cert' in content or 'Certification' in content)

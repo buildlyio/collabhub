@@ -682,6 +682,11 @@ class Contract(models.Model):
     signature_ip = models.GenericIPAddressField(null=True, blank=True, help_text="IP address of signer")
     signature_timestamp = models.DateTimeField(null=True, blank=True, help_text="Server timestamp of signature")
     ip_address = models.GenericIPAddressField(null=True, blank=True)
+    contract_hash = models.CharField(max_length=64, blank=True, help_text="SHA256 hash for contract verification and tamper detection")
+    
+    # Generated files
+    pdf_file = models.FileField(upload_to='contracts/pdf/', blank=True, null=True, help_text="Generated PDF of signed contract")
+    png_file = models.FileField(upload_to='contracts/png/', blank=True, null=True, help_text="Generated PNG image of signed contract")
     
     # Billing (Phase 4)
     billing_enabled = models.BooleanField(default=False, help_text="Enable billing for this contract")
@@ -699,8 +704,174 @@ class Contract(models.Model):
     def __str__(self):
         return f"{self.title} - {self.customer.company_name}"
     
+    def generate_hash(self):
+        """Generate SHA256 hash of contract for verification"""
+        import hashlib
+        hash_content = f"{self.contract_text}{self.signature_data}{self.signed_by}{self.signed_at}"
+        return hashlib.sha256(hash_content.encode('utf-8')).hexdigest()
+    
+    def verify_hash(self):
+        """Verify that stored hash matches current contract content"""
+        if not self.contract_hash:
+            return False
+        return self.contract_hash == self.generate_hash()
+    
+    @property
+    def total_amount(self):
+        """Calculate total amount from all line items"""
+        return sum(item.total for item in self.line_items.all())
+    
     class Meta:
         ordering = ['-created_at']
+
+
+class ContractLineItem(models.Model):
+    """Dynamic line items for contract services and fees"""
+    SERVICE_TYPES = [
+        ('team', 'Team Services'),
+        ('hosting', 'Hosting Fees'),
+        ('product_mgmt', 'Product Management'),
+        ('training', 'Developer Training & Onboarding'),
+        ('architecture', 'Software Architecture'),
+        ('other', 'Other Services'),
+    ]
+    
+    BILLING_FREQUENCY = [
+        ('one_time', 'One-Time'),
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
+        ('annually', 'Annually'),
+    ]
+    
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='line_items')
+    service_type = models.CharField(max_length=20, choices=SERVICE_TYPES)
+    description = models.CharField(max_length=255, help_text="Service description")
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, default=1, help_text="Quantity or hours")
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Price per unit")
+    billing_frequency = models.CharField(max_length=20, choices=BILLING_FREQUENCY, default='monthly')
+    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0, help_text="Discount %")
+    notes = models.TextField(blank=True, help_text="Additional notes or conditions")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    @property
+    def subtotal(self):
+        return self.quantity * self.unit_price
+    
+    @property
+    def discount_amount(self):
+        return (self.subtotal * self.discount_percentage) / 100
+    
+    @property
+    def total(self):
+        return self.subtotal - self.discount_amount
+    
+    def __str__(self):
+        return f"{self.get_service_type_display()}: {self.description} - ${self.total}"
+    
+    class Meta:
+        ordering = ['service_type', 'created_at']
+
+
+class CertificationLevel(models.Model):
+    """Dynamic certification levels/types that can be assigned to developers"""
+    LEVEL_TYPES = [
+        ('junior', 'Junior'),
+        ('intermediate', 'Intermediate'),
+        ('senior', 'Senior'),
+        ('expert', 'Expert'),
+        ('specialty', 'Specialty'),
+    ]
+    
+    name = models.CharField(max_length=255, help_text="e.g., Frontend React Specialist, Python Backend Expert")
+    level_type = models.CharField(max_length=20, choices=LEVEL_TYPES, default='intermediate')
+    description = models.TextField(help_text="What this certification demonstrates")
+    requirements = models.TextField(help_text="Skills and experience required", blank=True)
+    
+    # Optional pricing if certification requires payment
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Cost to obtain certification")
+    
+    # Skills covered
+    skills = models.TextField(help_text="Comma-separated list of skills", blank=True)
+    
+    # Template customization
+    badge_color = models.CharField(max_length=7, default='#3B82F6', help_text="Hex color for badge")
+    certificate_template = models.CharField(max_length=50, default='default', help_text="Template name for certificate design")
+    
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='certifications_created')
+    
+    def __str__(self):
+        return f"{self.name} ({self.get_level_type_display()})"
+    
+    class Meta:
+        ordering = ['level_type', 'name']
+
+
+class DeveloperCertification(models.Model):
+    """Tracks certifications earned by developers with hash verification"""
+    developer = models.ForeignKey(TeamMember, on_delete=models.CASCADE, related_name='certifications_earned')
+    certification_level = models.ForeignKey(CertificationLevel, on_delete=models.CASCADE, related_name='awarded_to')
+    
+    # Certification details
+    issued_at = models.DateTimeField(auto_now_add=True)
+    issued_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='certifications_issued')
+    expires_at = models.DateTimeField(null=True, blank=True, help_text="Certification expiration date")
+    
+    # Score/completion data
+    score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, help_text="Exam score or completion percentage")
+    notes = models.TextField(blank=True, help_text="Additional notes about certification")
+    
+    # Verification
+    certificate_hash = models.CharField(max_length=64, blank=True, help_text="SHA256 hash for certificate verification")
+    certificate_number = models.CharField(max_length=50, unique=True, help_text="Unique certificate ID")
+    
+    # Generated files
+    pdf_file = models.FileField(upload_to='certificates/pdf/', blank=True, null=True)
+    png_file = models.FileField(upload_to='certificates/png/', blank=True, null=True)
+    
+    is_revoked = models.BooleanField(default=False, help_text="Revoke if certification is no longer valid")
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    revoked_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='certifications_revoked')
+    revoked_reason = models.TextField(blank=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.certificate_number:
+            # Generate unique certificate number
+            import uuid
+            self.certificate_number = f"CERT-{uuid.uuid4().hex[:12].upper()}"
+        super().save(*args, **kwargs)
+    
+    def generate_hash(self):
+        """Generate SHA256 hash for certificate verification"""
+        import hashlib
+        hash_content = f"{self.certificate_number}{self.developer.id}{self.certification_level.id}{self.issued_at}{self.score}"
+        return hashlib.sha256(hash_content.encode('utf-8')).hexdigest()
+    
+    def verify_hash(self):
+        """Verify certificate hasn't been tampered with"""
+        if not self.certificate_hash:
+            return False
+        return self.certificate_hash == self.generate_hash()
+    
+    @property
+    def is_expired(self):
+        if not self.expires_at:
+            return False
+        from django.utils import timezone
+        return timezone.now() > self.expires_at
+    
+    @property
+    def is_valid(self):
+        return not self.is_revoked and not self.is_expired
+    
+    def __str__(self):
+        return f"{self.developer.user.get_full_name()} - {self.certification_level.name}"
+    
+    class Meta:
+        ordering = ['-issued_at']
+        unique_together = ['developer', 'certification_level']
 
 
 class ContractAdmin(admin.ModelAdmin):

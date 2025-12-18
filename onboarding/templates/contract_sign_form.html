@@ -2,8 +2,9 @@
 {% load static %}
 
 {% block title %}Sign Contract - {{ contract.title }}{% endblock %}
+{% block page_title %}Sign Contract{% endblock %}
 
-{% block content %}
+{% block page_content %}
 <div class="container mx-auto px-4 py-8 max-w-4xl">
     <div class="bg-white shadow-lg rounded-lg overflow-hidden">
         <!-- Header -->
@@ -36,7 +37,66 @@
             </div>
             {% endif %}
 
-            <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+            <!-- Contract Services & Fees -->
+            {% if contract.line_items.exists %}
+            <div class="mt-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Services & Fees</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Qty</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Unit Price</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Discount</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Billing</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for item in contract.line_items.all %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ item.get_service_type_display }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-700">
+                                    {{ item.description }}
+                                    {% if item.notes %}
+                                    <p class="text-xs text-gray-500 mt-1">{{ item.notes }}</p>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 text-sm text-right text-gray-700">{{ item.quantity }}</td>
+                                <td class="px-4 py-3 text-sm text-right text-gray-700">${{ item.unit_price }}</td>
+                                <td class="px-4 py-3 text-sm text-right text-gray-700">{{ item.discount_percentage }}%</td>
+                                <td class="px-4 py-3 text-sm text-right font-medium text-gray-900">${{ item.total }}</td>
+                                <td class="px-4 py-3 text-xs text-center text-gray-600">{{ item.get_billing_frequency_display }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="bg-gray-50">
+                            <tr>
+                                <td colspan="5" class="px-4 py-3 text-right text-sm font-semibold text-gray-900">Grand Total:</td>
+                                <td class="px-4 py-3 text-right text-lg font-bold text-gray-900">
+                                    ${{ contract.total_amount|floatformat:2 }}
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Additional Contract Terms -->
+            {% if contract.contract_text %}
+            <div class="mt-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Additional Terms & Conditions</h3>
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 max-h-96 overflow-y-auto">
+                    <pre class="text-sm text-gray-700 whitespace-pre-wrap font-sans">{{ contract.contract_text }}</pre>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mt-6">
                 <div class="flex">
                     <div class="flex-shrink-0">
                         <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
@@ -61,13 +121,13 @@
 
             <div class="space-y-6">
                 <div>
-                    <label for="signature_name" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="signed_by_name" class="block text-sm font-medium text-gray-700 mb-2">
                         Full Name <span class="text-red-500">*</span>
                     </label>
                     <input 
                         type="text" 
-                        name="signature_name" 
-                        id="signature_name" 
+                        name="signed_by_name" 
+                        id="signed_by_name" 
                         required
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         placeholder="Enter your full legal name"
@@ -77,19 +137,20 @@
                 </div>
 
                 <div>
-                    <label for="signature_title" class="block text-sm font-medium text-gray-700 mb-2">
-                        Title/Position <span class="text-red-500">*</span>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Digital Signature
                     </label>
-                    <input 
-                        type="text" 
-                        name="signature_title" 
-                        id="signature_title" 
-                        required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        placeholder="e.g., CEO, Director, Authorized Signatory"
-                        value="{{ company_admin.get_role_display }}"
-                    >
-                    <p class="mt-1 text-sm text-gray-500">Your official title or position within the organization</p>
+                    <div class="border-2 border-gray-300 rounded-md p-2 bg-white">
+                        <canvas id="signaturePad" class="w-full" style="height: 150px; border: 1px solid #e5e7eb; border-radius: 4px; cursor: crosshair;"></canvas>
+                    </div>
+                    <input type="hidden" name="signature_data" id="signatureData">
+                    <div class="mt-2 flex gap-2">
+                        <button type="button" onclick="clearSignature()" 
+                                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm font-medium">
+                            Clear Signature
+                        </button>
+                        <p class="text-xs text-gray-500 flex items-center">Draw your signature above using your mouse or touchscreen</p>
+                    </div>
                 </div>
 
                 <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
@@ -151,4 +212,111 @@
         <p class="mt-1">Timestamp: {{ now|date:"F d, Y g:i A T" }}</p>
     </div>
 </div>
+
+<script>
+    // Initialize signature pad
+    const canvas = document.getElementById('signaturePad');
+    const ctx = canvas.getContext('2d');
+    const signatureDataInput = document.getElementById('signatureData');
+    
+    // Set canvas dimensions
+    function resizeCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        ctx.scale(ratio, ratio);
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    
+    // Drawing variables
+    let isDrawing = false;
+    let hasDrawn = false;
+    
+    // Mouse events
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+    
+    // Touch events
+    canvas.addEventListener('touchstart', handleTouchStart);
+    canvas.addEventListener('touchmove', handleTouchMove);
+    canvas.addEventListener('touchend', stopDrawing);
+    
+    function startDrawing(e) {
+        isDrawing = true;
+        const rect = canvas.getBoundingClientRect();
+        ctx.beginPath();
+        ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    }
+    
+    function draw(e) {
+        if (!isDrawing) return;
+        hasDrawn = true;
+        const rect = canvas.getBoundingClientRect();
+        ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+    }
+    
+    function stopDrawing() {
+        isDrawing = false;
+        if (hasDrawn) {
+            // Save signature as base64
+            signatureDataInput.value = canvas.toDataURL('image/png');
+        }
+    }
+    
+    function handleTouchStart(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousedown', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+    
+    function handleTouchMove(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousemove', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+    
+    function clearSignature() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        signatureDataInput.value = '';
+        hasDrawn = false;
+    }
+    
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (!hasDrawn || !signatureDataInput.value) {
+            e.preventDefault();
+            alert('Please provide your digital signature before submitting.');
+            return false;
+        }
+        
+        const agreeCheckbox = document.getElementById('agree_terms');
+        if (!agreeCheckbox.checked) {
+            e.preventDefault();
+            alert('Please agree to the terms and conditions before submitting.');
+            return false;
+        }
+        
+        const nameInput = document.getElementById('signed_by_name');
+        if (!nameInput.value.trim()) {
+            e.preventDefault();
+            alert('Please enter your full name.');
+            return false;
+        }
+    });
+</script>
 {% endblock %}

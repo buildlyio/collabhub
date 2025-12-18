@@ -96,6 +96,25 @@
             <p class="mt-1 text-xs text-gray-500">This will be the contract that the customer signs.</p>
         </div>
 
+        <!-- Line Items Section -->
+        <div class="border-t border-gray-200 pt-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Contract Services & Fees</h3>
+                <button type="button" onclick="addLineItem()" 
+                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium">
+                    + Add Service
+                </button>
+            </div>
+            
+            <div id="lineItemsContainer" class="space-y-4">
+                <!-- Line items will be added here -->
+            </div>
+            
+            <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">
+                <strong>Tip:</strong> Add services like Team Services ($1500/month), Hosting Fees ($750/month), Product Management ($2000/month), etc.
+            </div>
+        </div>
+
         <div class="flex gap-4">
             <button type="submit" class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium">
                 Create Contract
@@ -107,4 +126,98 @@
         </div>
     </form>
 </div>
+
+<script>
+let lineItemCount = 0;
+
+function addLineItem() {
+    const container = document.getElementById('lineItemsContainer');
+    const itemId = lineItemCount++;
+    
+    const itemHtml = `
+        <div class="line-item p-4 border border-gray-300 rounded-md bg-gray-50" id="lineItem${itemId}">
+            <div class="flex items-center justify-between mb-3">
+                <h4 class="font-medium text-gray-900">Service ${itemId + 1}</h4>
+                <button type="button" onclick="removeLineItem(${itemId})" 
+                        class="text-red-600 hover:text-red-800 text-sm font-medium">
+                    Remove
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Service Type</label>
+                    <select name="line_items[${itemId}][service_type]" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                        <option value="team">Team Services</option>
+                        <option value="hosting">Hosting Fees</option>
+                        <option value="product_mgmt">Product Management</option>
+                        <option value="training">Developer Training & Onboarding</option>
+                        <option value="architecture">Software Architecture</option>
+                        <option value="other">Other Services</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                    <input type="text" name="line_items[${itemId}][description]" required
+                           placeholder="e.g., 2 Full-Stack Developers"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Quantity</label>
+                    <input type="number" name="line_items[${itemId}][quantity]" step="0.01" value="1" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Unit Price ($)</label>
+                    <input type="number" name="line_items[${itemId}][unit_price]" step="0.01" required
+                           placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Billing Frequency</label>
+                    <select name="line_items[${itemId}][billing_frequency]" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                        <option value="monthly">Monthly</option>
+                        <option value="one_time">One-Time</option>
+                        <option value="quarterly">Quarterly</option>
+                        <option value="annually">Annually</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Discount (%)</label>
+                    <input type="number" name="line_items[${itemId}][discount_percentage]" step="0.01" value="0" min="0" max="100"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <label class="block text-xs font-medium text-gray-700 mb-1">Notes (Optional)</label>
+                <input type="text" name="line_items[${itemId}][notes]"
+                       placeholder="Additional conditions or notes"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', itemHtml);
+}
+
+function removeLineItem(itemId) {
+    const item = document.getElementById(`lineItem${itemId}`);
+    if (item) {
+        item.remove();
+    }
+}
+
+// Add first line item on page load
+document.addEventListener('DOMContentLoaded', function() {
+    addLineItem();
+});
+</script>
 {% endblock %}

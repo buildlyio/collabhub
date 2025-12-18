@@ -93,6 +93,18 @@ urlpatterns = [
     path('contract/<int:contract_id>/sign/submit/', views.contract_sign_submit, name='contract_sign_submit'),
     path('contract/<int:contract_id>/download/', views.contract_pdf_download, name='contract_pdf_download'),
     
+    # Certificates
+    path('certificates/', views.developer_certificates, name='developer_certificates'),
+    path('certificate/<int:cert_id>/download/', views.certificate_download, name='certificate_download'),
+    path('admin/certifications/', views.admin_certification_levels, name='admin_certification_levels'),
+    path('admin/certification/create/', views.admin_certification_create, name='admin_certification_create'),
+    path('admin/developer/<int:developer_id>/certify/', views.admin_issue_certificate, name='admin_issue_certificate'),
+    
+    # Verification (Public)
+    path('verify/', views.verification_home, name='verification_home'),
+    path('verify/contract/<str:contract_hash>/', views.verify_contract, name='verify_contract'),
+    path('verify/certificate/<str:certificate_hash>/', views.verify_certificate, name='verify_certificate'),
+    
     # Notifications
     path('notifications/', views.notification_center, name='notification_center'),
     path('notifications/<int:notification_id>/read/', views.notification_mark_read, name='notification_mark_read'),

@@ -137,6 +137,24 @@ def dashboard(request):
         # startups_open = Product.objects.filter(status__in=[
         #     'Planned','Started','Draft','Found'       ])
 
+        # Fetch contracts for company admins
+        contracts = []
+        company_admin = None
+        try:
+            company_admin = CompanyAdmin.objects.get(user=request.user)
+            # Get contracts for this company admin's customer
+            contracts = Contract.objects.filter(
+                customer=company_admin.customer
+            ).order_by('-created_at')
+        except CompanyAdmin.DoesNotExist:
+            pass
+        
+        # Fetch certificates for this developer
+        from .models import DeveloperCertification
+        developer_certifications = DeveloperCertification.objects.filter(
+            developer=team_member
+        ).select_related('certification_level')
+
         return render(request, 'dashboard.html', {
             'resources': resources,
             'qr_codes': qr_codes,
@@ -146,6 +164,9 @@ def dashboard(request):
             'certification_exams': certification_exams,
             'team_member': team_member,
             'other_team_members': other_team_members,
+            'contracts': contracts,
+            'company_admin': company_admin,
+            'developer_certifications': developer_certifications,
             # 'startups_open': startups_open,
         })
     else:
@@ -1777,7 +1798,7 @@ def admin_contract_create(request, customer_id):
     
     if request.method == 'POST':
         title = request.POST.get('title')
-        contract_text = request.POST.get('contract_text')
+        contract_text = request.POST.get('contract_text', '')
         contract_type = request.POST.get('contract_type', 'engagement')
         start_date = request.POST.get('start_date')
         end_date = request.POST.get('end_date')
@@ -1802,6 +1823,32 @@ def admin_contract_create(request, customer_id):
         if developer_ids:
             developers = TeamMember.objects.filter(id__in=developer_ids)
             contract.developers.set(developers)
+        
+        # Process line items from form
+        from .models import ContractLineItem
+        line_item_count = 0
+        while f'line_items[{line_item_count}][service_type]' in request.POST:
+            service_type = request.POST.get(f'line_items[{line_item_count}][service_type]')
+            description = request.POST.get(f'line_items[{line_item_count}][description]')
+            quantity = request.POST.get(f'line_items[{line_item_count}][quantity]', 1)
+            unit_price = request.POST.get(f'line_items[{line_item_count}][unit_price]', 0)
+            billing_frequency = request.POST.get(f'line_items[{line_item_count}][billing_frequency]', 'monthly')
+            discount_percentage = request.POST.get(f'line_items[{line_item_count}][discount_percentage]', 0)
+            notes = request.POST.get(f'line_items[{line_item_count}][notes]', '')
+            
+            if service_type and description:
+                ContractLineItem.objects.create(
+                    contract=contract,
+                    service_type=service_type,
+                    description=description,
+                    quantity=quantity,
+                    unit_price=unit_price,
+                    billing_frequency=billing_frequency,
+                    discount_percentage=discount_percentage,
+                    notes=notes
+                )
+            
+            line_item_count += 1
         
         messages.success(request, f'Contract "{title}" created successfully!')
         return redirect('onboarding:admin_customer_detail', customer_id=customer.id)
@@ -2568,7 +2615,7 @@ def contract_sign_form(request, contract_id):
         messages.error(request, 'You do not have permission to sign contracts.')
         return redirect('onboarding:customer_portal_dashboard')
     
-    if contract.signed:
+    if contract.status == 'signed':
         messages.info(request, 'This contract is already signed.')
         return redirect('onboarding:customer_portal_dashboard')
     
@@ -2605,41 +2652,53 @@ def contract_sign_submit(request, contract_id):
         messages.error(request, 'You do not have permission to sign contracts.')
         return redirect('onboarding:customer_portal_dashboard')
     
-    if contract.signed:
+    if contract.status == 'signed':
         messages.warning(request, 'This contract is already signed.')
         return redirect('onboarding:customer_portal_dashboard')
     
     # Get signature data
-    signature_name = request.POST.get('signature_name')
-    signature_title = request.POST.get('signature_title')
+    signature_data = request.POST.get('signature_data')  # Base64 signature image
+    signed_by_name = request.POST.get('signed_by_name')
     agree_terms = request.POST.get('agree_terms')
     
-    if not all([signature_name, signature_title, agree_terms]):
-        messages.error(request, 'Please fill in all required fields.')
+    if not all([signed_by_name, agree_terms]):
+        messages.error(request, 'Please fill in all required fields and sign the contract.')
         return redirect('onboarding:contract_sign_form', contract_id=contract_id)
     
     # Sign contract
-    contract.signed = True
-    contract.signed_by = company_admin.user
-    contract.signed_date = now()
-    contract.signature_name = signature_name
-    contract.signature_title = signature_title
-    contract.signature_ip = get_client_ip(request)
+    contract.status = 'signed'
+    contract.signed_by = signed_by_name
+    contract.signed_at = now()
+    contract.signature_data = signature_data or ''
+    contract.signature_ip = request.META.get('REMOTE_ADDR', '')
     contract.signature_timestamp = now()
+    
+    # Generate and store hash for verification
+    contract.contract_hash = contract.generate_hash()
+    
     contract.save()
     
-    # Generate PDF
-    pdf_buffer = generate_contract_pdf(contract)
-    
-    # Save PDF to contract (if you have a FileField on Contract model)
-    # contract.signed_pdf.save(f'contract_{contract.id}_signed.pdf', pdf_buffer)
+    # Generate PDF and PNG documents
+    from .document_generator import save_contract_documents
+    try:
+        save_contract_documents(contract)
+    except Exception as e:
+        # Log error but don't fail signing
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to generate contract documents: {e}")
     
     # Send confirmation email
-    send_contract_signed_email(contract, company_admin)
+    from .utils import send_contract_signed_confirmation
+    try:
+        send_contract_signed_confirmation(contract, company_admin.user)
+    except Exception as e:
+        # Log error but don't fail the signing
+        pass
     
     # Create notification
     Notification.objects.create(
-        user=company_admin.user,
+        recipient=company_admin.user,
         notification_type='contract_signed',
         title='Contract Signed Successfully',
         message=f'Contract "{contract.title}" has been signed.',
@@ -2652,7 +2711,7 @@ def contract_sign_submit(request, contract_id):
     staff_users = User.objects.filter(is_staff=True)
     for staff_user in staff_users:
         Notification.objects.create(
-            user=staff_user,
+            recipient=staff_user,
             notification_type='contract_signed',
             title=f'Contract Signed: {contract.customer.company_name}',
             message=f'{contract.customer.company_name} signed "{contract.title}"',
@@ -2661,7 +2720,10 @@ def contract_sign_submit(request, contract_id):
             is_read=False
         )
     
-    messages.success(request, 'Contract signed successfully! A copy has been sent to your email.')
+    messages.success(
+        request, 
+        f'Contract signed successfully! Verification Hash: {contract.contract_hash[:16]}... A copy has been sent to your email.'
+    )
     return redirect('onboarding:customer_portal_dashboard')
 
 
@@ -2683,18 +2745,30 @@ def contract_pdf_download(request, contract_id):
             messages.error(request, 'You do not have access to this contract.')
             return redirect('onboarding:dashboard')
     
-    if not contract.signed:
+    if contract.status != 'signed':
         messages.error(request, 'This contract is not yet signed.')
         return redirect('onboarding:customer_portal_dashboard')
     
-    # Generate PDF
-    pdf_buffer = generate_contract_pdf(contract)
-    
-    # Return as download
-    response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="contract_{contract.id}_signed.pdf"'
-    
-    return response
+    # Check if PDF already exists
+    if contract.pdf_file:
+        # Serve existing file
+        from django.http import FileResponse
+        response = FileResponse(contract.pdf_file.open('rb'), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="contract_{contract.id}_signed.pdf"'
+        return response
+    else:
+        # Generate PDF on-the-fly
+        from .document_generator import generate_contract_pdf
+        try:
+            pdf_content = generate_contract_pdf(contract)
+            
+            # Return as download
+            response = HttpResponse(pdf_content, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="contract_{contract.id}_signed.pdf"'
+            return response
+        except Exception as e:
+            messages.error(request, f'Error generating PDF: {str(e)}')
+            return redirect('onboarding:customer_portal_dashboard')
 
 
 # ==================== NOTIFICATION VIEWS ====================
@@ -2738,3 +2812,230 @@ def notification_unread_count(request):
     """API endpoint for unread notification count"""
     count = Notification.objects.filter(user=request.user, is_read=False).count()
     return JsonResponse({'count': count})
+
+
+# ==================== CERTIFICATE VIEWS ====================
+
+@login_required
+def developer_certificates(request):
+    """View all certificates for a developer"""
+    try:
+        team_member = TeamMember.objects.get(user=request.user)
+    except TeamMember.DoesNotExist:
+        messages.error(request, 'You must be a registered developer to view certificates.')
+        return redirect('onboarding:dashboard')
+    
+    from .models import DeveloperCertification
+    certificates = DeveloperCertification.objects.filter(
+        developer=team_member
+    ).select_related('certification_level', 'issued_by')
+    
+    context = {
+        'team_member': team_member,
+        'certificates': certificates,
+    }
+    
+    return render(request, 'developer_certificates.html', context)
+
+
+@login_required
+def certificate_download(request, cert_id):
+    """Download a certificate PDF or PNG"""
+    from .models import DeveloperCertification
+    cert = get_object_or_404(DeveloperCertification, id=cert_id)
+    
+    # Verify access
+    if cert.developer.user != request.user and not request.user.is_staff:
+        messages.error(request, 'You do not have access to this certificate.')
+        return redirect('onboarding:dashboard')
+    
+    # Check if revoked
+    if cert.is_revoked:
+        messages.error(request, 'This certificate has been revoked.')
+        return redirect('onboarding:developer_certificates')
+    
+    # Get format from query param
+    file_format = request.GET.get('format', 'pdf')
+    
+    if file_format == 'png':
+        if cert.png_file:
+            from django.http import FileResponse
+            response = FileResponse(cert.png_file.open('rb'), content_type='image/png')
+            response['Content-Disposition'] = f'attachment; filename="certificate_{cert.certificate_number}.png"'
+            return response
+        else:
+            # Generate on-the-fly
+            from .document_generator import generate_certificate_png
+            png_content = generate_certificate_png(cert)
+            response = HttpResponse(png_content, content_type='image/png')
+            response['Content-Disposition'] = f'attachment; filename="certificate_{cert.certificate_number}.png"'
+            return response
+    else:
+        if cert.pdf_file:
+            from django.http import FileResponse
+            response = FileResponse(cert.pdf_file.open('rb'), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="certificate_{cert.certificate_number}.pdf"'
+            return response
+        else:
+            # Generate on-the-fly
+            from .document_generator import generate_certificate_pdf
+            pdf_content = generate_certificate_pdf(cert)
+            response = HttpResponse(pdf_content, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="certificate_{cert.certificate_number}.pdf"'
+            return response
+
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_certification_levels(request):
+    """Manage certification levels"""
+    from .models import CertificationLevel
+    levels = CertificationLevel.objects.all().order_by('level_type', 'name')
+    
+    context = {
+        'levels': levels,
+    }
+    
+    return render(request, 'admin_certification_levels.html', context)
+
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_certification_create(request):
+    """Create a new certification level"""
+    from .models import CertificationLevel
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        level_type = request.POST.get('level_type', 'intermediate')
+        description = request.POST.get('description')
+        requirements = request.POST.get('requirements', '')
+        skills = request.POST.get('skills', '')
+        price = request.POST.get('price') or None
+        badge_color = request.POST.get('badge_color', '#3B82F6')
+        
+        cert_level = CertificationLevel.objects.create(
+            name=name,
+            level_type=level_type,
+            description=description,
+            requirements=requirements,
+            skills=skills,
+            price=price,
+            badge_color=badge_color,
+            created_by=request.user
+        )
+        
+        messages.success(request, f'Certification level "{name}" created successfully!')
+        return redirect('onboarding:admin_certification_levels')
+    
+    from .models import CertificationLevel
+    context = {
+        'level_types': CertificationLevel.LEVEL_TYPES,
+    }
+    
+    return render(request, 'admin_certification_create.html', context)
+
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_issue_certificate(request, developer_id):
+    """Issue a certificate to a developer"""
+    from .models import DeveloperCertification, CertificationLevel
+    
+    developer = get_object_or_404(TeamMember, id=developer_id)
+    
+    if request.method == 'POST':
+        cert_level_id = request.POST.get('certification_level')
+        score = request.POST.get('score') or None
+        notes = request.POST.get('notes', '')
+        expires_in_months = request.POST.get('expires_in_months') or None
+        
+        cert_level = get_object_or_404(CertificationLevel, id=cert_level_id)
+        
+        # Check if already certified
+        existing = DeveloperCertification.objects.filter(
+            developer=developer,
+            certification_level=cert_level
+        ).first()
+        
+        if existing:
+            messages.warning(request, f'{developer.user.get_full_name()} already has this certification.')
+            return redirect('onboarding:admin_issue_certificate', developer_id=developer_id)
+        
+        # Create certification
+        cert = DeveloperCertification.objects.create(
+            developer=developer,
+            certification_level=cert_level,
+            issued_by=request.user,
+            score=score,
+            notes=notes
+        )
+        
+        # Set expiration
+        if expires_in_months:
+            from datetime import timedelta
+            cert.expires_at = cert.issued_at + timedelta(days=int(expires_in_months) * 30)
+        
+        # Generate hash
+        cert.certificate_hash = cert.generate_hash()
+        cert.save()
+        
+        # Generate documents
+        from .document_generator import save_certificate_documents
+        try:
+            save_certificate_documents(cert)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to generate certificate documents: {e}")
+        
+        messages.success(request, f'Certificate issued to {developer.user.get_full_name()}!')
+        return redirect('onboarding:admin_customer_dashboard')
+    
+    from .models import CertificationLevel
+    cert_levels = CertificationLevel.objects.filter(is_active=True)
+    
+    context = {
+        'developer': developer,
+        'cert_levels': cert_levels,
+    }
+    
+    return render(request, 'admin_issue_certificate.html', context)
+
+
+# ==================== VERIFICATION VIEWS (PUBLIC) ====================
+
+def verification_home(request):
+    """Public page for verifying contracts and certificates"""
+    return render(request, 'verification_home.html')
+
+
+def verify_contract(request, contract_hash):
+    """Public endpoint to verify a contract by hash"""
+    contract = get_object_or_404(Contract, contract_hash=contract_hash)
+    
+    # Verify hash
+    is_valid = contract.verify_hash()
+    
+    context = {
+        'contract': contract,
+        'is_valid': is_valid,
+        'verification_hash': contract_hash,
+    }
+    
+    return render(request, 'verify_contract.html', context)
+
+
+def verify_certificate(request, certificate_hash):
+    """Public endpoint to verify a certificate by hash"""
+    from .models import DeveloperCertification
+    
+    cert = get_object_or_404(DeveloperCertification, certificate_hash=certificate_hash)
+    
+    # Verify hash
+    is_valid = cert.verify_hash()
+    
+    context = {
+        'certificate': cert,
+        'is_valid': is_valid,
+        'verification_hash': certificate_hash,
+    }
+    
+    return render(request, 'verify_certificate.html', context)

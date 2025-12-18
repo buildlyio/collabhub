@@ -3,6 +3,8 @@ mysqlclient==2.1.0
 django-debug-toolbar
 python-dotenv
 reportlab
+Pillow>=10.0.0
+qrcode>=7.4.0
 stripe>=5.0.0,<6.0.0
 django-crispy-forms
 colorful

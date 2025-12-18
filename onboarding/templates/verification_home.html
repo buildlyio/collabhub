@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block page_title %}Verify Documents{% endblock %}
+
+{% block page_content %}
+<div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12">
+        <div class="inline-block p-4 bg-blue-100 rounded-full mb-4">
+            <svg class="w-16 h-16 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+        </div>
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Document Verification</h1>
+        <p class="text-lg text-gray-600">Verify the authenticity of contracts and certificates using their verification hash</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8 mb-12">
+        <!-- Verify Contract -->
+        <div class="bg-white rounded-lg shadow-md p-8 border-t-4 border-blue-600">
+            <div class="flex items-center mb-4">
+                <svg class="w-8 h-8 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <h2 class="text-2xl font-bold text-gray-900">Verify Contract</h2>
+            </div>
+            <p class="text-gray-600 mb-6">Enter the verification hash from a signed contract to confirm its authenticity and view details.</p>
+            
+            <form method="get" action="/onboarding/verify/contract/" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contract Hash</label>
+                    <input type="text" name="hash" placeholder="Enter 64-character hash..." 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                           pattern="[a-fA-F0-9]{64}" required>
+                    <p class="mt-1 text-xs text-gray-500">Found at the bottom of signed contracts</p>
+                </div>
+                <button type="submit" class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                    Verify Contract
+                </button>
+            </form>
+        </div>
+
+        <!-- Verify Certificate -->
+        <div class="bg-white rounded-lg shadow-md p-8 border-t-4 border-green-600">
+            <div class="flex items-center mb-4">
+                <svg class="w-8 h-8 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                </svg>
+                <h2 class="text-2xl font-bold text-gray-900">Verify Certificate</h2>
+            </div>
+            <p class="text-gray-600 mb-6">Enter the verification hash from a developer certificate to confirm it hasn't been tampered with.</p>
+            
+            <form method="get" action="/onboarding/verify/certificate/" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Certificate Hash</label>
+                    <input type="text" name="hash" placeholder="Enter 64-character hash..." 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 font-mono text-sm"
+                           pattern="[a-fA-F0-9]{64}" required>
+                    <p class="mt-1 text-xs text-gray-500">Found at the bottom of certificates</p>
+                </div>
+                <button type="submit" class="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
+                    Verify Certificate
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="bg-gray-50 rounded-lg p-8 border border-gray-200">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">How It Works</h3>
+        <div class="space-y-4 text-gray-700">
+            <div class="flex items-start">
+                <span class="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold mr-3">1</span>
+                <div>
+                    <strong>Hash Generation:</strong> When a document is signed or certificate is issued, a unique SHA-256 hash is generated from the document content.
+                </div>
+            </div>
+            <div class="flex items-start">
+                <span class="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold mr-3">2</span>
+                <div>
+                    <strong>Tamper Detection:</strong> Any modification to the document will result in a different hash, immediately revealing tampering.
+                </div>
+            </div>
+            <div class="flex items-start">
+                <span class="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold mr-3">3</span>
+                <div>
+                    <strong>Public Verification:</strong> Anyone with the hash can verify the document's authenticity without needing to log in.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
