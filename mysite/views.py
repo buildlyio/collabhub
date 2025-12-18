@@ -275,6 +275,33 @@ def customer_intake(request):
                 lines.append("Notes/Preferences:")
                 lines.append(cleaned["preferences"])
 
+            # Save to database
+            from onboarding.models import CustomerIntakeRequest
+            products_str = ', '.join([s['name'] for s in selected])
+            intake_request = CustomerIntakeRequest.objects.create(
+                name=cleaned['name'],
+                email=cleaned['email'],
+                company=cleaned['company'],
+                products=products_str,
+                timeline=cleaned['timeline'],
+                preferences=cleaned.get('preferences', ''),
+                status='new'
+            )
+
+            # Create notifications for all superuser staff
+            from onboarding.models import Notification
+            from django.contrib.auth.models import User
+            superusers = User.objects.filter(is_superuser=True, is_active=True)
+            for user in superusers:
+                Notification.objects.create(
+                    recipient=user,
+                    title="New Customer Intake Request",
+                    message=f"{cleaned['company']} ({cleaned['name']}) submitted a request for: {products_str}",
+                    link_url=f"/admin/onboarding/customerintakerequest/{intake_request.pk}/change/",
+                    notification_type="custom"
+                )
+
+            # Also send email as backup
             message = "\n".join(lines)
             send_mail(
                 subject,

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load static custom_filters %}
+
+{% block page_title %}Intake Request Detail{% endblock %}
+
+{% block page_content %}
+<div class="max-w-4xl mx-auto py-8">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <p class="text-sm text-gray-500">Intake Request</p>
+      <h1 class="text-3xl font-bold text-gray-900">{{ intake.company }}</h1>
+      <p class="text-gray-600">{{ intake.name }} • {{ intake.email }}</p>
+    </div>
+    <a href="{% url 'onboarding:admin_intake_requests' %}" class="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-800 transition">← Back to Requests</a>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+      <p class="text-sm text-gray-600">Status</p>
+      <div class="mt-1">
+        <span class="px-2 py-1 text-sm rounded-full {% if intake.status == 'new' %}bg-red-100 text-red-700{% elif intake.status == 'in_review' %}bg-yellow-100 text-yellow-700{% elif intake.status == 'contacted' %}bg-blue-100 text-blue-700{% elif intake.status == 'converted' %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-700{% endif %}">{{ intake.get_status_display }}</span>
+      </div>
+      <p class="text-xs text-gray-500 mt-2">Created {{ intake.created_at|date:"M d, Y H:i" }}{% if intake.responded_at %} • Responded {{ intake.responded_at|date:"M d, Y H:i" }}{% endif %}</p>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+      <p class="text-sm text-gray-600">Assigned To</p>
+      <p class="text-lg font-semibold text-gray-900 mt-1">{{ intake.assigned_to.get_full_name|default:intake.assigned_to.username|default:'Unassigned' }}</p>
+      {% if intake.customer %}
+      <p class="text-sm text-green-700 mt-2">Linked Customer: {{ intake.customer.company_name }} ({{ intake.customer.username }})</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm mb-6">
+    <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+      <h2 class="text-xl font-semibold text-gray-900">Request Details</h2>
+    </div>
+    <div class="p-4 space-y-3 text-sm text-gray-900">
+      <div>
+        <span class="font-semibold">Company:</span> {{ intake.company }}
+      </div>
+      <div>
+        <span class="font-semibold">Contact:</span> {{ intake.name }} • {{ intake.email }}
+      </div>
+      <div>
+        <span class="font-semibold">Products:</span>
+        <div class="flex flex-wrap gap-2 mt-1">
+          {% for product in intake.products|split:',' %}
+          <span class="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">{{ product|strip }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      <div>
+        <span class="font-semibold">Timeline:</span> {{ intake.timeline }}
+      </div>
+      {% if intake.preferences %}
+      <div>
+        <span class="font-semibold">Preferences / Notes:</span>
+        <p class="mt-1 text-gray-800 whitespace-pre-line">{{ intake.preferences }}</p>
+      </div>
+      {% endif %}
+      {% if intake.admin_notes %}
+      <div>
+        <span class="font-semibold">Admin Notes:</span>
+        <p class="mt-1 text-gray-800 whitespace-pre-line">{{ intake.admin_notes }}</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+    <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-gray-900">Actions</h2>
+      <span class="text-xs text-gray-500">Superusers only</span>
+    </div>
+    <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+      <form method="post" class="inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="assign_me">
+        <button type="submit" class="w-full px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition">Assign to Me</button>
+      </form>
+      <form method="post" class="inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="mark_in_review">
+        <button type="submit" class="w-full px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition">Mark In Review</button>
+      </form>
+      <form method="post" class="inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="mark_contacted">
+        <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">Mark Contacted</button>
+      </form>
+      <form method="post" class="inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="convert">
+        <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition">Convert to Customer</button>
+      </form>
+      <form method="post" class="inline">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reject">
+        <button type="submit" class="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition">Reject</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

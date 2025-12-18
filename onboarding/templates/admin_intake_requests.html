@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static custom_filters %}
+
+{% block page_title %}Customer Intake Requests{% endblock %}
+
+{% block page_content %}
+<div class="max-w-7xl mx-auto py-8">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">Customer Intake Requests</h1>
+      <p class="text-gray-600">Review inbound requests and convert them to customers</p>
+    </div>
+    <a href="{% url 'onboarding:admin_dashboard' %}" class="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-800 transition">← Back to Admin</a>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+    {% for code,label in status_choices %}
+    <a href="?status={{ code }}" class="block bg-white border {% if status_filter == code %}border-indigo-500 ring-2 ring-indigo-200{% else %}border-gray-200{% endif %} rounded-lg p-4 shadow-sm hover:shadow transition">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-600">{{ label }}</p>
+          <p class="text-2xl font-bold text-gray-900">{{ status_counts|get:code|default:0 }}</p>
+        </div>
+        <span class="px-2 py-1 text-xs rounded-full {% if code == 'new' %}bg-red-100 text-red-700{% elif code == 'in_review' %}bg-yellow-100 text-yellow-700{% elif code == 'contacted' %}bg-blue-100 text-blue-700{% elif code == 'converted' %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-700{% endif %}">{{ label }}</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <div class="bg-white rounded-lg shadow border border-gray-200">
+    <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900">Requests</h2>
+        {% if status_filter %}
+        <p class="text-sm text-gray-600">Filtered by status: {{ status_filter }}</p>
+        {% endif %}
+      </div>
+      <a href="?" class="text-sm text-blue-600 hover:underline">Reset filters</a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timeline</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned</th>
+            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {% for intake in requests %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-semibold text-gray-900">{{ intake.company }}</div>
+              <div class="text-sm text-gray-500">Created {{ intake.created_at|date:"M d, Y H:i" }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ intake.name }}</div>
+              <div class="text-sm text-gray-500">{{ intake.email }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ intake.products }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ intake.timeline }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2 py-1 text-xs rounded-full {% if intake.status == 'new' %}bg-red-100 text-red-700{% elif intake.status == 'in_review' %}bg-yellow-100 text-yellow-700{% elif intake.status == 'contacted' %}bg-blue-100 text-blue-700{% elif intake.status == 'converted' %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-700{% endif %}">{{ intake.get_status_display }}</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ intake.assigned_to.get_full_name|default:intake.assigned_to.username|default:'—' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <a href="{% url 'onboarding:admin_intake_request_detail' intake.id %}" class="text-indigo-600 hover:text-indigo-900">View</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="px-6 py-6 text-center text-gray-500">No intake requests found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

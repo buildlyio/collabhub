@@ -1632,6 +1632,66 @@ def admin_dashboard(request):
     return render(request, 'admin_dashboard.html', context)
 
 
+@user_passes_test(lambda u: u.is_superuser)
+def admin_intake_requests(request):
+    """List intake requests for superusers"""
+    from .models import CustomerIntakeRequest
+    status_filter = request.GET.get('status')
+    allowed_statuses = [choice[0] for choice in CustomerIntakeRequest.STATUS_CHOICES]
+    requests_qs = CustomerIntakeRequest.objects.select_related('assigned_to', 'customer').order_by('-created_at')
+    if status_filter in allowed_statuses:
+        requests_qs = requests_qs.filter(status=status_filter)
+    status_counts = {status: CustomerIntakeRequest.objects.filter(status=status).count() for status in allowed_statuses}
+    context = {
+        'requests': requests_qs,
+        'status_filter': status_filter,
+        'status_choices': CustomerIntakeRequest.STATUS_CHOICES,
+        'status_counts': status_counts,
+    }
+    return render(request, 'admin_intake_requests.html', context)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def admin_intake_request_detail(request, intake_id):
+    """Detail view and actions for a single intake request"""
+    from .models import CustomerIntakeRequest
+    intake = get_object_or_404(CustomerIntakeRequest, pk=intake_id)
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'assign_me':
+            intake.assigned_to = request.user
+            if intake.status == 'new':
+                intake.status = 'in_review'
+            intake.save()
+            messages.success(request, 'Assigned to you and moved to In Review.')
+        elif action == 'mark_in_review':
+            if intake.status == 'new':
+                intake.status = 'in_review'
+            if not intake.assigned_to:
+                intake.assigned_to = request.user
+            intake.save()
+            messages.success(request, 'Request marked as In Review.')
+        elif action == 'mark_contacted':
+            intake.mark_contacted(request.user)
+            messages.success(request, 'Marked as Contacted.')
+        elif action == 'convert':
+            customer = intake.convert_to_customer()
+            if customer:
+                messages.success(request, 'Converted to Customer record.')
+            else:
+                messages.warning(request, 'Request cannot be converted from current status.')
+        elif action == 'reject':
+            intake.status = 'rejected'
+            intake.save()
+            messages.info(request, 'Request rejected.')
+        return redirect('onboarding:admin_intake_request_detail', intake_id=intake.id)
+    context = {
+        'intake': intake,
+        'status_choices': CustomerIntakeRequest.STATUS_CHOICES,
+    }
+    return render(request, 'admin_intake_request_detail.html', context)
+
+
 @user_passes_test(lambda u: u.is_staff)
 def admin_customer_dashboard(request):
     """Customer management admin dashboard (new)"""
@@ -2800,7 +2860,7 @@ def notification_mark_read(request, notification_id):
     if request.method != 'POST':
         return redirect('onboarding:notification_center')
     
-    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+    notification = get_object_or_404(Notification, id=notification_id, recipient=request.user)
     notification.is_read = True
     notification.save()
     
@@ -2810,7 +2870,7 @@ def notification_mark_read(request, notification_id):
 @login_required
 def notification_unread_count(request):
     """API endpoint for unread notification count"""
-    count = Notification.objects.filter(user=request.user, is_read=False).count()
+    count = Notification.objects.filter(recipient=request.user, is_read=False).count()
     return JsonResponse({'count': count})
 
 

@@ -21,6 +21,7 @@ def user_roles(request):
         "company_admin_customer": None,
         "is_staff": False,
         "has_notifications": False,
+        "notification_count": 0,
     }
 
     user = getattr(request, "user", None)
@@ -44,7 +45,9 @@ def user_roles(request):
     # Notifications presence (lazy check)
     try:
         from .models import Notification
-        ctx["has_notifications"] = Notification.objects.filter(user=user, is_read=False).exists()
+        unread_qs = Notification.objects.filter(recipient=user, is_read=False)
+        ctx["has_notifications"] = unread_qs.exists()
+        ctx["notification_count"] = unread_qs.count()
     except Exception:
         pass
 

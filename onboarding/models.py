@@ -3,6 +3,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib import admin
+from django.utils import timezone
 
 TEAM_MEMBER_TYPES = [
     ('all', 'Everyone'),
@@ -642,6 +643,87 @@ class CustomerAdmin(admin.ModelAdmin):
             obj.generate_share_token()
 
 
+class CustomerIntakeRequestAdmin(admin.ModelAdmin):
+    list_display = ('company', 'name', 'email', 'status', 'timeline', 'assigned_to', 'has_customer', 'created_at')
+    list_filter = ('status', 'timeline', 'created_at', 'assigned_to')
+    search_fields = ('company', 'name', 'email', 'products', 'preferences')
+    readonly_fields = ('created_at', 'updated_at', 'responded_at', 'products_display', 'customer_link')
+    actions = ['mark_as_in_review', 'mark_as_contacted', 'convert_to_customers']
+    
+    fieldsets = (
+        ('Contact Information', {
+            'fields': ('name', 'email', 'company')
+        }),
+        ('Request Details', {
+            'fields': ('products_display', 'timeline', 'preferences')
+        }),
+        ('Workflow', {
+            'fields': ('status', 'assigned_to', 'customer_link', 'admin_notes')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at', 'responded_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def has_customer(self, obj):
+        return obj.customer is not None
+    has_customer.boolean = True
+    has_customer.short_description = 'Converted'
+    
+    def products_display(self, obj):
+        from django.utils.html import format_html
+        products = obj.get_products_list()
+        if not products:
+            return '-'
+        items = ''.join([f'<li>{p}</li>' for p in products])
+        return format_html(f'<ul style="margin: 0; padding-left: 20px;">{items}</ul>')
+    products_display.short_description = 'Requested Products'
+    
+    def customer_link(self, obj):
+        from django.utils.html import format_html
+        from django.urls import reverse
+        if obj.customer:
+            url = reverse('admin:onboarding_customer_change', args=[obj.customer.pk])
+            return format_html(
+                '<a href="{}" target="_blank">📋 {} ({})</a>',
+                url, obj.customer.company_name, obj.customer.username
+            )
+        return '-'
+    customer_link.short_description = 'Linked Customer'
+    
+    def mark_as_in_review(self, request, queryset):
+        updated = queryset.filter(status='new').update(status='in_review', assigned_to=request.user)
+        self.message_user(request, f'✅ Marked {updated} request(s) as in review.')
+    mark_as_in_review.short_description = '📋 Mark as In Review (assign to me)'
+    
+    def mark_as_contacted(self, request, queryset):
+        count = 0
+        for obj in queryset:
+            if obj.status in ['new', 'in_review']:
+                obj.mark_contacted(request.user)
+                count += 1
+        self.message_user(request, f'✅ Marked {count} request(s) as contacted.')
+    mark_as_contacted.short_description = '📞 Mark as Contacted'
+    
+    def convert_to_customers(self, request, queryset):
+        converted = []
+        errors = []
+        for obj in queryset:
+            if obj.can_convert_to_customer():
+                customer = obj.convert_to_customer()
+                if customer:
+                    converted.append(obj.company)
+            else:
+                errors.append(obj.company)
+        
+        if converted:
+            self.message_user(request, f'✅ Converted {len(converted)} request(s) to customers: {", ".join(converted)}')
+        if errors:
+            self.message_user(request, f'⚠️ Could not convert {len(errors)} request(s): {", ".join(errors)} (already converted or invalid status)', level='warning')
+    convert_to_customers.short_description = '🎯 Convert to Customer Records'
+
+
 # Contract Model for Engagement Agreements
 class Contract(models.Model):
     """
@@ -1012,3 +1094,93 @@ class LabsAccount(models.Model):
     
     class Meta:
         ordering = ['-linked_at']
+
+
+class CustomerIntakeRequest(models.Model):
+    """Tracks customer intake form submissions for admin review and conversion"""
+    STATUS_CHOICES = [
+        ('new', 'New'),
+        ('in_review', 'In Review'),
+        ('contacted', 'Contacted'),
+        ('converted', 'Converted to Customer'),
+        ('rejected', 'Rejected'),
+    ]
+    
+    # Form data
+    name = models.CharField(max_length=255)
+    email = models.EmailField()
+    company = models.CharField(max_length=255)
+    products = models.TextField(help_text="Comma-separated list of selected products")
+    timeline = models.CharField(max_length=100)
+    preferences = models.TextField(blank=True)
+    
+    # Workflow tracking
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
+    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, 
+                                    related_name='assigned_intake_requests')
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='intake_requests', 
+                                help_text="Linked Customer record if converted")
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    responded_at = models.DateTimeField(null=True, blank=True)
+    
+    # Admin notes
+    admin_notes = models.TextField(blank=True, help_text="Internal notes for tracking")
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Customer Intake Request'
+        verbose_name_plural = 'Customer Intake Requests'
+    
+    def __str__(self):
+        return f"{self.company} - {self.name} ({self.get_status_display()})"
+    
+    def get_products_list(self):
+        """Return list of product names"""
+        if self.products:
+            return [p.strip() for p in self.products.split(',')]
+        return []
+    
+    def can_convert_to_customer(self):
+        """Check if request can be converted to Customer"""
+        return self.status in ['new', 'in_review', 'contacted'] and self.customer is None
+    
+    def mark_contacted(self, user=None):
+        """Mark request as contacted"""
+        self.status = 'contacted'
+        self.responded_at = timezone.now()
+        if user and not self.assigned_to:
+            self.assigned_to = user
+        self.save()
+    
+    def convert_to_customer(self, username=None):
+        """Convert intake request to Customer record"""
+        if not self.can_convert_to_customer():
+            return None
+        
+        # Check if customer already exists with this email
+        existing_customer = Customer.objects.filter(contact_email=self.email).first()
+        if existing_customer:
+            self.customer = existing_customer
+            self.status = 'converted'
+            self.save()
+            return existing_customer
+        
+        # Create new customer
+        customer = Customer.objects.create(
+            company_name=self.company,
+            contact_name=self.name,
+            contact_email=self.email,
+            username=username or self.email.split('@')[0],
+            notes=f"Converted from intake request. Products: {self.products}. Timeline: {self.timeline}. Preferences: {self.preferences}"
+        )
+        customer.generate_share_token()
+        
+        self.customer = customer
+        self.status = 'converted'
+        self.save()
+        
+        return customer

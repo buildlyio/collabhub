@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static custom_filters %}
 
 {% block page_title %}Certification Levels{% endblock %}
 
@@ -67,7 +67,7 @@
                     <div class="mb-4">
                         <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Skills</span>
                         <div class="flex flex-wrap gap-2 mt-2">
-                            {% for skill in level.skills.split ',' %}
+                            {% for skill in level.skills|split:',' %}
                             <span class="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">{{ skill|strip }}</span>
                             {% endfor %}
                         </div>
