@@ -1583,7 +1583,7 @@ def customer_shared_contract_sign(request, token, contract_id):
 # CUSTOM ADMIN DASHBOARD VIEWS
 # ============================================================
 
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_dashboard(request):
     """Assessment-focused admin dashboard (original)"""
     from datetime import timedelta
@@ -1692,7 +1692,7 @@ def admin_intake_request_detail(request, intake_id):
     return render(request, 'admin_intake_request_detail.html', context)
 
 
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_customer_dashboard(request):
     """Customer management admin dashboard (new)"""
     customers = Customer.objects.all().order_by('-created_at')
@@ -1716,7 +1716,7 @@ def admin_customer_dashboard(request):
     return render(request, 'admin_dashboard_custom.html', context)
 
 
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_customers_list(request):
     """List all customers with search and filter"""
     customers = Customer.objects.all().order_by('-created_at')
@@ -1754,7 +1754,7 @@ def admin_customers_list(request):
     return render(request, 'admin_customers_list.html', context)
 
 
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_customer_detail(request, customer_id):
     """View and edit customer details, assign developers"""
     customer = get_object_or_404(Customer, id=customer_id)
@@ -1845,7 +1845,7 @@ def admin_customer_detail(request, customer_id):
     return render(request, 'admin_customer_detail.html', context)
 
 
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_contract_create(request, customer_id):
     """Create a new contract for a customer"""
     customer = get_object_or_404(Customer, id=customer_id)
@@ -1922,7 +1922,7 @@ def admin_contract_create(request, customer_id):
     return render(request, 'admin_contract_create.html', context)
 
 
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_contract_edit(request, contract_id):
     """Edit an existing contract"""
     contract = get_object_or_404(Contract, id=contract_id)
@@ -1964,7 +1964,7 @@ def admin_contract_edit(request, contract_id):
     return render(request, 'admin_contract_edit.html', context)
 
 
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_contract_delete(request, contract_id):
     """Delete a contract"""
     if request.method != 'POST':
@@ -1979,7 +1979,7 @@ def admin_contract_delete(request, contract_id):
     return redirect('onboarding:admin_customer_detail', customer_id=customer_id)
 
 
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_developers_list(request):
     """List all developers with search and filter"""
     developers = TeamMember.objects.all().order_by('-id')
@@ -2020,7 +2020,7 @@ def admin_developers_list(request):
     return render(request, 'admin_developers_list.html', context)
 
 
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_developer_profile(request, developer_id):
     """View full developer profile with assessment results"""
     developer = get_object_or_404(TeamMember, id=developer_id)
@@ -2219,7 +2219,7 @@ def sync_github_skills(request, developer_id):
     return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
 
 
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_customer_create(request):
     """Create a new customer"""
     if request.method == 'POST':
@@ -2260,7 +2260,7 @@ def admin_customer_create(request):
     return render(request, 'admin_customer_create.html', {})
 
 
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_customer_delete(request, customer_id):
     """Delete a customer"""
     customer = get_object_or_404(Customer, id=customer_id)
@@ -2422,21 +2422,71 @@ def labs_unlink(request):
 
 # ==================== APPROVAL WORKFLOW VIEWS ====================
 
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_approval_queue(request):
     """Admin view of developers pending community approval"""
     pending_developers = TeamMember.objects.filter(
         community_approval_date__isnull=True,
         approved=False,
         user__is_active=True
-    ).order_by('last_name', 'first_name')
+    ).select_related('user', 'agency').prefetch_related('tech_skills')
+    
+    # Search
+    search_query = request.GET.get('search', '')
+    if search_query:
+        pending_developers = pending_developers.filter(
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(github_account__icontains=search_query) |
+            Q(tech_skills__technology__icontains=search_query)
+        ).distinct()
+    
+    # Filter by type
+    type_filter = request.GET.get('type', '')
+    if type_filter:
+        type_obj = TeamMemberType.objects.filter(key=type_filter).first()
+        if type_obj:
+            pending_developers = pending_developers.filter(types=type_obj)
+    
+    # Filter by experience
+    exp_filter = request.GET.get('experience', '')
+    if exp_filter == 'junior':
+        pending_developers = pending_developers.filter(experience_years__lt=3)
+    elif exp_filter == 'mid':
+        pending_developers = pending_developers.filter(experience_years__gte=3, experience_years__lt=7)
+    elif exp_filter == 'senior':
+        pending_developers = pending_developers.filter(experience_years__gte=7)
+    
+    # Filter by independent/agency
+    affiliation_filter = request.GET.get('affiliation', '')
+    if affiliation_filter == 'independent':
+        pending_developers = pending_developers.filter(is_independent=True)
+    elif affiliation_filter == 'agency':
+        pending_developers = pending_developers.filter(is_independent=False)
+    
+    pending_developers = pending_developers.order_by('last_name', 'first_name')
+    
+    # Get unique types for filter dropdown
+    all_types = TeamMemberType.objects.filter(
+        team_members__in=TeamMember.objects.filter(
+            community_approval_date__isnull=True,
+            approved=False,
+            user__is_active=True
+        )
+    ).distinct().order_by('label')
     
     return render(request, 'admin_approval_queue.html', {
-        'pending_developers': pending_developers
+        'pending_developers': pending_developers,
+        'search_query': search_query,
+        'type_filter': type_filter,
+        'exp_filter': exp_filter,
+        'affiliation_filter': affiliation_filter,
+        'all_types': all_types,
     })
 
 
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_approve_community(request, developer_id):
     """Approve developer for community"""
     if request.method != 'POST':
@@ -2945,7 +2995,7 @@ def certificate_download(request, cert_id):
             return response
 
 
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_certification_levels(request):
     """Manage certification levels"""
     from .models import CertificationLevel
@@ -2958,7 +3008,7 @@ def admin_certification_levels(request):
     return render(request, 'admin_certification_levels.html', context)
 
 
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_certification_create(request):
     """Create a new certification level"""
     from .models import CertificationLevel
@@ -2994,7 +3044,7 @@ def admin_certification_create(request):
     return render(request, 'admin_certification_create.html', context)
 
 
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_issue_certificate(request, developer_id):
     """Issue a certificate to a developer"""
     from .models import DeveloperCertification, CertificationLevel
