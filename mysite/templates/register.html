@@ -80,7 +80,7 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                 <div>
-                    <label for="{{ form.team_member_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Developer Type *</label>
+                    <label for="{{ form.team_member_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Primary Developer Type *</label>
                     {{ form.team_member_type }}
                     {% if form.team_member_type.errors %}
                         <div class="mt-1 text-sm text-red-600">
@@ -98,11 +98,104 @@
                     {% endif %}
                 </div>
             </div>
+
+            <!-- Additional Profile Types -->
+            <div class="mt-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3">Additional Profile Types (Optional)</label>
+                <div class="bg-white border rounded-lg p-4">
+                    {{ form.profile_types }}
+                    <p class="text-sm text-gray-500 mt-2">{{ form.profile_types.help_text }}</p>
+                    {% if form.profile_types.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {% for error in form.profile_types.errors %}<p>{{ error }}</p>{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
         
         <!-- Professional Information -->
         <div class="bg-green-50 rounded-lg p-6 mb-6">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">Professional Information</h3>
+
+            <!-- Affiliation -->
+            <div class="bg-white border rounded-lg p-4 mb-6">
+                <h4 class="text-md font-semibold text-gray-800 mb-3">Work Affiliation</h4>
+                <div class="space-y-3">
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            {{ form.is_independent }}
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="{{ form.is_independent.id_for_label }}" class="font-medium text-gray-700 cursor-pointer">
+                                I am an independent developer
+                            </label>
+                            <p class="text-gray-500">Uncheck if you work through a development agency</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="agency-section" class="mt-4 hidden space-y-4 border-t pt-4">
+                    <div class="bg-blue-50 p-3 rounded-md mb-3">
+                        <p class="text-sm text-blue-800">
+                            <svg class="inline-block w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                            </svg>
+                            Agency Member Details
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.agency.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Select your agency
+                            <span class="text-gray-500 font-normal">(if already registered on Buildly)</span>
+                        </label>
+                        {{ form.agency }}
+                        {% if form.agency.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {% for error in form.agency.errors %}<p>{{ error }}</p>{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-white text-gray-500">OR</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="{{ form.agency_name_text.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Agency name
+                                <span class="text-gray-500 font-normal">(if not listed above)</span>
+                            </label>
+                            {{ form.agency_name_text }}
+                            <p class="text-sm text-gray-500 mt-1">Enter your agency's name</p>
+                            {% if form.agency_name_text.errors %}
+                                <div class="mt-1 text-sm text-red-600">
+                                    {% for error in form.agency_name_text.errors %}<p>{{ error }}</p>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label for="{{ form.agency_contact_email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Agency contact email
+                            </label>
+                            {{ form.agency_contact_email }}
+                            <p class="text-sm text-gray-500 mt-1">We'll send them an invite to join Buildly</p>
+                            {% if form.agency_contact_email.errors %}
+                                <div class="mt-1 text-sm text-red-600">
+                                    {% for error in form.agency_contact_email.errors %}<p>{{ error }}</p>{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <div>
                 <label for="{{ form.bio.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Bio & Skills</label>
@@ -199,5 +292,62 @@ textarea {
     resize: vertical;
     min-height: 100px;
 }
+
+/* Checkbox styling */
+input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+
+/* Profile types grid layout */
+#id_profile_types {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+#id_profile_types label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+}
+
+#id_profile_types label:hover {
+    background-color: #f9fafb;
+    border-color: #2563eb;
+}
+
+#id_profile_types input[type="checkbox"] {
+    margin-right: 0.5rem;
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const isIndependentCheckbox = document.getElementById('{{ form.is_independent.id_for_label }}');
+    const agencySection = document.getElementById('agency-section');
+
+    function toggleAgencySection() {
+        if (isIndependentCheckbox && agencySection) {
+            if (isIndependentCheckbox.checked) {
+                agencySection.classList.add('hidden');
+            } else {
+                agencySection.classList.remove('hidden');
+            }
+        }
+    }
+
+    if (isIndependentCheckbox) {
+        isIndependentCheckbox.addEventListener('change', toggleAgencySection);
+        toggleAgencySection(); // Initialize on page load
+    }
+});
+</script>
 {% endblock %}
