@@ -1,0 +1,21 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanks — Buildly</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body { font-family: 'Inter', Arial, sans-serif; }</style>
+</head>
+<body class="bg-gray-50">
+  <div class="max-w-3xl mx-auto px-4 py-16 text-center">
+    <div class="bg-white border border-gray-200 shadow-md rounded-2xl p-10">
+      <p class="text-xs font-semibold text-indigo-600 uppercase tracking-[0.3em]">Got it</p>
+      <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mt-3">Thanks — we’re on it</h1>
+      <p class="mt-3 text-gray-700">We’ll reach out shortly. In the meantime, you can capture your product brief, roadmap, and assets in Buildly Labs.</p>
+      <a href="{{ labs_url }}" target="_blank" class="inline-flex items-center justify-center mt-6 px-5 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Open Buildly Labs</a>
+    </div>
+  </div>
+</body>
+</html>

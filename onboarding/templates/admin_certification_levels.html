@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Certification Levels{% endblock %}
+
+{% block page_content %}
+<div class="max-w-7xl mx-auto py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Certification Levels</h1>
+                <p class="text-gray-600 mt-2">Manage dynamic certification types and requirements</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="{% url 'onboarding:admin_dashboard' %}" 
+                   class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
+                    ← Back to Admin
+                </a>
+                <a href="{% url 'onboarding:admin_certification_create' %}" 
+                   class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors font-semibold">
+                    + Create New Level
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if levels %}
+        <!-- Certification Levels Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for level in levels %}
+            <div class="bg-white rounded-lg shadow-md border-2 overflow-hidden"
+                 style="border-color: {{ level.badge_color }};">
+                <div class="p-6">
+                    <!-- Level Header -->
+                    <div class="mb-4">
+                        <div class="flex items-start justify-between mb-2">
+                            <span class="px-3 py-1 text-sm font-bold rounded-full"
+                                  style="background-color: {{ level.badge_color }}20; 
+                                         color: {{ level.badge_color }}; 
+                                         border: 2px solid {{ level.badge_color }};">
+                                {{ level.name }}
+                            </span>
+                            <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
+                                {{ level.level_type|title }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    {% if level.description %}
+                    <div class="mb-4">
+                        <p class="text-sm text-gray-700">{{ level.description }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Requirements -->
+                    {% if level.requirements %}
+                    <div class="mb-4">
+                        <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Requirements</span>
+                        <p class="text-sm text-gray-700 mt-1">{{ level.requirements }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Skills -->
+                    {% if level.skills %}
+                    <div class="mb-4">
+                        <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Skills</span>
+                        <div class="flex flex-wrap gap-2 mt-2">
+                            {% for skill in level.skills.split ',' %}
+                            <span class="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">{{ skill|strip }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Pricing -->
+                    {% if level.price %}
+                    <div class="mb-4">
+                        <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Price</span>
+                        <p class="text-2xl font-bold text-indigo-600 mt-1">${{ level.price }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Meta Info -->
+                    <div class="pt-4 border-t border-gray-200">
+                        <div class="text-xs text-gray-500">
+                            <p>Created by: {{ level.created_by.get_full_name|default:level.created_by.username }}</p>
+                            <p class="mt-1">Badge color: 
+                                <span class="inline-block w-4 h-4 rounded-full ml-1" 
+                                      style="background-color: {{ level.badge_color }};"></span>
+                                {{ level.badge_color }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Issue Certificate Button -->
+                    <div class="mt-4">
+                        <button onclick="location.href='{% url 'onboarding:admin_developers_list' %}?cert_level={{ level.id }}'" 
+                                class="w-full px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-md hover:from-indigo-700 hover:to-purple-700 transition-colors text-sm font-medium">
+                            Issue Certificate
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    {% else %}
+        <!-- Empty State -->
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 p-12 text-center">
+            <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">No Certification Levels</h3>
+            <p class="text-gray-600 mb-6">Create your first certification level to start issuing certificates to developers.</p>
+            <a href="{% url 'onboarding:admin_certification_create' %}" 
+               class="inline-block px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors font-medium">
+                + Create First Level
+            </a>
+        </div>
+    {% endif %}
+
+    <!-- Info Box -->
+    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <div class="flex gap-4">
+            <svg class="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+                <h4 class="font-bold text-blue-900 mb-2">About Certification Levels</h4>
+                <ul class="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                    <li><strong>Level Types:</strong> junior, intermediate, senior, expert, specialty</li>
+                    <li><strong>Dynamic Creation:</strong> Create custom certification types as needed</li>
+                    <li><strong>Badge Colors:</strong> Each level has a unique color for visual identification</li>
+                    <li><strong>Verification:</strong> All issued certificates include SHA-256 hashes and QR codes</li>
+                    <li><strong>Pricing:</strong> Optional pricing can be set for each certification level</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-lg shadow border border-gray-200 p-4">
+            <div class="flex items-center">
+                <div class="flex-1">
+                    <p class="text-sm text-gray-600">Total Levels</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ levels.count }}</p>
+                </div>
+                <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow border border-gray-200 p-4">
+            <div class="flex items-center">
+                <div class="flex-1">
+                    <p class="text-sm text-gray-600">Junior Levels</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ levels|filter_by:"level_type,junior"|length }}</p>
+                </div>
+                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow border border-gray-200 p-4">
+            <div class="flex items-center">
+                <div class="flex-1">
+                    <p class="text-sm text-gray-600">Senior Levels</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ levels|filter_by:"level_type,senior"|length }}</p>
+                </div>
+                <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow border border-gray-200 p-4">
+            <div class="flex items-center">
+                <div class="flex-1">
+                    <p class="text-sm text-gray-600">Expert Levels</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ levels|filter_by:"level_type,expert"|length }}</p>
+                </div>
+                <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

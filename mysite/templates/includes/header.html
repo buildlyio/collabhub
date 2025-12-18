@@ -100,6 +100,7 @@
         <li><a class="text-white font-semibold hover:text-blue-200 transition" href="/">Home</a></li>
         <li><a class="text-white font-semibold hover:text-blue-200 transition" href="/marketplace/">The Forge</a></li>
         <li><a class="text-white font-semibold hover:text-blue-200 transition" href="{% url 'onboarding:verification_home' %}">Verify</a></li>
+        <li><a class="text-white font-semibold hover:text-blue-200 transition" href="{% url 'customer_intake' %}">Work with Buildly</a></li>
         {% if user.is_authenticated %}
           <!-- Links for authenticated users -->
           <li class="dropdown-trigger relative">

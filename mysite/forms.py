@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm, PasswordResetForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.core.mail import EmailMessage
 
 # paypal
 from django.views.generic import FormView
@@ -108,6 +109,37 @@ class RegistrationUpdateForm(UserChangeForm):
         user.save()
 
         return user
+
+
+class CustomerIntakeForm(forms.Form):
+    name = forms.CharField(label="Your name", max_length=120)
+    email = forms.EmailField(label="Work email")
+    company = forms.CharField(label="Company", max_length=180)
+    products = forms.MultipleChoiceField(
+        label="What do you want help with?",
+        widget=forms.CheckboxSelectMultiple,
+        choices=[],
+    )
+    timeline = forms.ChoiceField(
+        label="When do you want to start?",
+        choices=[
+            ("asap", "Right away (this week)"),
+            ("2-4_weeks", "In 2–4 weeks"),
+            ("1-2_months", "1–2 months"),
+            ("3+_months", "Planning ahead (3+ months)"),
+        ],
+    )
+    preferences = forms.CharField(
+        label="Goals, context, or special requests",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 4}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        product_choices = kwargs.pop("product_choices", [])
+        super().__init__(*args, **kwargs)
+        self.fields["products"].choices = product_choices
+
     
 # main_app/forms.py
 

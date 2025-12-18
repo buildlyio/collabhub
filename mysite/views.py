@@ -21,6 +21,7 @@ from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
+from .forms import CustomerIntakeForm
 
 User = get_user_model()
 
@@ -209,6 +210,97 @@ def github_complete(request):
         return redirect('/')  # Redirect user after successful linking
     else:
         return redirect('/login/')  # Redirect to login if not authenticated
+
+
+def customer_intake(request):
+    """Public marketing-forward intake form for new customers."""
+    # Dynamic product catalog for messaging + choices
+    product_catalog = [
+        {
+            "key": "rad_ai_delivery",
+            "name": "RAD Process for AI Delivery",
+            "tagline": "Guardrails, governance, and delivery playbooks for AI features.",
+            "description": "Refined Rapid Application Delivery process that keeps AI work safe, reviewable, and ship-ready with built-in checkpoints.",
+        },
+        {
+            "key": "verified_devs",
+            "name": "Verified Developers & Certifications",
+            "tagline": "Hands-on builders with Buildly certifications, reviews, and live project history.",
+            "description": "Pre-vetted engineers with proof of work, code reviews, and certification badges mapped to your stack.",
+        },
+        {
+            "key": "cto_apprentice",
+            "name": "CTO-in-Training (Mentored)",
+            "tagline": "Try a rising technical lead with senior mentorship and guidance contracts.",
+            "description": "Great for new startups to trial a future CTO while we provide architectural guardrails and weekly coaching.",
+        },
+        {
+            "key": "scale_teams",
+            "name": "Scale Your Team (Elastic Pods)",
+            "tagline": "Add a Buildly pod short-term or long-term with product, design, and engineering.",
+            "description": "Spin up or extend a squad that can own delivery, augment an in-house team, or cover critical initiatives.",
+        },
+        {
+            "key": "labs_platform",
+            "name": "Buildly Labs Portfolio Platform",
+            "tagline": "Document products, roadmaps, and run delivery in one place.",
+            "description": "Connect to Buildly Labs to manage briefs, artifacts, and team assignments across your portfolio.",
+        },
+    ]
+
+    product_choices = [(item["key"], item["name"]) for item in product_catalog]
+
+    if request.method == "POST":
+        form = CustomerIntakeForm(request.POST, product_choices=product_choices)
+        if form.is_valid():
+            cleaned = form.cleaned_data
+            selected = [p for p in product_catalog if p["key"] in cleaned["products"]]
+
+            subject = "New Customer Intake - Buildly"
+            lines = [
+                "New customer request",
+                f"Name: {cleaned['name']}",
+                f"Email: {cleaned['email']}",
+                f"Company: {cleaned['company']}",
+                f"Timeline: {cleaned['timeline']}",
+                "Products:",
+            ]
+            for s in selected:
+                lines.append(f"- {s['name']}: {s['tagline']}")
+            if cleaned.get("preferences"):
+                lines.append("")
+                lines.append("Notes/Preferences:")
+                lines.append(cleaned["preferences"])
+
+            message = "\n".join(lines)
+            send_mail(
+                subject,
+                message,
+                getattr(settings, "DEFAULT_FROM_EMAIL", "no-reply@buildly.io"),
+                ["team@buildly.io"],
+                fail_silently=True,
+            )
+
+            # Quick confirmation view
+            return render(
+                request,
+                "customer_intake_thanks.html",
+                {
+                    "labs_url": "https://labs.buildly.io",
+                },
+            )
+    else:
+        form = CustomerIntakeForm(product_choices=product_choices)
+
+    return render(
+        request,
+        "customer_intake.html",
+        {
+            "form": form,
+            "product_catalog": product_catalog,
+            "labs_url": "https://labs.buildly.io",
+        },
+    )
 
 
 def partner_redirect(request):

@@ -47,6 +47,7 @@ urlpatterns = [
     # forge marketplace
     path('forge/', views.forge_redirect, name='forge_redirect'),  # Redirect to marketplace
     path('marketplace/', include('forge.urls')),
+    path('work-with-buildly/', views.customer_intake, name='customer_intake'),
     
     # Agency URLs (redirecting to onboarding app)
     path('agency_list/', views.agency_list_redirect, name='agency_list'),  # Redirect to onboarding agencies list
