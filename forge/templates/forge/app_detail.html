@@ -37,7 +37,7 @@
           <div class="flex justify-center my-6">
             <img src="{{ app.logo_url_or_default }}" alt="{{ app.name }} logo" 
                  class="h-32 w-auto object-contain" 
-                 onerror="this.src='{{ STATIC_URL }}img/forge-default-logo.png'">
+                 onerror="this.src='{% static "img/forge-default-logo.png" %}'">
           </div>
           
           <!-- Screenshots Gallery -->
