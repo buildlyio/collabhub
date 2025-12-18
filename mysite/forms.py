@@ -134,11 +134,58 @@ class CustomerIntakeForm(forms.Form):
         required=False,
         widget=forms.Textarea(attrs={"rows": 4}),
     )
+    
+    # Anti-spam fields
+    website = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"class": "hidden-honeypot", "tabindex": "-1", "autocomplete": "off"}),
+    )
+    verify_human = forms.BooleanField(
+        label="I'm not a robot",
+        required=True,
+        error_messages={"required": "Please confirm you're not a robot."},
+    )
+    form_timestamp = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
 
     def __init__(self, *args, **kwargs):
         product_choices = kwargs.pop("product_choices", [])
         super().__init__(*args, **kwargs)
         self.fields["products"].choices = product_choices
+        
+        # Set initial timestamp if not provided
+        if not self.data.get('form_timestamp'):
+            import time
+            self.initial['form_timestamp'] = str(int(time.time()))
+    
+    def clean_website(self):
+        """Honeypot field - should be empty"""
+        website = self.cleaned_data.get('website')
+        if website:
+            raise forms.ValidationError("Invalid submission detected.")
+        return website
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Check form submission time (prevent instant bot submissions)
+        form_timestamp = cleaned_data.get('form_timestamp')
+        if form_timestamp:
+            try:
+                import time
+                submit_time = int(time.time())
+                form_time = int(form_timestamp)
+                time_elapsed = submit_time - form_time
+                
+                # Require at least 3 seconds to fill form (blocks instant bot submissions)
+                if time_elapsed < 3:
+                    raise forms.ValidationError("Form submitted too quickly. Please try again.")
+            except (ValueError, TypeError):
+                pass  # Invalid timestamp, let it through
+        
+        return cleaned_data
 
     
 # main_app/forms.py

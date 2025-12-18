@@ -251,6 +251,9 @@ def customer_intake(request):
     product_choices = [(item["key"], item["name"]) for item in product_catalog]
 
     if request.method == "POST":
+        # Initialize form with timestamp on GET
+        import time
+        initial_data = {'form_timestamp': str(int(time.time()))}
         form = CustomerIntakeForm(request.POST, product_choices=product_choices)
         if form.is_valid():
             cleaned = form.cleaned_data
@@ -290,7 +293,12 @@ def customer_intake(request):
                 },
             )
     else:
-        form = CustomerIntakeForm(product_choices=product_choices)
+        # Set initial timestamp for new form
+        import time
+        form = CustomerIntakeForm(
+            product_choices=product_choices,
+            initial={'form_timestamp': str(int(time.time()))}
+        )
 
     return render(
         request,

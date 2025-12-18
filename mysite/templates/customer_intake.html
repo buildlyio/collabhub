@@ -8,6 +8,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { font-family: 'Inter', Arial, sans-serif; }
+    .hidden-honeypot { position: absolute; left: -9999px; width: 1px; height: 1px; }
   </style>
 </head>
 <body class="bg-gray-50">
@@ -45,6 +46,16 @@
 
       <form method="post" class="px-6 py-6 space-y-5">
         {% csrf_token %}
+        
+        <!-- Honeypot field (hidden from users) -->
+        <div class="hidden-honeypot">
+          <label for="id_website">Website</label>
+          <input type="text" name="website" id="id_website" tabindex="-1" autocomplete="off">
+        </div>
+        
+        <!-- Hidden timestamp -->
+        <input type="hidden" name="form_timestamp" value="{{ form.form_timestamp.value|default:'' }}">
+        
         <div class="grid md:grid-cols-3 gap-4">
           <div>
             <label class="block text-sm font-semibold text-gray-700">Name</label>
@@ -87,10 +98,27 @@
           </div>
         </div>
 
+        <!-- Human Verification -->
+        <div class="border-t border-gray-200 pt-4">
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" name="verify_human" {% if form.verify_human.value %}checked{% endif %} class="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-2 focus:ring-indigo-500" required>
+            <span class="text-sm font-medium text-gray-700">I'm not a robot ✓</span>
+          </label>
+          {% if form.verify_human.errors %}
+          <p class="mt-1 text-sm text-red-600">{{ form.verify_human.errors.0 }}</p>
+          {% endif %}
+        </div>
+
         <div class="flex items-center justify-between pt-2">
-          <p class="text-sm text-gray-600">We’ll reply fast. We’ll also include a Labs link so you can document your product and manage your portfolio.</p>
+          <p class="text-sm text-gray-600">We'll reply fast. We'll also include a Labs link so you can document your product and manage your portfolio.</p>
           <button type="submit" class="inline-flex items-center px-5 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Submit</button>
         </div>
+        
+        {% if form.non_field_errors %}
+        <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+          <p class="text-sm text-red-800">{{ form.non_field_errors.0 }}</p>
+        </div>
+        {% endif %}
       </form>
     </div>
   </div>
