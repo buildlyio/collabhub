@@ -48,19 +48,24 @@
     <div class="content">
         <p>Hi {{ developer.first_name }},</p>
         
-        <p>Great news! Your profile has been approved to join the Buildly community.</p>
+        <p>Great news! Your profile has been approved to join the Buildly Open Source Community.</p>
         
-        <p><strong>What's next?</strong></p>
+        <p><strong>What you can do now:</strong></p>
         <ul>
-            <li>You can now be assigned to customer teams</li>
-            <li>Complete your profile to showcase your skills</li>
-            <li>Link your Buildly Labs account for unified access</li>
-            <li>Start collaborating on exciting projects!</li>
+            <li><strong>Access Community Trainings:</strong> Explore our comprehensive training resources to enhance your skills</li>
+            <li><strong>Pursue Certifications:</strong> Complete certification programs to validate your expertise and advance your career</li>
+            <li><strong>Get Evaluated for Jobs:</strong> You can now be evaluated for job openings now and in the future</li>
+            <li><strong>Complete Your Profile:</strong> Showcase your skills and experience to potential employers</li>
+            <li><strong>Collaborate on Projects:</strong> Join customer teams and work on exciting open source projects</li>
         </ul>
         
-        <a href="{{ dashboard_url }}" class="button">Go to Dashboard</a>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ login_url }}" class="button" style="margin: 5px;">Login to Dashboard</a>
+            <a href="{{ resources_url }}" class="button" style="margin: 5px; background: #10b981;">View Resources</a>
+            <a href="{{ certifications_url }}" class="button" style="margin: 5px; background: #f59e0b;">Explore Certifications</a>
+        </div>
         
-        <p>If you have any questions, feel free to reach out to our team.</p>
+        <p style="margin-top: 20px;">We're excited to have you as part of our open source community! If you have any questions, feel free to reach out to our team.</p>
         
         <p>Best regards,<br>
         The Buildly Team</p>

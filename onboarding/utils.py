@@ -94,11 +94,14 @@ def send_community_approval_email(team_member):
         'first_name': team_member.first_name,
         'developer_name': f"{team_member.first_name} {team_member.last_name}",
         'buildly_url': settings.SITE_URL or 'https://collab.buildly.io',
+        'login_url': f"{settings.SITE_URL or 'https://collab.buildly.io'}/login",
+        'resources_url': f"{settings.SITE_URL or 'https://collab.buildly.io'}/onboarding/resources",
+        'certifications_url': f"{settings.SITE_URL or 'https://collab.buildly.io'}/onboarding/certificates/",
     }
     
     return send_email(
         to_email=team_member.email,
-        subject="Welcome to Buildly Community!",
+        subject="Welcome to Buildly Open Source Community!",
         template_name='emails/community_approval.html',
         context=context
     )

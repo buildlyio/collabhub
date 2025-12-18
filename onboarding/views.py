@@ -8,7 +8,7 @@ from django.views.generic import CreateView
 from django.db.models import Q, Count, Avg
 from django.core.mail import send_mail
 from .forms import TeamMemberRegistrationForm, ResourceForm, TeamMemberUpdateForm, DevelopmentAgencyForm
-from .models import TeamMember, Resource, TeamMemberResource,CertificationExam,Quiz, QuizQuestion, QuizAnswer, DevelopmentAgency, TEAM_MEMBER_TYPES, Customer, CustomerDeveloperAssignment, Contract
+from .models import TeamMember, TeamMemberType, Resource, TeamMemberResource,CertificationExam,Quiz, QuizQuestion, QuizAnswer, DevelopmentAgency, TEAM_MEMBER_TYPES, Customer, CustomerDeveloperAssignment, Contract
 from submission.models import SubmissionLink, Submission
 from django.contrib import messages
 from django.utils.timezone import now
@@ -2498,6 +2498,13 @@ def admin_approve_community(request, developer_id):
         messages.warning(request, f'{developer.first_name} {developer.last_name} is already approved.')
         return redirect('onboarding:admin_approval_queue')
     
+    # Get profile type from form if provided
+    profile_type_key = request.POST.get('profile_type')
+    if profile_type_key:
+        profile_type = TeamMemberType.objects.filter(key=profile_type_key).first()
+        if profile_type and profile_type not in developer.profile_types.all():
+            developer.profile_types.add(profile_type)
+    
     # Approve developer
     developer.community_approval_date = now()
     developer.community_approved_by = request.user
@@ -2511,8 +2518,8 @@ def admin_approve_community(request, developer_id):
     Notification.objects.create(
         recipient=developer.user,
         notification_type='community_approved',
-        title='Welcome to Buildly Community!',
-        message=f'Your profile has been approved. You can now be assigned to customer teams.',
+        title='Welcome to Buildly Open Source Community!',
+        message=f'Your profile has been approved! You now have access to community trainings, certifications, and can be evaluated for job openings.',
         is_read=False
     )
     
