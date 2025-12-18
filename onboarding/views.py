@@ -1614,6 +1614,14 @@ def admin_dashboard(request):
     # Recent signups for list
     recent_signups = TeamMember.objects.select_related('user').order_by('-user__date_joined')[:5]
     
+    # Community Members (approved developers) for new section
+    approved_developers = TeamMember.objects.filter(
+        community_approval_date__isnull=False
+    ).select_related('user').order_by('-community_approval_date')[:10]
+    total_community_members = TeamMember.objects.filter(
+        community_approval_date__isnull=False
+    ).count()
+    
     context = {
         'awaiting_evaluation': awaiting_evaluation,
         'total_quizzes': total_quizzes,
@@ -1627,6 +1635,8 @@ def admin_dashboard(request):
         'total_answers': total_answers,
         'pending_assessments': pending_assessments,
         'recent_signups': recent_signups,
+        'approved_developers': approved_developers,
+        'total_community_members': total_community_members,
     }
     
     return render(request, 'admin_dashboard.html', context)
@@ -1980,9 +1990,10 @@ def admin_contract_delete(request, contract_id):
 
 
 @user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_developers_list(request):
-    """List all developers with search and filter"""
-    developers = TeamMember.objects.all().order_by('-id')
+    """Unified admin developer management with search, filters, and approval"""
+    developers = TeamMember.objects.all().prefetch_related('tech_skills', 'types', 'profile_types').order_by('-id')
     
     # Search
     search_query = request.GET.get('search', '')
@@ -1990,31 +2001,53 @@ def admin_developers_list(request):
         developers = developers.filter(
             Q(first_name__icontains=search_query) |
             Q(last_name__icontains=search_query) |
-            Q(email__icontains=search_query)
-        )
+            Q(email__icontains=search_query) |
+            Q(github_account__icontains=search_query)
+        ).distinct()
     
     # Filter by approval status
     approval_filter = request.GET.get('approval', '')
     if approval_filter == 'approved':
-        developers = developers.filter(approved=True)
+        developers = developers.filter(community_approval_date__isnull=False)
     elif approval_filter == 'pending':
-        developers = developers.filter(approved=False)
+        developers = developers.filter(community_approval_date__isnull=True, approved=False)
+    elif approval_filter == 'legacy':
+        developers = developers.filter(approved=True, community_approval_date__isnull=True)
     
     # Filter by team member type
     type_filter = request.GET.get('type', '')
     if type_filter:
-        developers = developers.filter(team_member_type=type_filter)
+        developers = developers.filter(types__key=type_filter).distinct()
     
-    # Add assignment count
-    for dev in developers:
-        dev.assignment_count = CustomerDeveloperAssignment.objects.filter(developer=dev).count()
+    # Filter by experience level
+    exp_filter = request.GET.get('experience', '')
+    if exp_filter == 'junior':
+        developers = developers.filter(experience_years__lt=3)
+    elif exp_filter == 'mid':
+        developers = developers.filter(experience_years__gte=3, experience_years__lt=7)
+    elif exp_filter == 'senior':
+        developers = developers.filter(experience_years__gte=7)
+    
+    # Filter by affiliation
+    affiliation_filter = request.GET.get('affiliation', '')
+    if affiliation_filter == 'independent':
+        developers = developers.filter(is_independent=True)
+    elif affiliation_filter == 'agency':
+        developers = developers.filter(is_independent=False)
+    
+    developers = developers.order_by('last_name', 'first_name')
+    
+    # Get unique types for filter dropdown
+    all_types = TeamMemberType.objects.all().order_by('label')
     
     context = {
         'developers': developers,
         'search_query': search_query,
         'approval_filter': approval_filter,
         'type_filter': type_filter,
-        'team_member_types': TEAM_MEMBER_TYPES,
+        'exp_filter': exp_filter,
+        'affiliation_filter': affiliation_filter,
+        'all_types': all_types,
     }
     
     return render(request, 'admin_developers_list.html', context)
@@ -2022,10 +2055,50 @@ def admin_developers_list(request):
 
 @user_passes_test(lambda u: u.is_superuser)
 def admin_developer_profile(request, developer_id):
-    """View full developer profile with assessment results"""
+    """View full developer profile with assessment results and approval options"""
     developer = get_object_or_404(TeamMember, id=developer_id)
     
-    # Handle approval toggle
+    # Handle community approval
+    if request.method == 'POST' and request.POST.get('action') == 'approve_community':
+        profile_type_key = request.POST.get('profile_type')
+        if not profile_type_key:
+            messages.error(request, 'Please select a profile type before approving.')
+            return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
+        
+        profile_type = TeamMemberType.objects.filter(key=profile_type_key).first()
+        if not profile_type:
+            messages.error(request, 'Invalid profile type selected.')
+            return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
+        
+        if developer.community_approval_date:
+            messages.warning(request, f'{developer.first_name} {developer.last_name} is already approved.')
+            return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
+        
+        if profile_type not in developer.profile_types.all():
+            developer.profile_types.add(profile_type)
+        
+        # Approve developer
+        developer.community_approval_date = now()
+        developer.community_approved_by = request.user
+        developer.approved = True
+        developer.save(update_fields=['community_approval_date', 'community_approved_by', 'approved'])
+        
+        # Send email notification
+        send_community_approval_email(developer)
+        
+        # Create in-app notification
+        Notification.objects.create(
+            recipient=developer.user,
+            notification_type='community_approved',
+            title='Welcome to Buildly Open Source Community!',
+            message=f'Your profile has been approved! You now have access to community trainings, certifications, and can be evaluated for job openings.',
+            is_read=False
+        )
+        
+        messages.success(request, f'{developer.first_name} {developer.last_name} approved successfully!')
+        return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
+    
+    # Handle approval toggle (legacy)
     if request.method == 'POST' and request.POST.get('action') == 'toggle_approval':
         developer.approved = not developer.approved
         developer.save()
@@ -2115,6 +2188,7 @@ def admin_developer_profile(request, developer_id):
         'tech_skills': tech_skills,
         'skills_dict': skills_dict,
         'primary_techs': primary_techs,
+        'all_types': TeamMemberType.objects.all().order_by('label'),
     }
     
     return render(request, 'admin_developer_profile.html', context)
@@ -2467,14 +2541,8 @@ def admin_approval_queue(request):
     
     pending_developers = pending_developers.order_by('last_name', 'first_name')
     
-    # Get unique types for filter dropdown
-    all_types = TeamMemberType.objects.filter(
-        team_members__in=TeamMember.objects.filter(
-            community_approval_date__isnull=True,
-            approved=False,
-            user__is_active=True
-        )
-    ).distinct().order_by('label')
+    # Get all types for approval dropdown (show all available types, not just pending ones)
+    all_types = TeamMemberType.objects.all().order_by('label')
     
     return render(request, 'admin_approval_queue.html', {
         'pending_developers': pending_developers,
@@ -2498,12 +2566,19 @@ def admin_approve_community(request, developer_id):
         messages.warning(request, f'{developer.first_name} {developer.last_name} is already approved.')
         return redirect('onboarding:admin_approval_queue')
     
-    # Get profile type from form if provided
+    # Get profile type from form if provided (required)
     profile_type_key = request.POST.get('profile_type')
-    if profile_type_key:
-        profile_type = TeamMemberType.objects.filter(key=profile_type_key).first()
-        if profile_type and profile_type not in developer.profile_types.all():
-            developer.profile_types.add(profile_type)
+    if not profile_type_key:
+        messages.error(request, 'Please select a profile type before approving.')
+        return redirect('onboarding:admin_approval_queue')
+    
+    profile_type = TeamMemberType.objects.filter(key=profile_type_key).first()
+    if not profile_type:
+        messages.error(request, 'Invalid profile type selected.')
+        return redirect('onboarding:admin_approval_queue')
+    
+    if profile_type not in developer.profile_types.all():
+        developer.profile_types.add(profile_type)
     
     # Approve developer
     developer.community_approval_date = now()
@@ -2894,7 +2969,7 @@ def contract_pdf_download(request, contract_id):
 def notification_center(request):
     """View all notifications"""
     notifications = Notification.objects.filter(
-        user=request.user
+        recipient=request.user
     ).order_by('-created_at')
     
     # Mark as read if requested
