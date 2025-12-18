@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block page_title %}{{ action }} Training{% endblock %}
+
+{% block page_content %}
+<div class="max-w-3xl mx-auto">
+  <div class="bg-white rounded-lg shadow p-6">
+    <h1 class="text-2xl font-bold text-gray-900 mb-4">{{ action }} Training</h1>
+    <form method="post">
+      {% csrf_token %}
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Customer</label>
+          {{ form.customer }}
+          {% if form.customer.errors %}<div class="text-sm text-red-600">{{ form.customer.errors }}</div>{% endif %}
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Assign to Team (optional)</label>
+          {{ form.developer_team }}
+          {% if form.developer_team.errors %}<div class="text-sm text-red-600">{{ form.developer_team.errors }}</div>{% endif %}
+          <p class="text-xs text-gray-500 mt-1">Assigning to a team will automatically enroll all team members.</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+          {{ form.name }}
+          {% if form.name.errors %}<div class="text-sm text-red-600">{{ form.name.errors }}</div>{% endif %}
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          {{ form.description }}
+          {% if form.description.errors %}<div class="text-sm text-red-600">{{ form.description.errors }}</div>{% endif %}
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Resources</label>
+          {{ form.resources }}
+          <p class="text-xs text-gray-500 mt-1">Hold Cmd (Mac) or Ctrl (Windows) to select multiple.</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Quiz (optional)</label>
+          {{ form.quiz }}
+        </div>
+        <div class="flex items-center gap-2">
+          {{ form.is_active }}
+          <label class="text-sm text-gray-700">Active</label>
+        </div>
+      </div>
+      <div class="mt-6 flex items-center justify-between">
+        {% if training %}
+          <a href="{% url 'onboarding:admin_training_detail' training.id %}"
+             class="text-gray-600 hover:text-gray-800">Cancel</a>
+        {% else %}
+          <a href="{% url 'onboarding:admin_training_list' %}"
+             class="text-gray-600 hover:text-gray-800">Cancel</a>
+        {% endif %}
+        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Dynamic team dropdown filtering based on customer selection
+document.addEventListener('DOMContentLoaded', function() {
+  const customerSelect = document.querySelector('#id_customer');
+  const teamSelect = document.querySelector('#id_developer_team');
+  
+  if (customerSelect && teamSelect) {
+    // Store all team options
+    const allTeamOptions = Array.from(teamSelect.options);
+    
+    customerSelect.addEventListener('change', function() {
+      const customerId = this.value;
+      
+      // If no customer selected, clear teams
+      if (!customerId) {
+        teamSelect.innerHTML = '<option value="">---------</option>';
+        return;
+      }
+      
+      // Filter teams by customer via AJAX
+      fetch(`/onboarding/api/teams/?customer=${customerId}`)
+        .then(response => response.json())
+        .then(teams => {
+          teamSelect.innerHTML = '<option value="">---------</option>';
+          teams.forEach(team => {
+            const option = document.createElement('option');
+            option.value = team.id;
+            option.textContent = `${team.name} (${team.member_count} members)`;
+            teamSelect.appendChild(option);
+          });
+        })
+        .catch(error => {
+          console.error('Error loading teams:', error);
+          // Fallback: just clear the dropdown
+          teamSelect.innerHTML = '<option value="">---------</option>';
+        });
+    });
+  }
+});
+</script>
+<style>
+  /* Basic form field styling to avoid white-on-white */
+  select, input[type="text"], textarea {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      background: #fff;
+      color: #111827;
+  }
+  select:focus, input[type="text"]:focus, textarea:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+  textarea { min-height: 100px; resize: vertical; }
+</style>
+{% endblock %}

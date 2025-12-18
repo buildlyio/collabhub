@@ -27,3 +27,8 @@ admin.site.register(CompanyProfile)
 admin.site.register(CompanyAdmin)
 admin.site.register(Notification)
 admin.site.register(LabsAccount)
+
+# Team Training Management
+admin.site.register(DeveloperTeam, DeveloperTeamAdmin)
+admin.site.register(TeamTraining, TeamTrainingAdmin)
+admin.site.register(DeveloperTrainingEnrollment, DeveloperTrainingEnrollmentAdmin)

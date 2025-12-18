@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Developer Teams</h1>
+        <a href="{% url 'onboarding:admin_team_create' %}" 
+           class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Create Team
+        </a>
+    </div>
+
+    <!-- Filter -->
+    <div class="mb-4">
+        <form method="get" class="flex gap-2">
+            <select name="customer" class="border rounded px-3 py-2">
+                <option value="">All Customers</option>
+                {% for customer in customers %}
+                    <option value="{{ customer.id }}" {% if request.GET.customer == customer.id|stringformat:"s" %}selected{% endif %}>
+                        {{ customer.company_name }}
+                    </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">
+                Filter
+            </button>
+        </form>
+    </div>
+
+    <!-- Teams Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        {% if teams %}
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Team Name
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Customer
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Members
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Team Lead
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for team in teams %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="font-medium text-gray-900">{{ team.name }}</div>
+                                {% if team.description %}
+                                    <div class="text-sm text-gray-500">{{ team.description|truncatewords:10 }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ team.customer.company_name }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ team.member_count }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {% if team.team_lead %}
+                                    {{ team.team_lead.user.first_name }} {{ team.team_lead.user.last_name }}
+                                {% else %}
+                                    <span class="text-gray-400">None</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if team.is_active %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        Active
+                                    </span>
+                                {% else %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                        Inactive
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <a href="{% url 'onboarding:admin_team_detail' team.id %}" 
+                                   class="text-blue-600 hover:text-blue-900 mr-3">View</a>
+                                <a href="{% url 'onboarding:admin_team_edit' team.id %}" 
+                                   class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="p-8 text-center text-gray-500">
+                <p class="mb-4">No developer teams found.</p>
+                <a href="{% url 'onboarding:admin_team_create' %}" 
+                   class="text-blue-600 hover:text-blue-800 font-medium">
+                    Create your first team
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

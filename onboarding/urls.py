@@ -111,5 +111,28 @@ urlpatterns = [
     path('notifications/', views.notification_center, name='notification_center'),
     path('notifications/<int:notification_id>/read/', views.notification_mark_read, name='notification_mark_read'),
     path('api/notifications/unread-count/', views.notification_unread_count, name='notification_unread_count'),
+
+    # Developer Teams & Trainings
+    path('teams/', views.developer_teams, name='developer_teams'),
+    path('teams/resource/<int:resource_id>/complete/', views.mark_resource_complete, name='mark_resource_complete'),
+
+    # Admin: Training Management
+    path('admin/trainings/', views.admin_training_list, name='admin_training_list'),
+    path('admin/trainings/create/', views.admin_training_create, name='admin_training_create'),
+    path('admin/trainings/<int:training_id>/', views.admin_training_detail, name='admin_training_detail'),
+    path('admin/trainings/<int:training_id>/edit/', views.admin_training_edit, name='admin_training_edit'),
+    path('admin/trainings/<int:training_id>/enroll/', views.admin_training_enroll, name='admin_training_enroll'),
+    path('admin/trainings/<int:training_id>/assign-team/', views.admin_training_assign_team, name='admin_training_assign_team'),
+    
+    # Admin: Developer Team Management
+    path('admin/developer-teams/', views.admin_team_list, name='admin_team_list'),
+    path('admin/developer-teams/create/', views.admin_team_create, name='admin_team_create'),
+    path('admin/developer-teams/<int:team_id>/', views.admin_team_detail, name='admin_team_detail'),
+    path('admin/developer-teams/<int:team_id>/edit/', views.admin_team_edit, name='admin_team_edit'),
+    path('admin/developer-teams/<int:team_id>/add-member/', views.admin_team_add_member, name='admin_team_add_member'),
+    path('admin/developer-teams/<int:team_id>/remove-member/<int:member_id>/', views.admin_team_remove_member, name='admin_team_remove_member'),
+    
+    # API endpoints
+    path('api/teams/', views.api_teams_list, name='api_teams_list'),
 ]
 

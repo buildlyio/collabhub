@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_content %}
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold">{{ action }} Developer Team</h1>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Customer -->
+            <div>
+                <label for="{{ form.customer.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Customer *
+                </label>
+                {{ form.customer }}
+                {% if form.customer.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.customer.errors }}</p>
+                {% endif %}
+                <p class="mt-1 text-sm text-gray-500">Select the customer this team belongs to</p>
+            </div>
+
+            <!-- Name -->
+            <div>
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Team Name *
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Team Lead -->
+            <div>
+                <label for="{{ form.team_lead.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Team Lead
+                </label>
+                {{ form.team_lead }}
+                {% if form.team_lead.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.team_lead.errors }}</p>
+                {% endif %}
+                <p class="mt-1 text-sm text-gray-500">Optional - Select a developer to lead this team</p>
+            </div>
+
+            <!-- Is Active -->
+            <div class="flex items-center">
+                {{ form.is_active }}
+                <label for="{{ form.is_active.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
+                    Team is Active
+                </label>
+                {% if form.is_active.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.is_active.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex gap-3 pt-4">
+                <button type="submit" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">
+                    Save Team
+                </button>
+                <a href="{% url 'onboarding:admin_team_list' %}" 
+                   class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+
+    {% if team %}
+        <div class="mt-6 text-sm text-gray-600">
+            <p>Created: {{ team.created_at|date:"F j, Y g:i A" }}</p>
+            <p>Last Updated: {{ team.updated_at|date:"F j, Y g:i A" }}</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    /* Form field styling */
+    select, input[type="text"], textarea {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        background: #fff;
+        color: #111827;
+    }
+    
+    select:focus, input[type="text"]:focus, textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+    
+    input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
+        border-radius: 0.25rem;
+        border: 1px solid #d1d5db;
+    }
+</style>
+{% endblock %}

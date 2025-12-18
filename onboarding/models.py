@@ -322,49 +322,132 @@ class QuizAnswerAdmin(admin.ModelAdmin):
     list_display = ('question', 'team_member', 'answer_preview', 'ai_detection_score', 'evaluator_score', 'submitted_at')
     list_filter = ('question__quiz', 'evaluated_at', 'submitted_at')
     search_fields = ('team_member__first_name', 'team_member__last_name', 'answer')
-    readonly_fields = ('submitted_at', 'ai_detection_score', 'ai_detection_analysis')
-    
-    fieldsets = (
-        ('Answer Details', {
-            'fields': ('question', 'team_member', 'answer', 'submitted_at')
-        }),
-        ('AI Detection', {
-            'fields': ('ai_detection_score', 'ai_detection_analysis'),
-            'classes': ('collapse',)
-        }),
-        ('Human Evaluation', {
-            'fields': ('evaluator_score', 'evaluator_notes', 'evaluated_by', 'evaluated_at')
-        }),
-    )
-    
+
     def answer_preview(self, obj):
         return obj.answer[:100] + '...' if len(obj.answer) > 100 else obj.answer
     answer_preview.short_description = 'Answer Preview'
+
+
+# Developer Teams (groups within a customer)
+class DeveloperTeam(models.Model):
+    """A team/group of developers within a customer organization."""
+    customer = models.ForeignKey('onboarding.Customer', on_delete=models.CASCADE, related_name='developer_teams')
+    name = models.CharField(max_length=200, help_text="Team name (e.g., 'Frontend Team', 'Mobile Squad')")
+    description = models.TextField(blank=True)
+    members = models.ManyToManyField('onboarding.TeamMember', blank=True, related_name='developer_teams')
+    team_lead = models.ForeignKey('onboarding.TeamMember', null=True, blank=True, on_delete=models.SET_NULL, related_name='teams_led', help_text="Optional team lead")
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='developer_teams_created')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.customer.company_name} - {self.name}"
+
+    def member_count(self):
+        return self.members.count()
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ('customer', 'name')
+
+
+class DeveloperTeamAdmin(admin.ModelAdmin):
+    list_display = ('name', 'customer', 'member_count', 'team_lead', 'is_active', 'created_at')
+    list_filter = ('is_active', 'customer')
+    search_fields = ('name', 'customer__company_name')
+    readonly_fields = ('created_at',)
+    filter_horizontal = ('members',)
+
+
+# Team Trainings (per customer/team)
+class TeamTraining(models.Model):
+    """A training program scoped to a customer/team, grouping resources and an optional quiz."""
+    customer = models.ForeignKey('onboarding.Customer', on_delete=models.CASCADE, related_name='team_trainings')
+    developer_team = models.ForeignKey('onboarding.DeveloperTeam', null=True, blank=True, on_delete=models.SET_NULL, related_name='trainings', help_text="Optional: assign to specific team within customer")
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    resources = models.ManyToManyField('onboarding.Resource', blank=True, related_name='team_trainings')
+    quiz = models.ForeignKey('onboarding.Quiz', null=True, blank=True, on_delete=models.SET_NULL, related_name='team_trainings')
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='team_trainings_created')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        team_part = f" ({self.developer_team.name})" if self.developer_team else ""
+        return f"{self.customer.company_name}{team_part} - {self.name}"
+
+    def total_resources(self):
+        return self.resources.count()
     
-    actions = ['run_ai_detection']
-    
-    def run_ai_detection(self, request, queryset):
-        """Run AI detection on selected essay answers"""
-        from .ai_detection import detect_ai_usage
+    def auto_enroll_team_members(self, assigned_by=None):
+        """Automatically enroll all members of the assigned developer team."""
+        if not self.developer_team:
+            return 0
         
-        essay_answers = queryset.filter(question__question_type='essay')
-        if not essay_answers:
-            self.message_user(request, "No essay answers selected. AI detection only works on essay questions.", level='WARNING')
-            return
-        
-        detected_count = 0
-        for answer in essay_answers:
-            try:
-                score, analysis = detect_ai_usage(answer.answer)
-                answer.ai_detection_score = score
-                answer.ai_detection_analysis = analysis
-                answer.save(update_fields=['ai_detection_score', 'ai_detection_analysis'])
-                detected_count += 1
-            except Exception as e:
-                self.message_user(request, f"Error detecting AI for answer {answer.id}: {str(e)}", level='ERROR')
-        
-        self.message_user(request, f"AI detection completed for {detected_count} answers.")
-    run_ai_detection.short_description = "Run AI detection on essay answers"
+        enrolled_count = 0
+        for member in self.developer_team.members.all():
+            enrollment, created = DeveloperTrainingEnrollment.objects.get_or_create(
+                developer=member,
+                training=self,
+                defaults={'assigned_by': assigned_by}
+            )
+            if created:
+                enrolled_count += 1
+        return enrolled_count
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class TeamTrainingAdmin(admin.ModelAdmin):
+    list_display = ('name', 'customer', 'developer_team', 'is_active', 'total_resources', 'created_at')
+    list_filter = ('is_active', 'customer', 'developer_team')
+    search_fields = ('name', 'customer__company_name', 'developer_team__name')
+    readonly_fields = ('created_at',)
+
+
+class DeveloperTrainingEnrollment(models.Model):
+    """Enrollment of a developer into a specific team training."""
+    STATUS_CHOICES = [
+        ('assigned', 'Assigned'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+    ]
+
+    developer = models.ForeignKey('onboarding.TeamMember', on_delete=models.CASCADE, related_name='training_enrollments')
+    training = models.ForeignKey(TeamTraining, on_delete=models.CASCADE, related_name='enrollments')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='assigned')
+    assigned_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='trainings_assigned')
+    assigned_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.developer} → {self.training} ({self.status})"
+
+    def progress_percent(self):
+        """Compute percent of training resources marked complete by this developer."""
+        total = self.training.resources.count()
+        if total == 0:
+            return 0
+        from django.db.models import Q
+        completed = TeamMemberResource.objects.filter(
+            team_member=self.developer,
+            resource__in=self.training.resources.all(),
+            percentage_complete__gte=100,
+        ).count()
+        return int((completed / total) * 100)
+
+    class Meta:
+        unique_together = ('developer', 'training')
+        ordering = ['-assigned_at']
+
+
+class DeveloperTrainingEnrollmentAdmin(admin.ModelAdmin):
+    list_display = ('developer', 'training', 'status', 'assigned_at', 'progress_percent')
+    list_filter = ('status', 'assigned_at', 'training__customer')
+    search_fields = ('developer__first_name', 'developer__last_name', 'training__name', 'training__customer__company_name')
+    readonly_fields = ('assigned_at',)
 
 
 class DevelopmentAgency(models.Model):

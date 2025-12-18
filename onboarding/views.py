@@ -8,7 +8,7 @@ from django.views.generic import CreateView
 from django.db.models import Q, Count, Avg
 from django.core.mail import send_mail
 from .forms import TeamMemberRegistrationForm, ResourceForm, TeamMemberUpdateForm, DevelopmentAgencyForm
-from .models import TeamMember, TeamMemberType, Resource, TeamMemberResource,CertificationExam,Quiz, QuizQuestion, QuizAnswer, DevelopmentAgency, TEAM_MEMBER_TYPES, Customer, CustomerDeveloperAssignment, Contract
+from .models import TeamMember, TeamMemberType, Resource, TeamMemberResource,CertificationExam,Quiz, QuizQuestion, QuizAnswer, DevelopmentAgency, TEAM_MEMBER_TYPES, Customer, CustomerDeveloperAssignment, Contract, TeamTraining, DeveloperTrainingEnrollment, DeveloperTeam
 from submission.models import SubmissionLink, Submission
 from django.contrib import messages
 from django.utils.timezone import now
@@ -3231,3 +3231,464 @@ def verify_certificate(request, certificate_hash):
     }
     
     return render(request, 'verify_certificate.html', context)
+
+
+# ==================== DEVELOPER TEAMS & TRAININGS ====================
+
+@login_required
+def developer_teams(request):
+    """Show logged-in developer the teams (customers) they are part of and assigned trainings."""
+    try:
+        team_member = TeamMember.objects.get(user=request.user)
+    except TeamMember.DoesNotExist:
+        return redirect('onboarding:register')
+
+    assignments = (CustomerDeveloperAssignment.objects
+                   .filter(developer=team_member, status='approved')
+                   .select_related('customer'))
+
+    # Precompute completed resources for this developer
+    completed_resource_ids = set(
+        TeamMemberResource.objects.filter(team_member=team_member, percentage_complete__gte=100)
+        .values_list('resource_id', flat=True)
+    )
+
+    teams = []
+    for assignment in assignments:
+        trainings = TeamTraining.objects.filter(customer=assignment.customer, is_active=True)
+        enrollments = {e.training_id: e for e in DeveloperTrainingEnrollment.objects.filter(developer=team_member, training__in=trainings)}
+        team_entry = {
+            'customer': assignment.customer,
+            'trainings': [],
+        }
+        for tr in trainings:
+            enr = enrollments.get(tr.id)
+            progress = enr.progress_percent() if enr else 0
+            team_entry['trainings'].append({
+                'training': tr,
+                'enrollment': enr,
+                'progress': progress,
+            })
+        teams.append(team_entry)
+
+    context = {
+        'team_member': team_member,
+        'teams': teams,
+        'completed_resource_ids': completed_resource_ids,
+    }
+    return render(request, 'developer_teams.html', context)
+
+
+@login_required
+def mark_resource_complete(request, resource_id):
+    """Mark a learning resource as complete for the current developer."""
+    team_member = get_object_or_404(TeamMember, user=request.user)
+    resource = get_object_or_404(Resource, id=resource_id)
+
+    tm_res, _ = TeamMemberResource.objects.get_or_create(team_member=team_member, resource=resource)
+    tm_res.percentage_complete = 100
+    tm_res.save()
+    messages.success(request, f'Marked "{resource.title}" as complete.')
+    return redirect(request.META.get('HTTP_REFERER', 'onboarding:developer_teams'))
+
+
+def _is_staff(user):
+    return user.is_staff
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_training_list(request):
+    qs = TeamTraining.objects.select_related('customer').all()
+    customer_id = request.GET.get('customer')
+    if customer_id:
+        qs = qs.filter(customer_id=customer_id)
+    return render(request, 'admin_training_list.html', {
+        'trainings': qs,
+    })
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_training_create(request):
+    from django import forms
+
+    class TeamTrainingForm(forms.ModelForm):
+        class Meta:
+            model = TeamTraining
+            fields = ['customer', 'developer_team', 'name', 'description', 'resources', 'quiz', 'is_active']
+            widgets = {
+                'resources': forms.SelectMultiple(attrs={'size': 10}),
+            }
+        
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            if 'customer' in self.data:
+                try:
+                    customer_id = int(self.data.get('customer'))
+                    self.fields['developer_team'].queryset = DeveloperTeam.objects.filter(customer_id=customer_id)
+                except (ValueError, TypeError):
+                    pass
+            elif self.instance.pk and self.instance.customer:
+                self.fields['developer_team'].queryset = DeveloperTeam.objects.filter(customer=self.instance.customer)
+            else:
+                self.fields['developer_team'].queryset = DeveloperTeam.objects.none()
+
+    if request.method == 'POST':
+        form = TeamTrainingForm(request.POST)
+        if form.is_valid():
+            training = form.save(commit=False)
+            training.created_by = request.user
+            training.save()
+            form.save_m2m()
+            
+            # Auto-enroll team members if a team was selected
+            if training.developer_team:
+                enrolled_count = training.auto_enroll_team_members(assigned_by=request.user)
+                if enrolled_count > 0:
+                    messages.success(request, f'Training created and {enrolled_count} team members enrolled.')
+                else:
+                    messages.success(request, 'Training created.')
+            else:
+                messages.success(request, 'Training created.')
+            return redirect('onboarding:admin_training_detail', training_id=training.id)
+    else:
+        form = TeamTrainingForm()
+
+    return render(request, 'admin_training_form.html', {
+        'form': form,
+        'action': 'Create',
+    })
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_training_edit(request, training_id):
+    from django import forms
+    training = get_object_or_404(TeamTraining, id=training_id)
+
+    class TeamTrainingForm(forms.ModelForm):
+        class Meta:
+            model = TeamTraining
+            fields = ['customer', 'developer_team', 'name', 'description', 'resources', 'quiz', 'is_active']
+            widgets = {
+                'resources': forms.SelectMultiple(attrs={'size': 10}),
+            }
+        
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            if 'customer' in self.data:
+                try:
+                    customer_id = int(self.data.get('customer'))
+                    self.fields['developer_team'].queryset = DeveloperTeam.objects.filter(customer_id=customer_id)
+                except (ValueError, TypeError):
+                    pass
+            elif self.instance.pk and self.instance.customer:
+                self.fields['developer_team'].queryset = DeveloperTeam.objects.filter(customer=self.instance.customer)
+            else:
+                self.fields['developer_team'].queryset = DeveloperTeam.objects.none()
+
+    if request.method == 'POST':
+        form = TeamTrainingForm(request.POST, instance=training)
+        if form.is_valid():
+            old_team = training.developer_team
+            form.save()
+            
+            # If team assignment changed, auto-enroll new team members
+            if training.developer_team and training.developer_team != old_team:
+                enrolled_count = training.auto_enroll_team_members(assigned_by=request.user)
+                if enrolled_count > 0:
+                    messages.success(request, f'Training updated and {enrolled_count} team members enrolled.')
+                else:
+                    messages.success(request, 'Training updated.')
+            else:
+                messages.success(request, 'Training updated.')
+            return redirect('onboarding:admin_training_detail', training_id=training.id)
+    else:
+        form = TeamTrainingForm(instance=training)
+
+    return render(request, 'admin_training_form.html', {
+        'form': form,
+        'action': 'Edit',
+        'training': training,
+    })
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_training_detail(request, training_id):
+    training = get_object_or_404(TeamTraining.objects.select_related('customer', 'quiz'), id=training_id)
+
+    # Get all approved community developers
+    all_developers = TeamMember.objects.filter(
+        community_approval_date__isnull=False
+    ).order_by('first_name', 'last_name')
+
+    # Check which ones are assigned to this customer
+    assigned_to_customer = set(
+        CustomerDeveloperAssignment.objects.filter(
+            customer=training.customer,
+            status='approved'
+        ).values_list('developer_id', flat=True)
+    )
+
+    # Annotate developers with assignment status
+    developers_with_status = []
+    for dev in all_developers:
+        developers_with_status.append({
+            'developer': dev,
+            'is_assigned_to_customer': dev.id in assigned_to_customer,
+        })
+
+    enrollments = DeveloperTrainingEnrollment.objects.filter(training=training).select_related('developer')
+    
+    # Get customer teams for team assignment dropdown
+    customer_teams = DeveloperTeam.objects.filter(customer=training.customer, is_active=True).order_by('name')
+
+    return render(request, 'admin_training_detail.html', {
+        'training': training,
+        'enrollments': enrollments,
+        'developers_with_status': developers_with_status,
+        'has_assigned_developers': len(assigned_to_customer) > 0,
+        'customer_teams': customer_teams,
+    })
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_training_enroll(request, training_id):
+    if request.method != 'POST':
+        return redirect('onboarding:admin_training_detail', training_id=training_id)
+
+    training = get_object_or_404(TeamTraining, id=training_id)
+    developer_id = request.POST.get('developer_id')
+    developer = get_object_or_404(TeamMember, id=developer_id)
+
+    # Check if developer is assigned to this customer
+    is_assigned = CustomerDeveloperAssignment.objects.filter(
+        customer=training.customer, 
+        developer=developer, 
+        status='approved'
+    ).exists()
+    
+    if not is_assigned:
+        # Auto-create the assignment if developer is approved for community
+        if developer.community_approval_date:
+            assignment, created = CustomerDeveloperAssignment.objects.get_or_create(
+                customer=training.customer,
+                developer=developer,
+                defaults={'status': 'approved', 'reviewed_at': now()}
+            )
+            if created:
+                messages.info(request, f'Developer automatically assigned to {training.customer.company_name} team.')
+        else:
+            messages.error(request, 'Developer must be community-approved first.')
+            return redirect('onboarding:admin_training_detail', training_id=training.id)
+
+    enrollment, created = DeveloperTrainingEnrollment.objects.get_or_create(
+        developer=developer,
+        training=training,
+        defaults={'assigned_by': request.user}
+    )
+    if created:
+        messages.success(request, f"Assigned {developer.first_name} {developer.last_name} to training.")
+    else:
+        messages.info(request, 'Developer is already assigned to this training.')
+    return redirect('onboarding:admin_training_detail', training_id=training.id)
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_training_assign_team(request, training_id):
+    """Assign an entire developer team to a training at once."""
+    if request.method != 'POST':
+        return redirect('onboarding:admin_training_detail', training_id=training_id)
+    
+    training = get_object_or_404(TeamTraining, id=training_id)
+    team_id = request.POST.get('team_id')
+    
+    if team_id:
+        team = get_object_or_404(DeveloperTeam, id=team_id, customer=training.customer)
+        training.developer_team = team
+        training.save()
+        
+        # Auto-enroll all team members
+        enrolled_count = training.auto_enroll_team_members(assigned_by=request.user)
+        messages.success(request, f'Training assigned to {team.name}. {enrolled_count} members enrolled.')
+    else:
+        # Unassign team
+        training.developer_team = None
+        training.save()
+        messages.info(request, 'Training unassigned from team.')
+    
+    return redirect('onboarding:admin_training_detail', training_id=training.id)
+
+
+# ==================== DEVELOPER TEAM MANAGEMENT ====================
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_team_list(request):
+    """List all developer teams."""
+    teams = DeveloperTeam.objects.select_related('customer', 'team_lead').all()
+    customer_id = request.GET.get('customer')
+    if customer_id:
+        teams = teams.filter(customer_id=customer_id)
+    
+    customers = Customer.objects.all().order_by('company_name')
+    
+    return render(request, 'admin_team_list.html', {
+        'teams': teams,
+        'customers': customers,
+    })
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_team_create(request):
+    """Create a new developer team."""
+    from django import forms
+    
+    class DeveloperTeamForm(forms.ModelForm):
+        class Meta:
+            model = DeveloperTeam
+            fields = ['customer', 'name', 'description', 'team_lead', 'is_active']
+    
+    if request.method == 'POST':
+        form = DeveloperTeamForm(request.POST)
+        if form.is_valid():
+            team = form.save(commit=False)
+            team.created_by = request.user
+            team.save()
+            messages.success(request, f'Team "{team.name}" created.')
+            return redirect('onboarding:admin_team_detail', team_id=team.id)
+    else:
+        form = DeveloperTeamForm()
+    
+    return render(request, 'admin_team_form.html', {
+        'form': form,
+        'action': 'Create',
+    })
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_team_edit(request, team_id):
+    """Edit a developer team."""
+    from django import forms
+    team = get_object_or_404(DeveloperTeam, id=team_id)
+    
+    class DeveloperTeamForm(forms.ModelForm):
+        class Meta:
+            model = DeveloperTeam
+            fields = ['customer', 'name', 'description', 'team_lead', 'is_active']
+    
+    if request.method == 'POST':
+        form = DeveloperTeamForm(request.POST, instance=team)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Team updated.')
+            return redirect('onboarding:admin_team_detail', team_id=team.id)
+    else:
+        form = DeveloperTeamForm(instance=team)
+    
+    return render(request, 'admin_team_form.html', {
+        'form': form,
+        'action': 'Edit',
+        'team': team,
+    })
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_team_detail(request, team_id):
+    """View team details and manage members."""
+    team = get_object_or_404(DeveloperTeam.objects.select_related('customer', 'team_lead'), id=team_id)
+    
+    # Get potential members (approved for this customer)
+    potential_members = TeamMember.objects.filter(
+        id__in=CustomerDeveloperAssignment.objects.filter(
+            customer=team.customer,
+            status='approved'
+        ).values_list('developer_id', flat=True)
+    ).exclude(
+        id__in=team.members.values_list('id', flat=True)
+    ).order_by('first_name', 'last_name')
+    
+    # Get trainings for this team
+    trainings = TeamTraining.objects.filter(developer_team=team)
+    
+    return render(request, 'admin_team_detail.html', {
+        'team': team,
+        'potential_members': potential_members,
+        'trainings': trainings,
+    })
+
+
+# ==================== API ENDPOINTS ====================
+
+@login_required
+@user_passes_test(_is_staff)
+def api_teams_list(request):
+    """API endpoint to get teams filtered by customer (for AJAX)."""
+    from django.http import JsonResponse
+    
+    customer_id = request.GET.get('customer')
+    if not customer_id:
+        return JsonResponse({'teams': []})
+    
+    teams = DeveloperTeam.objects.filter(
+        customer_id=customer_id,
+        is_active=True
+    ).values('id', 'name')
+    
+    # Add member count to each team
+    teams_list = []
+    for team_data in teams:
+        team = DeveloperTeam.objects.get(id=team_data['id'])
+        teams_list.append({
+            'id': team_data['id'],
+            'name': team_data['name'],
+            'member_count': team.member_count()
+        })
+    
+    return JsonResponse(teams_list, safe=False)
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_team_add_member(request, team_id):
+    """Add a member to a team."""
+    if request.method != 'POST':
+        return redirect('onboarding:admin_team_detail', team_id=team_id)
+    
+    team = get_object_or_404(DeveloperTeam, id=team_id)
+    member_id = request.POST.get('member_id')
+    member = get_object_or_404(TeamMember, id=member_id)
+    
+    # Verify member is assigned to this customer
+    is_assigned = CustomerDeveloperAssignment.objects.filter(
+        customer=team.customer,
+        developer=member,
+        status='approved'
+    ).exists()
+    
+    if not is_assigned:
+        messages.error(request, 'Developer must be assigned to this customer first.')
+        return redirect('onboarding:admin_team_detail', team_id=team.id)
+    
+    team.members.add(member)
+    messages.success(request, f'Added {member.first_name} {member.last_name} to team.')
+    return redirect('onboarding:admin_team_detail', team_id=team.id)
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_team_remove_member(request, team_id, member_id):
+    """Remove a member from a team."""
+    team = get_object_or_404(DeveloperTeam, id=team_id)
+    member = get_object_or_404(TeamMember, id=member_id)
+    
+    team.members.remove(member)
+    messages.success(request, f'Removed {member.first_name} {member.last_name} from team.')
+    return redirect('onboarding:admin_team_detail', team_id=team.id)

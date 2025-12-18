@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block page_title %}My Teams & Trainings{% endblock %}
+
+{% block page_content %}
+<div class="max-w-7xl mx-auto">
+  <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg p-8 mb-8 text-white">
+    <h1 class="text-3xl md:text-4xl font-bold mb-2">My Teams & Trainings</h1>
+    <p class="opacity-90">See your teams, assigned trainings, and track your progress</p>
+  </div>
+
+  {% if teams %}
+    {% for entry in teams %}
+      <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-xl font-semibold text-gray-900">{{ entry.customer.company_name }}</h2>
+            <p class="text-sm text-gray-600">Team trainings and certifications</p>
+          </div>
+        </div>
+
+        {% if entry.trainings %}
+          <div class="space-y-6">
+            {% for t in entry.trainings %}
+            <div class="border rounded-lg p-4">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <h3 class="text-lg font-semibold text-gray-900">{{ t.training.name }}</h3>
+                  {% if t.training.description %}
+                    <p class="text-sm text-gray-600 mt-1">{{ t.training.description }}</p>
+                  {% endif %}
+                  {% if t.training.quiz %}
+                    <p class="text-sm text-gray-600 mt-2">Quiz: <a href="{% url 'onboarding:quiz_detail' t.training.quiz.id %}" class="text-blue-600 hover:text-blue-800">{{ t.training.quiz.name }}</a></p>
+                  {% endif %}
+                </div>
+                <div class="min-w-[220px] text-right">
+                  <div class="text-sm text-gray-600 mb-1">Progress: {{ t.progress }}%</div>
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-green-500 h-2 rounded-full" style="width: {{ t.progress }}%"></div>
+                  </div>
+                  {% if t.enrollment %}
+                    <div class="text-xs text-gray-500 mt-2">Status: {{ t.enrollment.get_status_display }}</div>
+                  {% else %}
+                    <div class="text-xs text-yellow-600 mt-2">Not yet assigned</div>
+                  {% endif %}
+                </div>
+              </div>
+
+              {% if t.training.resources.all %}
+                <div class="mt-4">
+                  <h4 class="text-sm font-semibold text-gray-800 mb-2">Resources</h4>
+                  <ul class="divide-y">
+                    {% for res in t.training.resources.all %}
+                      <li class="py-2 flex items-center justify-between">
+                        <div>
+                          <div class="text-sm font-medium text-gray-900">{{ res.title }}</div>
+                          {% if res.descr %}<div class="text-xs text-gray-600 mt-0.5">{{ res.descr|truncatewords:20 }}</div>{% endif %}
+                          {% if res.link %}<a href="{{ res.link }}" target="_blank" class="text-xs text-blue-600 hover:underline">Open resource →</a>{% endif %}
+                        </div>
+                        <div class="flex items-center gap-3">
+                          {% if res.id in completed_resource_ids %}
+                            <span class="text-green-700 text-sm">✓ Completed</span>
+                          {% else %}
+                            <a href="{% url 'onboarding:mark_resource_complete' res.id %}" class="text-sm px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700">Mark complete</a>
+                          {% endif %}
+                        </div>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-sm text-gray-500">No trainings available for this team yet.</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="bg-white rounded-lg shadow p-8 text-center">
+      <p class="text-gray-600">You are not part of any teams yet.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
