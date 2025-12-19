@@ -31,6 +31,8 @@ class ForgeAppListSerializer(serializers.ModelSerializer):
     price_dollars = serializers.ReadOnlyField()
     latest_validation_status = serializers.SerializerMethodField()
     has_release = serializers.SerializerMethodField()
+    # Always return a safe logo URL (default fallback when missing)
+    logo_url = serializers.SerializerMethodField()
     
     class Meta:
         model = ForgeApp
@@ -50,6 +52,10 @@ class ForgeAppListSerializer(serializers.ModelSerializer):
         """Check if app has a GitHub release available"""
         return obj.has_github_release
 
+    def get_logo_url(self, obj):
+        """Return logo URL or default image path"""
+        return obj.logo_url_or_default
+
 
 class ForgeAppDetailSerializer(serializers.ModelSerializer):
     """Serializer for detailed Forge app view (public)"""
@@ -57,6 +63,8 @@ class ForgeAppDetailSerializer(serializers.ModelSerializer):
     latest_validation = RepoValidationSerializer(read_only=True)
     video_embed_url = serializers.ReadOnlyField()
     has_release = serializers.ReadOnlyField(source='has_github_release')
+    # Always return a safe logo URL for detail view as well
+    logo_url = serializers.SerializerMethodField()
     
     class Meta:
         model = ForgeApp
@@ -68,6 +76,9 @@ class ForgeAppDetailSerializer(serializers.ModelSerializer):
             'has_release', 'latest_validation', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
+
+    def get_logo_url(self, obj):
+        return obj.logo_url_or_default
 
 
 class ForgeAppCreateUpdateSerializer(serializers.ModelSerializer):

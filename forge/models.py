@@ -1,4 +1,6 @@
 import uuid
+import logging
+import requests
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
@@ -128,6 +130,37 @@ class ForgeApp(models.Model):
                 return f"https://player.vimeo.com/video/{video_id}"
         
         return self.demo_video_url
+
+    def _logo_url_is_valid(self, url: str, timeout: float = 3.0) -> bool:
+        """Lightweight check to see if a remote logo URL is reachable.
+        Uses HEAD, then falls back to GET for providers that don't support HEAD.
+        """
+        if not url:
+            return False
+        try:
+            resp = requests.head(url, allow_redirects=True, timeout=timeout)
+            if resp.status_code == 200:
+                return True
+            if resp.status_code in (405, 403):  # Method not allowed or auth-style block; try GET
+                resp = requests.get(url, allow_redirects=True, timeout=timeout, stream=True)
+                return resp.status_code == 200
+            return False
+        except requests.RequestException:
+            return False
+
+    def save(self, *args, **kwargs):
+        """Ensure `logo_url` is valid; clear it when unreachable to force default fallback."""
+        try:
+            if self.logo_url and isinstance(self.logo_url, str) and self.logo_url.startswith('http'):
+                if not self._logo_url_is_valid(self.logo_url):
+                    logging.getLogger(__name__).warning(
+                        "Clearing invalid ForgeApp.logo_url for %s: %s", self.slug, self.logo_url
+                    )
+                    self.logo_url = None
+        except Exception:
+            # Never block saves on validation errors; API already falls back to default image
+            pass
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = "Forge App"
