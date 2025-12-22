@@ -145,7 +145,7 @@
                         </td>
                         <td class="px-2 py-2 text-sm text-gray-500">
                             {% if developer.github_account %}
-                            <a href="https://github.com/{{ developer.github_account }}" target="_blank" class="text-blue-600 hover:text-blue-800 truncate block">
+                            <a href="{{ developer.github_account }}" target="_blank" class="text-blue-600 hover:text-blue-800 truncate block">
                                 @{{ developer.github_account|truncatechars:15 }}
                             </a>
                             {% else %}

@@ -78,11 +78,14 @@ class RegistrationUpdateForm(UserChangeForm):
     email = forms.EmailField(required=True)
     first_name = forms.CharField(max_length=30)
     last_name = forms.CharField(max_length=30)
-    github_profile = forms.URLField(required=False)
+    bio = forms.CharField(widget=forms.Textarea, required=False)
+    linkedin = forms.URLField(required=False)
+    experience_years = forms.IntegerField(required=False)
+    github_account = forms.URLField(required=False)
 
     class Meta:
         model = User
-        fields = ('email', 'first_name', 'last_name', 'username')
+        fields = ('email', 'first_name', 'last_name', 'username', 'bio', 'linkedin', 'experience_years', 'github_account')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -95,6 +98,10 @@ class RegistrationUpdateForm(UserChangeForm):
             Field('first_name', placeholder='First Name'),
             Field('last_name', placeholder='Last Name'),
             Field('username', placeholder='Username'),
+            Field('bio', placeholder='Bio'),
+            Field('linkedin', placeholder='LinkedIn Profile URL'),
+            Field('experience_years', placeholder='Years of Experience'),
+            Field('github_account', placeholder='GitHub Profile URL'),
             Submit('submit', 'Update')
         )
 
@@ -106,6 +113,10 @@ class RegistrationUpdateForm(UserChangeForm):
         user.email = self.cleaned_data['email']
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
+        user.bio = self.cleaned_data['bio']
+        user.linkedin = self.cleaned_data['linkedin']
+        user.experience_years = self.cleaned_data['experience_years']
+        user.github_account = self.cleaned_data['github_account']
         user.save()
 
         return user
