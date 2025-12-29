@@ -144,10 +144,9 @@
                         </td>
                         <td class="px-2 py-3 whitespace-nowrap text-right text-sm font-medium">
                             <div class="flex flex-col gap-1">
-                                <a href="{% url 'onboarding:admin_developer_profile' developer.id %}" 
-                                   class="text-indigo-600 hover:text-indigo-900">
-                                    View Profile
-                                </a>
+                                <a href="{{ developer.profile_url }}" class="text-indigo-600 hover:text-indigo-900">View Profile</a>
+                                <a href="{{ developer.profile_url }}#assessmentDetails" class="text-blue-600 hover:text-blue-900">Quizzes</a>
+                                <a href="{{ developer.profile_url }}#resources" class="text-purple-600 hover:text-purple-900">Training</a>
                                 {% if not developer.community_approval_date %}
                                 <button 
                                     onclick="showApprovalModal('{{ developer.id }}', '{{ developer.first_name }} {{ developer.last_name }}')"
