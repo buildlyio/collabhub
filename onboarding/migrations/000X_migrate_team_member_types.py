@@ -1,9 +1,29 @@
 from django.db import migrations
-from onboarding.models import TEAM_MEMBER_TYPES
 
 def migrate_team_member_types(apps, schema_editor):
     TeamMemberType = apps.get_model('onboarding', 'TeamMemberType')
     TeamMember = apps.get_model('onboarding', 'TeamMember')
+
+    TEAM_MEMBER_TYPES = [
+        ('all', 'Everyone'),
+        ('buildly-hire-frontend', 'Buildly Hire Frontend'),
+        ('buildly-hire-backend', 'Buildly Hire Backend'),
+        ('buildly-hire-ai', 'Buildly Hire AI'),
+        ('buildly-hire-marketing', 'Buildly Hire Marketing'),
+        ('buildly-hire-product', 'Buildly Hire Product'),
+        ('buildly-hire-marketing-intern', 'Buildly Hire Marketing Intern'),
+        ('community-member-generic', 'Generic Community Member'),
+        ('community-frontend', 'Community Member Frontend'),
+        ('community-backend', 'Community Member Backend'),
+        ('community-product', 'Community Member Product'),
+        ('community-ai', 'Community Member AI'),
+        ('community-ui-designer', 'Community Member UI Designer'),
+        ('community-ux', 'Community Member UX'),
+        ('community-advisor', 'Community Member Advisor'),
+        ('community-software-agency', 'Community Member Software Agency'),
+        ('community-marketing-agency', 'Community Member Marketing Agency'),
+        ('community-design-agency', 'Community Member Design Agency'),
+    ]
 
     # 1. Create TeamMemberType objects for each type in TEAM_MEMBER_TYPES
     key_to_obj = {}
