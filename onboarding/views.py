@@ -1926,55 +1926,87 @@ def admin_contract_delete(request, contract_id):
 @user_passes_test(lambda u: u.is_superuser)
 def admin_developers_list(request):
     """Unified admin developer management with search, filters, and approval"""
-    developers = TeamMember.objects.all().prefetch_related('tech_skills', 'types', 'profile_types').order_by('-id')
+    from onboarding.models import DeveloperTeam, DeveloperTrainingEnrollment, Quiz
+    developers = TeamMember.objects.all().prefetch_related('tech_skills', 'types', 'profile_types', 'developer_teams').order_by('-id')
+    # Annotate each developer with approval status, team, and profile/quiz/training links
+    developer_list = []
+    for dev in developers:
+        # Approval status
+        if dev.community_approval_date:
+            approval_status = 'approved'
+        elif dev.approved:
+            approval_status = 'legacy'
+        else:
+            approval_status = 'pending'
+        # Team (first team or None)
+        team = dev.developer_teams.first()
+        team_name = team.name if team else None
+        # Profile URL
+        from django.urls import reverse
+        profile_url = reverse('onboarding:admin_developer_profile', args=[dev.id])
+        # Quizzes: link to profile with anchor
+        quizzes_url = f"{profile_url}#assessmentDetails"
+        # Trainings: link to profile with anchor
+        trainings_url = f"{profile_url}#resources"
+        developer_list.append({
+            'id': dev.id,
+            'first_name': dev.first_name,
+            'last_name': dev.last_name,
+            'email': dev.email,
+            'github_account': dev.get_github_username() or '',
+            'experience_years': dev.experience_years,
+            'tech_skills': dev.tech_skills.all(),
+            'user': dev.user,
+            'approval_status': approval_status,
+            'team': team_name,
+            'profile_url': profile_url,
+            'quizzes_url': quizzes_url,
+            'trainings_url': trainings_url,
+            'community_approval_date': dev.community_approval_date,
+            'approved': dev.approved,
+            'types': dev.types.all(),
+        })
+    # ...existing code...
     
     # Search
     search_query = request.GET.get('search', '')
     if search_query:
-        developers = developers.filter(
-            Q(first_name__icontains=search_query) |
-            Q(last_name__icontains=search_query) |
-            Q(email__icontains=search_query) |
-            Q(github_account__icontains=search_query)
-        ).distinct()
+        developer_list = [d for d in developer_list if search_query.lower() in (d['first_name'].lower() + d['last_name'].lower() + d['email'].lower() + (d['github_account'] or '').lower())]
     
     # Filter by approval status
     approval_filter = request.GET.get('approval', '')
-    if approval_filter == 'approved':
-        developers = developers.filter(community_approval_date__isnull=False)
-    elif approval_filter == 'pending':
-        developers = developers.filter(community_approval_date__isnull=True, approved=False)
-    elif approval_filter == 'legacy':
-        developers = developers.filter(approved=True, community_approval_date__isnull=True)
+    if approval_filter:
+        developer_list = [d for d in developer_list if d['approval_status'] == approval_filter]
     
     # Filter by team member type
     type_filter = request.GET.get('type', '')
     if type_filter:
-        developers = developers.filter(types__key=type_filter).distinct()
+        developer_list = [d for d in developer_list if any(t.key == type_filter for t in d['types'])]
     
     # Filter by experience level
     exp_filter = request.GET.get('experience', '')
     if exp_filter == 'junior':
-        developers = developers.filter(experience_years__lt=3)
+        developer_list = [d for d in developer_list if d['experience_years'] and d['experience_years'] < 3]
     elif exp_filter == 'mid':
-        developers = developers.filter(experience_years__gte=3, experience_years__lt=7)
+        developer_list = [d for d in developer_list if d['experience_years'] and 3 <= d['experience_years'] < 7]
     elif exp_filter == 'senior':
-        developers = developers.filter(experience_years__gte=7)
+        developer_list = [d for d in developer_list if d['experience_years'] and d['experience_years'] >= 7]
     
     # Filter by affiliation
     affiliation_filter = request.GET.get('affiliation', '')
     if affiliation_filter == 'independent':
-        developers = developers.filter(is_independent=True)
+        developer_list = [d for d in developer_list if getattr(TeamMember.objects.get(id=d['id']), 'is_independent', True)]
     elif affiliation_filter == 'agency':
-        developers = developers.filter(is_independent=False)
+        developer_list = [d for d in developer_list if not getattr(TeamMember.objects.get(id=d['id']), 'is_independent', True)]
     
-    developers = developers.order_by('last_name', 'first_name')
-    
+    # Sort by last name, first name
+    developer_list = sorted(developer_list, key=lambda d: (d['last_name'], d['first_name']))
+
     # Get unique types for filter dropdown
     all_types = TeamMemberType.objects.all().order_by('label')
-    
+
     context = {
-        'developers': developers,
+        'developers': developer_list,
         'search_query': search_query,
         'approval_filter': approval_filter,
         'type_filter': type_filter,
@@ -1982,7 +2014,7 @@ def admin_developers_list(request):
         'affiliation_filter': affiliation_filter,
         'all_types': all_types,
     }
-    
+
     return render(request, 'admin_developers_list.html', context)
 
 

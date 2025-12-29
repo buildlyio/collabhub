@@ -87,6 +87,7 @@
                     <tr>
                         <th class="w-1/6 px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Developer</th>
                         <th class="w-1/12 px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                        <th class="w-1/12 px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Team</th>
                         <th class="w-1/12 px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Experience</th>
                         <th class="w-1/5 px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Skills</th>
                         <th class="w-1/12 px-2 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Registered</th>
@@ -105,11 +106,11 @@
                         </td>
                         <td class="px-2 py-3 whitespace-nowrap">
                             <div class="flex flex-col gap-1">
-                                {% if developer.community_approval_date %}
+                                {% if developer.approval_status == 'approved' %}
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
                                     ✓ Approved
                                 </span>
-                                {% elif developer.approved %}
+                                {% elif developer.approval_status == 'legacy' %}
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
                                     ✓ Legacy
                                 </span>
@@ -119,6 +120,9 @@
                                 </span>
                                 {% endif %}
                             </div>
+                        </td>
+                        <td class="px-2 py-3 whitespace-nowrap">
+                            <div class="text-xs text-gray-700">{{ developer.team|default:'-' }}</div>
                         </td>
                         <td class="px-2 py-3 text-sm text-gray-500 whitespace-nowrap">
                             {{ developer.experience_years }}yr
@@ -145,9 +149,9 @@
                         <td class="px-2 py-3 whitespace-nowrap text-right text-sm font-medium">
                             <div class="flex flex-col gap-1">
                                 <a href="{{ developer.profile_url }}" class="text-indigo-600 hover:text-indigo-900">View Profile</a>
-                                <a href="{{ developer.profile_url }}#assessmentDetails" class="text-blue-600 hover:text-blue-900">Quizzes</a>
-                                <a href="{{ developer.profile_url }}#resources" class="text-purple-600 hover:text-purple-900">Training</a>
-                                {% if not developer.community_approval_date %}
+                                <a href="{{ developer.quizzes_url }}" class="text-blue-600 hover:text-blue-900">Quizzes</a>
+                                <a href="{{ developer.trainings_url }}" class="text-purple-600 hover:text-purple-900">Training</a>
+                                {% if developer.approval_status != 'approved' %}
                                 <button 
                                     onclick="showApprovalModal('{{ developer.id }}', '{{ developer.first_name }} {{ developer.last_name }}')"
                                     class="text-green-600 hover:text-green-900">
