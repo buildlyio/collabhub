@@ -34,8 +34,17 @@ class TeamMemberType(models.Model):
     def __str__(self):
         return self.label
     
+
     class Meta:
         ordering = ['label']
+
+
+# Register TeamMemberType in Django admin
+class TeamMemberTypeAdmin(admin.ModelAdmin):
+    list_display = ('key', 'label')
+    search_fields = ('key', 'label')
+
+admin.site.register(TeamMemberType, TeamMemberTypeAdmin)
 
 
 class TeamMember(models.Model):
