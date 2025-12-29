@@ -31,59 +31,59 @@ class SmokeTestBase(TestCase):
         # Create admin user and team member
         cls.admin_user = User.objects.create_superuser(
             username='admin_test',
-            email='admin@test.com',
-            password='testpass123'
-        )
-        cls.admin_member = TeamMember.objects.create(
-            user=cls.admin_user,
-            first_name='Admin',
-            last_name='User',
-            email='admin@test.com',
-            approved=True
-        )
-        cls.admin_member.types.add(cls.frontend_type)
-        
-        # Create regular user and team member
-        cls.regular_user = User.objects.create_user(
-            username='developer_test',
-            email='dev@test.com',
-            password='testpass123'
-        )
-        cls.regular_member = TeamMember.objects.create(
-            user=cls.regular_user,
-            first_name='Test',
-            last_name='Developer',
-            email='dev@test.com',
-            approved=True
-        )
-        cls.regular_member.types.add(cls.backend_type)
-        
-        # Create customer
-        cls.customer = Customer.objects.create(
-            company_name='Test Company',
-            contact_name='Test Customer',
-            contact_email='customer@test.com',
-            username='customer_test',
-            password='testpass123'
-        )
-        
-        # Create agency
-        cls.agency = DevelopmentAgency.objects.create(
-            agency_name='Test Agency',
-            contact_email='agency@test.com'
-        )
-
-
-class PageLoadSmokeTests(SmokeTestBase):
-    """Test that all major pages load without 500 errors"""
-    
-    def setUp(self):
-        self.client = Client()
-    
-    def test_public_pages_load(self):
-        """Test public pages that don't require authentication"""
-        public_urls = [
-            '/',
+            @classmethod
+            def setUpTestData(cls):
+                """Create minimal test data needed across all tests"""
+                # Create or get user types
+                cls.frontend_type, _ = TeamMemberType.objects.get_or_create(
+                    key='buildly-hire-frontend',
+                    defaults={'label': 'Frontend Developer'}
+                )
+                cls.backend_type, _ = TeamMemberType.objects.get_or_create(
+                    key='buildly-hire-backend',
+                    defaults={'label': 'Backend Developer'}
+                )
+                # Create admin user and team member
+                cls.admin_user = User.objects.create_superuser(
+                    username='admin_test',
+                    email='admin@test.com',
+                    password='testpass123'
+                )
+                cls.admin_member = TeamMember.objects.create(
+                    user=cls.admin_user,
+                    first_name='Admin',
+                    last_name='User',
+                    email='admin@test.com',
+                    approved=True
+                )
+                cls.admin_member.types.add(cls.frontend_type)
+                # Create regular user and team member
+                cls.regular_user = User.objects.create_user(
+                    username='developer_test',
+                    email='dev@test.com',
+                    password='testpass123'
+                )
+                cls.regular_member = TeamMember.objects.create(
+                    user=cls.regular_user,
+                    first_name='Test',
+                    last_name='Developer',
+                    email='dev@test.com',
+                    approved=True
+                )
+                cls.regular_member.types.add(cls.backend_type)
+                # Create customer
+                cls.customer = Customer.objects.create(
+                    company_name='Test Company',
+                    contact_name='Test Customer',
+                    contact_email='customer@test.com',
+                    username='customer_test',
+                    password='testpass123'
+                )
+                # Create agency
+                cls.agency = DevelopmentAgency.objects.create(
+                    agency_name='Test Agency',
+                    contact_email='agency@test.com'
+                )
             '/login/',
             '/register/',
         ]
