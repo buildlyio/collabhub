@@ -2022,7 +2022,23 @@ def admin_developers_list(request):
 def admin_developer_profile(request, developer_id):
     """View full developer profile with assessment results and approval options"""
     developer = get_object_or_404(TeamMember, id=developer_id)
-    
+
+    # Default assignments to prevent UnboundLocalError
+    quiz_answers = QuizAnswer.objects.none()
+    mc_score = 0
+    essay_score = 0
+    overall_score = 0
+    resources = TeamMemberResource.objects.none()
+    assignments = CustomerDeveloperAssignment.objects.none()
+    total_assessments = 0
+    total_answers = 0
+    mc_total = 0
+    essay_total = 0
+    tech_skills = []
+    skills_dict = {}
+    primary_techs = ['javascript', 'python', 'typescript', 'nodejs', 'kubernetes', 'git', 'bash']
+    all_types = TeamMemberType.objects.none()
+
     # Handle community approval
     if request.method == 'POST' and request.POST.get('action') == 'approve_community':
         profile_type_key = request.POST.get('profile_type')
@@ -2102,55 +2118,43 @@ def admin_developer_profile(request, developer_id):
     quiz_answers = QuizAnswer.objects.filter(
         team_member=developer
     ).select_related('question', 'question__quiz').order_by('-submitted_at')
-    
+
     # Calculate scores - note: question_type is 'multiple_choice' or 'essay', not 'MC' or 'ES'
     mc_questions = quiz_answers.filter(question__question_type='multiple_choice')
     essay_questions = quiz_answers.filter(question__question_type='essay')
-    
-    mc_score = 0
+
     mc_total = mc_questions.count()
-    # Note: MC questions don't have an is_correct field, they're just stored as text answers
-    # So MC score calculation would need to compare against correct answers or be manually evaluated
-    
-    essay_score = 0
     essay_total = essay_questions.count()
+
+    if mc_total > 0:
+        # If you have a way to calculate MC score, do it here
+        pass
+
     if essay_total > 0:
         scored_essays = essay_questions.exclude(evaluator_score__isnull=True)
         if scored_essays.exists():
             avg_score = scored_essays.aggregate(Avg('evaluator_score'))['evaluator_score__avg']
-            # evaluator_score uses 0-4 rubric; convert to percentage for display
             essay_score = int((avg_score / 4) * 100) if avg_score else 0
-    
+
     # For overall score, we can only use evaluated answers
     all_evaluated = quiz_answers.exclude(evaluator_score__isnull=True)
-    overall_score = 0
     if all_evaluated.exists():
         avg_score = all_evaluated.aggregate(Avg('evaluator_score'))['evaluator_score__avg']
         overall_score = int((avg_score / 4) * 100) if avg_score else 0
-    
-    # Count total quiz answers for debugging
+
     total_answers = quiz_answers.count()
-    
-    # Get learning resources
     resources = TeamMemberResource.objects.filter(
         team_member=developer
     ).select_related('resource').order_by('-id')
-    
-    # Get customer assignments
     assignments = CustomerDeveloperAssignment.objects.filter(
         developer=developer
     ).select_related('customer').order_by('-assigned_at')
-    
-    # Get technology skills
     from onboarding.models import TechnologySkill
     tech_skills = TechnologySkill.objects.filter(team_member=developer).order_by('technology')
-    
-    # Create dict of existing skills for easy lookup
     skills_dict = {skill.technology: skill for skill in tech_skills}
-    
-    # Primary technologies we want to track
-    primary_techs = ['javascript', 'python', 'typescript', 'nodejs', 'kubernetes', 'git', 'bash']
-    
+    all_types = TeamMemberType.objects.all().order_by('label')
+    total_assessments = quiz_answers.values('question__quiz').distinct().count()
+
     context = {
         'developer': developer,
         'quiz_answers': quiz_answers,
@@ -2159,14 +2163,14 @@ def admin_developer_profile(request, developer_id):
         'overall_score': overall_score,
         'resources': resources,
         'assignments': assignments,
-        'total_assessments': quiz_answers.values('question__quiz').distinct().count(),
+        'total_assessments': total_assessments,
         'total_answers': total_answers,
         'mc_total': mc_total,
         'essay_total': essay_total,
         'tech_skills': tech_skills,
         'skills_dict': skills_dict,
         'primary_techs': primary_techs,
-        'all_types': TeamMemberType.objects.all().order_by('label'),
+        'all_types': all_types,
     }
     
     return render(request, 'admin_developer_profile.html', context)
