@@ -2065,7 +2065,6 @@ def admin_developer_profile(request, developer_id):
         developer.save(update_fields=['community_approval_date', 'community_approved_by', 'approved'])
 
         # Auto-assign to Buildly customer if not already assigned
-        from onboarding.models import Customer, CustomerDeveloperAssignment
         buildly_customer = Customer.objects.filter(company_name__icontains='Buildly').first()
         if buildly_customer:
             already_assigned = CustomerDeveloperAssignment.objects.filter(customer=buildly_customer, developer=developer).exists()
