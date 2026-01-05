@@ -13,6 +13,14 @@ from reportlab.pdfgen import canvas
 from datetime import datetime
 
 
+# Default site URL fallback
+DEFAULT_SITE_URL = 'https://collab.buildly.io'
+
+def get_site_url():
+    """Safely get SITE_URL from settings with fallback"""
+    return getattr(settings, 'SITE_URL', None) or DEFAULT_SITE_URL
+
+
 # ===== ENCRYPTION UTILITIES =====
 
 def get_encryption_key():
@@ -90,13 +98,14 @@ def send_email(to_email: str, subject: str, template_name: str, context: dict, f
 
 def send_community_approval_email(team_member):
     """Email sent when developer approved to Buildly community"""
+    site_url = get_site_url()
     context = {
         'first_name': team_member.first_name,
         'developer_name': f"{team_member.first_name} {team_member.last_name}",
-        'buildly_url': settings.SITE_URL or 'https://collab.buildly.io',
-        'login_url': f"{settings.SITE_URL or 'https://collab.buildly.io'}/login",
-        'resources_url': f"{settings.SITE_URL or 'https://collab.buildly.io'}/onboarding/resources",
-        'certifications_url': f"{settings.SITE_URL or 'https://collab.buildly.io'}/onboarding/certificates/",
+        'buildly_url': site_url,
+        'login_url': f"{site_url}/login",
+        'resources_url': f"{site_url}/onboarding/resources",
+        'certifications_url': f"{site_url}/onboarding/certificates/",
     }
     
     return send_email(
@@ -115,7 +124,7 @@ def send_team_approval_email(customer_developer_assignment):
     context = {
         'first_name': developer.first_name,
         'customer_name': customer.company_name,
-        'buildly_url': settings.SITE_URL or 'https://collab.buildly.io',
+        'buildly_url': get_site_url(),
     }
     
     return send_email(
@@ -128,12 +137,13 @@ def send_team_approval_email(customer_developer_assignment):
 
 def send_contract_ready_email(contract, user):
     """Email sent when contract is ready to sign"""
+    site_url = get_site_url()
     context = {
         'first_name': user.first_name,
         'contract_title': contract.title,
         'customer_name': contract.customer.company_name,
-        'sign_url': f"{settings.SITE_URL}/customer/contracts/{contract.id}/sign/",
-        'buildly_url': settings.SITE_URL or 'https://collab.buildly.io',
+        'sign_url': f"{site_url}/customer/contracts/{contract.id}/sign/",
+        'buildly_url': site_url,
     }
     
     return send_email(
@@ -146,13 +156,14 @@ def send_contract_ready_email(contract, user):
 
 def send_contract_signed_email(contract, user):
     """Email confirmation sent when contract signed"""
+    site_url = get_site_url()
     context = {
         'first_name': user.first_name,
         'contract_title': contract.title,
         'customer_name': contract.customer.company_name,
         'signed_at': contract.signed_at.strftime('%B %d, %Y'),
-        'pdf_url': f"{settings.SITE_URL}/customer/contracts/{contract.id}/pdf/",
-        'buildly_url': settings.SITE_URL or 'https://collab.buildly.io',
+        'pdf_url': f"{site_url}/customer/contracts/{contract.id}/pdf/",
+        'buildly_url': site_url,
     }
     
     return send_email(
@@ -170,7 +181,7 @@ def send_removal_request_email(admin_user, developer, customer):
         'developer_name': f"{developer.first_name} {developer.last_name}",
         'customer_name': customer.company_name,
         'days_notice': 30,
-        'admin_url': f"{settings.SITE_URL}/admin/approvals/",
+        'admin_url': f"{get_site_url()}/admin/approvals/",
     }
     
     return send_email(
