@@ -138,8 +138,7 @@
                         <option value="">Select a developer...</option>
                         {% for dev in available_developers %}
                         <option value="{{ dev.id }}">
-                            {{ dev.first_name }} {{ dev.last_name }} - {% for type in dev.types.all %}{{ type.label }}{% if not forloop.last %}, {% endif %}{% empty %}Team Member{% endfor %}
-                            {% if dev.has_completed_assessment %}✓ Assessment{% endif %}
+                            {{ dev.first_name }} {{ dev.last_name }}{% if dev.types.all|length > 0 %} ({{ dev.types.first.label }}{% if dev.types.all|length > 1 %} +{{ dev.types.all|length|add:"-1" }}{% endif %}){% endif %}{% if dev.has_completed_assessment %} ✓{% endif %}
                         </option>
                         {% endfor %}
                     </select>
