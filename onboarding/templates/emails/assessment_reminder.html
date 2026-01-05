@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .header.final {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        .content {
+            background: #f9fafb;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .final-warning-box {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header {% if is_final_reminder %}final{% endif %}">
+        {% if is_final_reminder %}
+        <h1>⚠️ Final Reminder: Assessment Required</h1>
+        {% elif reminder_count == 2 %}
+        <h1>📋 Second Reminder: Complete Your Assessment</h1>
+        {% else %}
+        <h1>📋 Reminder: Complete Your Assessment</h1>
+        {% endif %}
+    </div>
+    <div class="content">
+        <p>Hi {{ first_name }},</p>
+        
+        {% if is_final_reminder %}
+        <div class="final-warning-box">
+            <strong>⚠️ Final Notice:</strong> This is your third and final reminder. If we don't receive your completed assessment soon, your application may be removed from our system.
+        </div>
+        
+        <p>We're still waiting to receive your completed Developer Assessment to process your application to join the Buildly Open Source Community.</p>
+        {% else %}
+        <p>We wanted to follow up on your application to join the Buildly Open Source Community. We're still waiting for you to complete your Developer Assessment.</p>
+        
+        <div class="warning-box">
+            <strong>📌 Reminder {{ reminder_count }} of 3:</strong> Please complete your assessment to be considered for community membership.
+        </div>
+        {% endif %}
+        
+        <p><strong>Why complete the assessment?</strong></p>
+        <ul>
+            <li><strong>Get Approved:</strong> Your assessment is required for us to evaluate and approve your membership</li>
+            <li><strong>Showcase Your Skills:</strong> Demonstrate your technical abilities to potential employers</li>
+            <li><strong>Access Opportunities:</strong> Unlock access to trainings, certifications, and job opportunities</li>
+            <li><strong>Join the Community:</strong> Connect with other developers and contribute to open source projects</li>
+        </ul>
+        
+        <p style="text-align: center;">
+            <a href="{{ assessment_url }}" class="button">Complete Your Assessment Now →</a>
+        </p>
+        
+        <p>The assessment typically takes 15-30 minutes to complete and covers:</p>
+        <ul>
+            <li>Technical knowledge questions</li>
+            <li>Problem-solving scenarios</li>
+            <li>Your experience and background</li>
+        </ul>
+        
+        {% if is_final_reminder %}
+        <p><strong>Please complete your assessment within the next 7 days</strong> to avoid having your application removed.</p>
+        {% endif %}
+        
+        <p>If you have any questions or need assistance, please don't hesitate to reach out to us.</p>
+        
+        <p>Best regards,<br>The Buildly Team</p>
+    </div>
+    <div class="footer">
+        <p>© 2026 Buildly. All rights reserved.</p>
+        <p><a href="{{ buildly_url }}">Visit Buildly</a></p>
+    </div>
+</body>
+</html>

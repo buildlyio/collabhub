@@ -155,6 +155,84 @@
     </div>
     {% endif %}
 
+    <!-- Assessment Reminder Section (only show for unapproved developers without completed assessment) -->
+    {% if not developer.approved and not developer.has_completed_assessment %}
+    <div class="bg-white rounded-lg shadow p-6 mb-6 border-l-4 {% if developer.assessment_reminder_count >= 3 %}border-red-500{% else %}border-yellow-500{% endif %}">
+        <div class="flex items-start justify-between flex-wrap gap-4">
+            <div class="flex-1">
+                <h2 class="text-xl font-bold text-gray-900 mb-2">
+                    {% if developer.assessment_reminder_count >= 3 %}
+                    ⚠️ Final Reminder Sent - Action Required
+                    {% else %}
+                    📋 Assessment Not Submitted
+                    {% endif %}
+                </h2>
+                <p class="text-gray-600 mb-3">
+                    This developer has not yet completed and submitted their Developer Assessment.
+                </p>
+                
+                <!-- Reminder Status -->
+                <div class="flex items-center gap-4 text-sm mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-500">Reminders Sent:</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                            {% if developer.assessment_reminder_count == 0 %}bg-gray-100 text-gray-800
+                            {% elif developer.assessment_reminder_count == 1 %}bg-yellow-100 text-yellow-800
+                            {% elif developer.assessment_reminder_count == 2 %}bg-orange-100 text-orange-800
+                            {% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ developer.assessment_reminder_count }} / 3
+                        </span>
+                    </div>
+                    {% if developer.assessment_last_reminded %}
+                    <div class="flex items-center gap-2 text-gray-500">
+                        <span>Last Reminded:</span>
+                        <span>{{ developer.assessment_last_reminded|date:"M d, Y H:i" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if developer.assessment_reminder_count >= 3 %}
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                    <p class="text-red-700 text-sm">
+                        <strong>Maximum reminders reached.</strong> This developer has been sent 3 reminders without completing their assessment. 
+                        You may choose to remove them from the system.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-col gap-2">
+                {% if developer.assessment_reminder_count < 3 %}
+                <form method="POST" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="send_reminder">
+                    <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-yellow-600 hover:bg-yellow-700 transition">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                        Send Reminder #{{ developer.assessment_reminder_count|add:1 }}
+                    </button>
+                </form>
+                {% endif %}
+                
+                {% if developer.assessment_reminder_count >= 3 %}
+                <form method="POST" class="inline" onsubmit="return confirm('Are you sure you want to remove {{ developer.first_name }} {{ developer.last_name }} from the system? This action cannot be undone.');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_member">
+                    <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 transition">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        Remove Member
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <!-- Left Column - Assessment Scores -->
         <div class="lg:col-span-1">

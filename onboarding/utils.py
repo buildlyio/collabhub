@@ -61,7 +61,7 @@ def decrypt_token(encrypted_token: str) -> str:
 
 # ===== EMAIL UTILITIES =====
 
-def send_email(to_email: str, subject: str, template_name: str, context: dict, from_email: str = None):
+def send_email(to_email: str, subject: str, template_name: str, context: dict, from_email: str = None, bcc: list = None):
     """
     Send email using MailerSend
     
@@ -71,6 +71,7 @@ def send_email(to_email: str, subject: str, template_name: str, context: dict, f
         template_name: Template file path (e.g., 'emails/community_approval.html')
         context: Context data for template
         from_email: Sender email (defaults to DEFAULT_FROM_EMAIL)
+        bcc: List of BCC email addresses
     """
     if not from_email:
         from_email = settings.DEFAULT_FROM_EMAIL or 'noreply@buildly.io'
@@ -85,7 +86,8 @@ def send_email(to_email: str, subject: str, template_name: str, context: dict, f
             subject=subject,
             body=text_content,
             from_email=from_email,
-            to=[to_email]
+            to=[to_email],
+            bcc=bcc or []
         )
         email.attach_alternative(html_content, "text/html")
         
@@ -113,6 +115,37 @@ def send_community_approval_email(team_member):
         subject="Welcome to Buildly Open Source Community!",
         template_name='emails/community_approval.html',
         context=context
+    )
+
+
+def send_assessment_reminder_email(team_member, reminder_count):
+    """Email sent to remind developer to complete their assessment"""
+    site_url = get_site_url()
+    
+    # Customize subject based on reminder count
+    if reminder_count == 1:
+        subject = "Reminder: Complete Your Buildly Developer Assessment"
+    elif reminder_count == 2:
+        subject = "Second Reminder: Your Buildly Assessment Awaits"
+    else:
+        subject = "Final Reminder: Complete Your Assessment to Join Buildly Community"
+    
+    context = {
+        'first_name': team_member.first_name,
+        'developer_name': f"{team_member.first_name} {team_member.last_name}",
+        'reminder_count': reminder_count,
+        'is_final_reminder': reminder_count >= 3,
+        'buildly_url': site_url,
+        'login_url': f"{site_url}/login",
+        'assessment_url': f"{site_url}/onboarding/assessment",
+    }
+    
+    return send_email(
+        to_email=team_member.email,
+        subject=subject,
+        template_name='emails/assessment_reminder.html',
+        context=context,
+        bcc=['admin@buildly.io']
     )
 
 

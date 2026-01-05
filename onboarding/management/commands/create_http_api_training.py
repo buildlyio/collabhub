@@ -21,10 +21,25 @@ class Command(BaseCommand):
         User = get_user_model()
         owner_username = options["owner_username"]
 
-        try:
-            owner = User.objects.get(username=owner_username)
-        except User.DoesNotExist:
+        # Try to find the specified user
+        owner = User.objects.filter(username=owner_username).first()
+        
+        # If not found, try to find any superuser
+        if not owner:
+            owner = User.objects.filter(is_superuser=True).first()
+            if owner:
+                self.stdout.write(self.style.WARNING(
+                    f"User '{owner_username}' not found. Using superuser '{owner.username}' instead."
+                ))
+        
+        # If still no owner, list available users and exit
+        if not owner:
+            available_users = User.objects.values_list('username', flat=True)[:10]
             self.stderr.write(self.style.ERROR(f"User '{owner_username}' not found."))
+            self.stderr.write(self.style.ERROR(f"Available users: {list(available_users)}"))
+            self.stderr.write(self.style.ERROR(
+                "Run with --owner-username=<username> to specify a valid user."
+            ))
             return
 
         # ========== RESOURCES ==========

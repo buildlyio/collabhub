@@ -2119,6 +2119,40 @@ def admin_developer_profile(request, developer_id):
         messages.success(request, "Technology skills updated successfully.")
         return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
     
+    # Handle assessment reminder
+    if request.method == 'POST' and request.POST.get('action') == 'send_reminder':
+        from onboarding.utils import send_assessment_reminder_email
+        
+        # Increment reminder count
+        developer.assessment_reminder_count += 1
+        developer.assessment_last_reminded = now()
+        developer.save(update_fields=['assessment_reminder_count', 'assessment_last_reminded'])
+        
+        # Send the reminder email
+        send_assessment_reminder_email(developer, developer.assessment_reminder_count)
+        
+        if developer.assessment_reminder_count >= 3:
+            messages.warning(request, f"Final reminder (#{developer.assessment_reminder_count}) sent to {developer.first_name} {developer.last_name}. Consider removing if no response.")
+        else:
+            messages.success(request, f"Reminder #{developer.assessment_reminder_count} sent to {developer.first_name} {developer.last_name}.")
+        return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
+    
+    # Handle member deletion
+    if request.method == 'POST' and request.POST.get('action') == 'delete_member':
+        developer_name = f"{developer.first_name} {developer.last_name}"
+        user = developer.user
+        
+        # Delete the TeamMember first (cascade will handle related objects)
+        developer.delete()
+        
+        # Deactivate the associated user account
+        if user:
+            user.is_active = False
+            user.save()
+        
+        messages.success(request, f"{developer_name} has been removed from the system.")
+        return redirect('onboarding:admin_approval_queue')
+    
     # Get quiz answers - using all() to ensure queryset is evaluated
     quiz_answers = QuizAnswer.objects.filter(
         team_member=developer
@@ -2485,17 +2519,15 @@ def labs_unlink(request):
 
 @user_passes_test(lambda u: u.is_superuser)
 def admin_approval_queue(request):
-    """Admin view of developers pending community approval"""
-    pending_developers = TeamMember.objects.filter(
-        community_approval_date__isnull=True,
-        approved=False,
+    """Admin view of developers - shows all with pending first"""
+    developers = TeamMember.objects.filter(
         user__is_active=True
-    ).select_related('user', 'agency').prefetch_related('tech_skills')
+    ).select_related('user', 'agency').prefetch_related('tech_skills', 'types')
     
     # Search
     search_query = request.GET.get('search', '')
     if search_query:
-        pending_developers = pending_developers.filter(
+        developers = developers.filter(
             Q(first_name__icontains=search_query) |
             Q(last_name__icontains=search_query) |
             Q(email__icontains=search_query) |
@@ -2503,37 +2535,50 @@ def admin_approval_queue(request):
             Q(tech_skills__technology__icontains=search_query)
         ).distinct()
     
+    # Filter by status
+    status_filter = request.GET.get('status', '')
+    if status_filter == 'pending':
+        developers = developers.filter(approved=False)
+    elif status_filter == 'approved':
+        developers = developers.filter(approved=True)
+    
     # Filter by type
     type_filter = request.GET.get('type', '')
     if type_filter:
         type_obj = TeamMemberType.objects.filter(key=type_filter).first()
         if type_obj:
-            pending_developers = pending_developers.filter(types=type_obj)
+            developers = developers.filter(types=type_obj)
     
     # Filter by experience
     exp_filter = request.GET.get('experience', '')
     if exp_filter == 'junior':
-        pending_developers = pending_developers.filter(experience_years__lt=3)
+        developers = developers.filter(experience_years__lt=3)
     elif exp_filter == 'mid':
-        pending_developers = pending_developers.filter(experience_years__gte=3, experience_years__lt=7)
+        developers = developers.filter(experience_years__gte=3, experience_years__lt=7)
     elif exp_filter == 'senior':
-        pending_developers = pending_developers.filter(experience_years__gte=7)
+        developers = developers.filter(experience_years__gte=7)
     
     # Filter by independent/agency
     affiliation_filter = request.GET.get('affiliation', '')
     if affiliation_filter == 'independent':
-        pending_developers = pending_developers.filter(is_independent=True)
+        developers = developers.filter(is_independent=True)
     elif affiliation_filter == 'agency':
-        pending_developers = pending_developers.filter(is_independent=False)
+        developers = developers.filter(is_independent=False)
     
-    pending_developers = pending_developers.order_by('last_name', 'first_name')
+    # Sort with pending (not approved) first, then by name
+    developers = developers.order_by('approved', 'last_name', 'first_name')
+    
+    # Count pending for banner
+    pending_count = developers.filter(approved=False).count()
     
     # Get all types for approval dropdown (show all available types, not just pending ones)
     all_types = TeamMemberType.objects.all().order_by('label')
     
     return render(request, 'admin_approval_queue.html', {
-        'pending_developers': pending_developers,
+        'developers': developers,
+        'pending_count': pending_count,
         'search_query': search_query,
+        'status_filter': status_filter,
         'type_filter': type_filter,
         'exp_filter': exp_filter,
         'affiliation_filter': affiliation_filter,
