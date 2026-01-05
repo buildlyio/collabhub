@@ -1545,15 +1545,20 @@ def admin_dashboard(request):
     pending_assessments = TeamMember.objects.filter(has_completed_assessment=False).count()
     
     # Recent signups for list
-    recent_signups = TeamMember.objects.select_related('user').order_by('-user__date_joined')[:5]
+    recent_signups = TeamMember.objects.select_related('user').prefetch_related('profile_types').order_by('-user__date_joined')[:5]
+    
+    # Recent assessment completions (team members who completed assessment, ordered by completion date)
+    recent_completions = TeamMember.objects.filter(
+        has_completed_assessment=True,
+        assessment_completed_at__isnull=False
+    ).select_related('user').prefetch_related('profile_types').order_by('-assessment_completed_at')[:10]
     
     # Community Members (approved developers) for new section
+    # Use approved=True to show all approved developers, not just community_approval_date
     approved_developers = TeamMember.objects.filter(
-        community_approval_date__isnull=False
-    ).select_related('user').order_by('-community_approval_date')[:10]
-    total_community_members = TeamMember.objects.filter(
-        community_approval_date__isnull=False
-    ).count()
+        approved=True
+    ).select_related('user').prefetch_related('profile_types').order_by('-id')[:10]
+    total_community_members = TeamMember.objects.filter(approved=True).count()
     
     context = {
         'awaiting_evaluation': awaiting_evaluation,
@@ -1568,6 +1573,7 @@ def admin_dashboard(request):
         'total_answers': total_answers,
         'pending_assessments': pending_assessments,
         'recent_signups': recent_signups,
+        'recent_completions': recent_completions,
         'approved_developers': approved_developers,
         'total_community_members': total_community_members,
     }
