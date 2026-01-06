@@ -1,21 +1,60 @@
 {% extends "base.html" %}
 {% block page_content %}
-<h2>{{ quiz.name }}</h2>
-<form method="post" action="{% url 'onboarding:submit_answers' quiz.id %}">
-    {% csrf_token %}
-    {% for question in questions %}
-    <div>
-        <p><strong>Question:</strong> {{ question.question }}</p>
-        {% if question.question_type == 'multiple_choice' %}
-        <input type="radio" name="question_{{ question.id }}" value="A"> A <br>
-        <input type="radio" name="question_{{ question.id }}" value="B"> B <br>
-        <input type="radio" name="question_{{ question.id }}" value="C"> C <br>
-        <input type="radio" name="question_{{ question.id }}" value="D"> D <br>
-        {% else %}
-        <textarea name="question_{{ question.id }}" rows="4" cols="50"></textarea>
+<div class="max-w-4xl mx-auto py-8 px-4">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ quiz.name }}</h1>
+        {% if quiz.description %}
+        <p class="text-gray-600 mb-6">{{ quiz.description }}</p>
         {% endif %}
+        
+        <form method="post" action="{% url 'onboarding:submit_answers' quiz.id %}">
+            {% csrf_token %}
+            
+            {% for question in questions %}
+            <div class="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
+                <div class="flex items-start gap-3 mb-4">
+                    <span class="flex-shrink-0 w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                        {{ forloop.counter }}
+                    </span>
+                    <p class="text-lg font-medium text-gray-900">{{ question.question }}</p>
+                </div>
+                
+                {% if question.question_type == 'multiple_choice' %}
+                <div class="ml-11 space-y-3">
+                    {% for choice in question.choices.splitlines %}
+                    {% if choice.strip %}
+                    <label class="flex items-center p-3 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition">
+                        <input type="radio" name="question_{{ question.id }}" value="{{ choice.strip|slice:':1' }}" 
+                               class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
+                        <span class="ml-3 text-gray-700">{{ choice.strip }}</span>
+                    </label>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="ml-11">
+                    <textarea name="question_{{ question.id }}" rows="6" 
+                              placeholder="Enter your answer here..."
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-y text-gray-700"></textarea>
+                    <p class="mt-2 text-sm text-gray-500">Please provide a detailed response.</p>
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="text-center py-8 text-gray-500">
+                <p>No questions available for this quiz.</p>
+            </div>
+            {% endfor %}
+            
+            {% if questions %}
+            <div class="flex justify-end mt-6">
+                <button type="submit" 
+                        class="px-8 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md">
+                    Submit Answers
+                </button>
+            </div>
+            {% endif %}
+        </form>
     </div>
-    {% endfor %}
-    <button type="submit">Submit</button>
-</form>
+</div>
 {% endblock %}
