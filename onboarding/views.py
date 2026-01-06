@@ -3125,7 +3125,7 @@ def admin_certification_levels(request):
 @user_passes_test(lambda u: u.is_superuser)
 def admin_certification_create(request):
     """Create a new certification level"""
-    from .models import CertificationLevel
+    from .models import CertificationLevel, TeamTraining, TrainingSection, Quiz
     
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -3135,6 +3135,7 @@ def admin_certification_create(request):
         skills = request.POST.get('skills', '')
         price = request.POST.get('price') or None
         badge_color = request.POST.get('badge_color', '#3B82F6')
+        min_quiz_score = request.POST.get('min_quiz_score', 70)
         
         cert_level = CertificationLevel.objects.create(
             name=name,
@@ -3144,15 +3145,33 @@ def admin_certification_create(request):
             skills=skills,
             price=price,
             badge_color=badge_color,
+            min_quiz_score=min_quiz_score,
             created_by=request.user
         )
+        
+        # Add required trainings
+        training_ids = request.POST.getlist('required_trainings')
+        if training_ids:
+            cert_level.required_trainings.set(training_ids)
+        
+        # Add required sections
+        section_ids = request.POST.getlist('required_sections')
+        if section_ids:
+            cert_level.required_sections.set(section_ids)
+        
+        # Add required quizzes
+        quiz_ids = request.POST.getlist('required_quizzes')
+        if quiz_ids:
+            cert_level.required_quizzes.set(quiz_ids)
         
         messages.success(request, f'Certification level "{name}" created successfully!')
         return redirect('onboarding:admin_certification_levels')
     
-    from .models import CertificationLevel
     context = {
         'level_types': CertificationLevel.LEVEL_TYPES,
+        'trainings': TeamTraining.objects.filter(is_active=True).select_related('customer'),
+        'sections': TrainingSection.objects.filter(is_active=True).select_related('training', 'training__customer'),
+        'quizzes': Quiz.objects.all().order_by('name'),
     }
     
     return render(request, 'admin_certification_create.html', context)

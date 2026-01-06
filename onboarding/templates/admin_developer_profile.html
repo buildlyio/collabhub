@@ -171,6 +171,26 @@
                     This developer has not yet completed and submitted their Developer Assessment.
                 </p>
                 
+                <!-- Assessment Link Box -->
+                <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4">
+                    <p class="text-sm font-medium text-indigo-800 mb-2">📎 Assessment Link (share with developer):</p>
+                    <div class="flex items-center gap-2">
+                        <input type="text" 
+                               readonly 
+                               value="{{ request.scheme }}://{{ request.get_host }}{% url 'onboarding:assessment_landing' %}" 
+                               id="assessment_link"
+                               class="flex-1 px-3 py-2 bg-white border border-indigo-300 rounded text-sm text-gray-700">
+                        <button type="button" 
+                                onclick="copyAssessmentLink()"
+                                class="px-3 py-2 bg-indigo-600 text-white text-sm font-medium rounded hover:bg-indigo-700 transition">
+                            Copy
+                        </button>
+                    </div>
+                    <p class="text-xs text-indigo-600 mt-2">
+                        Direct link: <a href="{% url 'onboarding:assessment_landing' %}" target="_blank" class="underline hover:no-underline">{% url 'onboarding:assessment_landing' %}</a>
+                    </p>
+                </div>
+                
                 <!-- Reminder Status -->
                 <div class="flex items-center gap-4 text-sm mb-4">
                     <div class="flex items-center gap-2">
@@ -231,6 +251,26 @@
             </div>
         </div>
     </div>
+    
+    <script>
+    function copyAssessmentLink() {
+        const linkInput = document.getElementById('assessment_link');
+        linkInput.select();
+        document.execCommand('copy');
+        
+        // Show feedback
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+        btn.classList.add('bg-green-600');
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.classList.remove('bg-green-600');
+            btn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+        }, 2000);
+    }
+    </script>
     {% endif %}
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">

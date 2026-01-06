@@ -21,7 +21,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--quiz-url",
             type=str,
-            default="https://collab.buildly.io/quizzes/developer-level-assessment",
+            default="https://collab.buildly.io/onboarding/assessment/",
             help="Public URL for the quiz.",
         )
 

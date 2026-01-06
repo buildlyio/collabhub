@@ -1302,6 +1302,14 @@ class CertificationLevel(models.Model):
     description = models.TextField(help_text="What this certification demonstrates")
     requirements = models.TextField(help_text="Skills and experience required", blank=True)
     
+    # Required trainings and sections to complete for this certification
+    required_trainings = models.ManyToManyField('TeamTraining', blank=True, related_name='certifications', help_text="Trainings that must be completed for this certification")
+    required_sections = models.ManyToManyField('TrainingSection', blank=True, related_name='certifications', help_text="Specific training sections required for this certification")
+    required_quizzes = models.ManyToManyField('Quiz', blank=True, related_name='certifications', help_text="Quizzes that must be passed for this certification")
+    
+    # Minimum quiz score required (percentage)
+    min_quiz_score = models.PositiveIntegerField(default=70, help_text="Minimum passing score percentage for quizzes")
+    
     # Optional pricing if certification requires payment
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Cost to obtain certification")
     
@@ -1318,6 +1326,54 @@ class CertificationLevel(models.Model):
     
     def __str__(self):
         return f"{self.name} ({self.get_level_type_display()})"
+    
+    def total_required_items(self):
+        """Count total required trainings, sections, and quizzes"""
+        return (
+            self.required_trainings.count() + 
+            self.required_sections.count() + 
+            self.required_quizzes.count()
+        )
+    
+    def check_developer_eligibility(self, developer):
+        """Check if a developer meets all requirements for this certification"""
+        # Check trainings
+        for training in self.required_trainings.all():
+            enrollment = DeveloperTrainingEnrollment.objects.filter(
+                developer=developer,
+                training=training,
+                status='completed'
+            ).first()
+            if not enrollment:
+                return False, f"Training '{training.name}' not completed"
+        
+        # Check sections
+        for section in self.required_sections.all():
+            progress = SectionProgress.objects.filter(
+                enrollment__developer=developer,
+                section=section,
+                status='completed'
+            ).first()
+            if not progress:
+                return False, f"Section '{section.name}' not completed"
+        
+        # Check quizzes
+        for quiz in self.required_quizzes.all():
+            # Check if developer has answered all questions with passing score
+            total_questions = quiz.questions.count()
+            if total_questions == 0:
+                continue
+            
+            passed_answers = QuizAnswer.objects.filter(
+                team_member=developer,
+                question__quiz=quiz,
+                evaluator_score__gte=3  # Assuming 3+ out of 4 is passing
+            ).count()
+            
+            if passed_answers < total_questions:
+                return False, f"Quiz '{quiz.name}' not passed"
+        
+        return True, "All requirements met"
     
     class Meta:
         ordering = ['level_type', 'name']

@@ -90,4 +90,25 @@ class Migration(migrations.Migration):
                 'unique_together': {('section_progress', 'resource')},
             },
         ),
+        # Add new fields to CertificationLevel model
+        migrations.AddField(
+            model_name='certificationlevel',
+            name='required_trainings',
+            field=models.ManyToManyField(blank=True, help_text='Trainings that must be completed for this certification', related_name='certifications', to='onboarding.TeamTraining'),
+        ),
+        migrations.AddField(
+            model_name='certificationlevel',
+            name='required_sections',
+            field=models.ManyToManyField(blank=True, help_text='Specific training sections required for this certification', related_name='certifications', to='onboarding.TrainingSection'),
+        ),
+        migrations.AddField(
+            model_name='certificationlevel',
+            name='required_quizzes',
+            field=models.ManyToManyField(blank=True, help_text='Quizzes that must be passed for this certification', related_name='certifications', to='onboarding.Quiz'),
+        ),
+        migrations.AddField(
+            model_name='certificationlevel',
+            name='min_quiz_score',
+            field=models.PositiveIntegerField(default=70, help_text='Minimum passing score percentage for quizzes'),
+        ),
     ]
