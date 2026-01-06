@@ -1,127 +1,120 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends "base.html" %}
 
-{% block title %}Projects - {{ training.name }}{% endblock %}
+{% block page_title %}Projects - {{ training.name }}{% endblock %}
 
-{% block content %}
-<div class="container py-4">
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'onboarding:developer_teams' %}">Teams & Trainings</a></li>
-            <li class="breadcrumb-item active">{{ training.name }} Projects</li>
+{% block page_content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm text-gray-600">
+            <li><a href="{% url 'onboarding:developer_teams' %}" class="hover:text-blue-600">Teams & Trainings</a></li>
+            <li class="text-gray-400">/</li>
+            <li class="text-gray-900 font-medium">{{ training.name }} Projects</li>
         </ol>
     </nav>
 
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0"><i class="fas fa-project-diagram me-2"></i>{{ training.name }} - Projects</h4>
-        </div>
-        <div class="card-body">
-            <p class="text-muted mb-0">{{ training.description|truncatewords:30 }}</p>
-            {% if training.due_date %}
-            <p class="mt-2 mb-0">
-                <i class="fas fa-calendar-alt me-1"></i>
-                <strong>Due:</strong> {{ training.due_date|date:"M d, Y" }}
-            </p>
-            {% endif %}
-        </div>
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg p-8 mb-8 text-white">
+        <h1 class="text-3xl font-bold mb-2">{{ training.name }}</h1>
+        <p class="opacity-90">{{ training.description|truncatewords:30 }}</p>
+        {% if training.due_date %}
+        <p class="mt-4 text-sm opacity-75">
+            <strong>Due:</strong> {{ training.due_date|date:"M d, Y" }}
+        </p>
+        {% endif %}
     </div>
 
     {% if not projects %}
-    <div class="alert alert-info">
-        <i class="fas fa-info-circle me-2"></i>
-        No projects have been assigned for this training yet.
+    <div class="bg-white rounded-lg shadow p-8 text-center">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+        </svg>
+        <h3 class="mt-2 text-lg font-medium text-gray-900">No Projects</h3>
+        <p class="mt-1 text-sm text-gray-500">No projects have been assigned for this training yet.</p>
     </div>
     {% else %}
-    <div class="row">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for item in projects %}
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 {% if item.status == 'approved' %}border-success{% elif item.status == 'submitted' or item.status == 'in_review' %}border-warning{% elif item.status == 'revision_requested' %}border-danger{% endif %}">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <span class="fw-bold">{{ item.project.title }}</span>
+        <div class="bg-white rounded-lg shadow overflow-hidden {% if item.status == 'approved' %}ring-2 ring-green-400{% elif item.status == 'submitted' or item.status == 'in_review' %}ring-2 ring-yellow-400{% elif item.status == 'revision_requested' %}ring-2 ring-red-400{% endif %}">
+            <div class="p-5">
+                <div class="flex items-start justify-between mb-3">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ item.project.title }}</h3>
                     {% if item.project.is_required %}
-                    <span class="badge bg-danger">Required</span>
+                    <span class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">Required</span>
                     {% else %}
-                    <span class="badge bg-secondary">Optional</span>
+                    <span class="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">Optional</span>
                     {% endif %}
                 </div>
-                <div class="card-body">
-                    <p class="card-text text-muted">{{ item.project.description|truncatewords:25 }}</p>
-                    
-                    <div class="mb-3">
-                        <small class="text-muted">
-                            <i class="fas fa-star me-1"></i>
-                            Max Score: {{ item.project.max_score }} | Passing: {{ item.project.passing_score }}
-                        </small>
-                    </div>
-                    
+
+                <p class="text-sm text-gray-600 mb-4">{{ item.project.description|truncatewords:25 }}</p>
+
+                <div class="text-xs text-gray-500 mb-3 space-y-1">
+                    <p>Max Score: {{ item.project.max_score }} | Passing: {{ item.project.passing_score }}</p>
                     {% if item.project.due_date %}
-                    <div class="mb-3">
-                        <small class="text-muted">
-                            <i class="fas fa-calendar me-1"></i>
-                            Due: {{ item.project.due_date|date:"M d, Y" }}
-                        </small>
-                    </div>
-                    {% endif %}
-
-                    <!-- Status Badge -->
-                    <div class="mb-3">
-                        {% if item.status == 'not_started' %}
-                        <span class="badge bg-secondary"><i class="fas fa-circle me-1"></i>Not Started</span>
-                        {% elif item.status == 'draft' %}
-                        <span class="badge bg-info"><i class="fas fa-edit me-1"></i>Draft</span>
-                        {% elif item.status == 'submitted' %}
-                        <span class="badge bg-warning text-dark"><i class="fas fa-paper-plane me-1"></i>Submitted</span>
-                        {% elif item.status == 'in_review' %}
-                        <span class="badge bg-primary"><i class="fas fa-search me-1"></i>In Review</span>
-                        {% elif item.status == 'revision_requested' %}
-                        <span class="badge bg-danger"><i class="fas fa-exclamation-circle me-1"></i>Revision Requested</span>
-                        {% elif item.status == 'approved' %}
-                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Approved</span>
-                        {% if item.submission.score %}
-                        <span class="badge bg-success ms-1">Score: {{ item.submission.score }}/{{ item.project.max_score }}</span>
-                        {% endif %}
-                        {% elif item.status == 'rejected' %}
-                        <span class="badge bg-dark"><i class="fas fa-times-circle me-1"></i>Rejected</span>
-                        {% endif %}
-                    </div>
-
-                    <!-- Teacher Notes (if any) -->
-                    {% if item.submission and item.submission.teacher_notes %}
-                    <div class="alert alert-info py-2 small">
-                        <i class="fas fa-comment me-1"></i>
-                        <strong>Feedback:</strong> {{ item.submission.teacher_notes|truncatewords:20 }}
-                    </div>
+                    <p>Due: {{ item.project.due_date|date:"M d, Y" }}</p>
                     {% endif %}
                 </div>
-                <div class="card-footer bg-transparent">
-                    {% if item.status == 'approved' %}
-                    <a href="{% url 'onboarding:developer_project_submit' project_id=item.project.id %}" class="btn btn-outline-success btn-sm">
-                        <i class="fas fa-eye me-1"></i>View Submission
-                    </a>
+
+                <!-- Status Badge -->
+                <div class="mb-4">
+                    {% if item.status == 'not_started' %}
+                    <span class="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded">Not Started</span>
+                    {% elif item.status == 'draft' %}
+                    <span class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded">Draft</span>
+                    {% elif item.status == 'submitted' %}
+                    <span class="px-3 py-1 text-sm bg-yellow-100 text-yellow-700 rounded">Submitted</span>
+                    {% elif item.status == 'in_review' %}
+                    <span class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded">In Review</span>
+                    {% elif item.status == 'revision_requested' %}
+                    <span class="px-3 py-1 text-sm bg-red-100 text-red-700 rounded">Revision Requested</span>
+                    {% elif item.status == 'approved' %}
+                    <span class="px-3 py-1 text-sm bg-green-100 text-green-700 rounded">Approved</span>
+                    {% if item.submission.score %}
+                    <span class="ml-2 px-2 py-1 text-sm bg-green-600 text-white rounded">{{ item.submission.score }}/{{ item.project.max_score }}</span>
+                    {% endif %}
                     {% elif item.status == 'rejected' %}
-                    <span class="text-muted small">This project has been rejected.</span>
-                    {% else %}
-                    <a href="{% url 'onboarding:developer_project_submit' project_id=item.project.id %}" class="btn btn-primary btn-sm">
-                        {% if item.status == 'not_started' %}
-                        <i class="fas fa-plus me-1"></i>Start Project
-                        {% elif item.status == 'revision_requested' %}
-                        <i class="fas fa-redo me-1"></i>Revise & Resubmit
-                        {% else %}
-                        <i class="fas fa-edit me-1"></i>Continue Working
-                        {% endif %}
-                    </a>
+                    <span class="px-3 py-1 text-sm bg-gray-800 text-white rounded">Rejected</span>
                     {% endif %}
                 </div>
+
+                <!-- Teacher Notes Preview -->
+                {% if item.submission and item.submission.teacher_notes %}
+                <div class="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <p class="text-xs text-blue-700"><strong>Feedback:</strong> {{ item.submission.teacher_notes|truncatewords:20 }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="px-5 py-3 bg-gray-50 border-t border-gray-200">
+                {% if item.status == 'approved' %}
+                <a href="{% url 'onboarding:developer_project_submit' project_id=item.project.id %}" 
+                   class="text-green-600 hover:text-green-800 text-sm font-medium">
+                    View Submission →
+                </a>
+                {% elif item.status == 'rejected' %}
+                <span class="text-gray-400 text-sm">This project has been rejected.</span>
+                {% else %}
+                <a href="{% url 'onboarding:developer_project_submit' project_id=item.project.id %}" 
+                   class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium">
+                    {% if item.status == 'not_started' %}
+                    Start Project
+                    {% elif item.status == 'revision_requested' %}
+                    Revise & Resubmit
+                    {% else %}
+                    Continue Working
+                    {% endif %}
+                </a>
+                {% endif %}
             </div>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <div class="mt-4">
-        <a href="{% url 'onboarding:developer_teams' %}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left me-2"></i>Back to Teams
+    <!-- Back Link -->
+    <div class="mt-8">
+        <a href="{% url 'onboarding:developer_teams' %}" class="text-gray-600 hover:text-gray-800">
+            ← Back to Teams
         </a>
     </div>
 </div>

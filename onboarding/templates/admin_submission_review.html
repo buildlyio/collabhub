@@ -1,211 +1,200 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends "base.html" %}
 
-{% block title %}Review Submission | Admin{% endblock %}
+{% block page_title %}Review Submission{% endblock %}
 
-{% block content %}
-<div class="container py-4">
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'onboarding:admin_training_list' %}">Trainings</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'onboarding:admin_training_detail' training_id=submission.project.training.id %}">{{ submission.project.training.name }}</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'onboarding:admin_submission_list' training_id=submission.project.training.id %}">Submissions</a></li>
-            <li class="breadcrumb-item active">Review</li>
+{% block page_content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm text-gray-600">
+            <li><a href="{% url 'onboarding:admin_training_list' %}" class="hover:text-blue-600">Trainings</a></li>
+            <li class="text-gray-400">/</li>
+            <li><a href="{% url 'onboarding:admin_training_detail' training_id=submission.project.training.id %}" class="hover:text-blue-600">{{ submission.project.training.name }}</a></li>
+            <li class="text-gray-400">/</li>
+            <li><a href="{% url 'onboarding:admin_submission_list' training_id=submission.project.training.id %}" class="hover:text-blue-600">Submissions</a></li>
+            <li class="text-gray-400">/</li>
+            <li class="text-gray-900 font-medium">Review</li>
         </ol>
     </nav>
 
-    <div class="row">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <!-- Submission Details -->
-        <div class="col-lg-7 mb-4">
-            <div class="card">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                    <span><i class="fas fa-file-code me-2"></i>Submission Details</span>
+        <div class="lg:col-span-3 space-y-6">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-gray-900">Submission Details</h2>
                     {% if submission.status == 'draft' %}
-                    <span class="badge bg-secondary">Draft</span>
+                    <span class="px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded">Draft</span>
                     {% elif submission.status == 'submitted' %}
-                    <span class="badge bg-warning text-dark">Awaiting Review</span>
+                    <span class="px-3 py-1 text-sm bg-yellow-100 text-yellow-700 rounded">Awaiting Review</span>
                     {% elif submission.status == 'in_review' %}
-                    <span class="badge bg-primary">In Review</span>
+                    <span class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded">In Review</span>
                     {% elif submission.status == 'revision_requested' %}
-                    <span class="badge bg-danger">Revision Requested</span>
+                    <span class="px-3 py-1 text-sm bg-red-100 text-red-700 rounded">Revision Requested</span>
                     {% elif submission.status == 'approved' %}
-                    <span class="badge bg-success">Approved</span>
+                    <span class="px-3 py-1 text-sm bg-green-100 text-green-700 rounded">Approved</span>
                     {% elif submission.status == 'rejected' %}
-                    <span class="badge bg-dark">Rejected</span>
+                    <span class="px-3 py-1 text-sm bg-gray-800 text-white rounded">Rejected</span>
                     {% endif %}
                 </div>
-                <div class="card-body">
-                    <!-- Developer Info -->
-                    <div class="d-flex align-items-center mb-4">
-                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
-                             style="width: 50px; height: 50px; font-size: 1.25rem;">
-                            {{ submission.developer.first_name.0 }}{{ submission.developer.last_name.0 }}
-                        </div>
-                        <div>
-                            <h5 class="mb-0">{{ submission.developer.first_name }} {{ submission.developer.last_name }}</h5>
-                            <small class="text-muted">{{ submission.developer.user.email }}</small>
-                        </div>
+
+                <!-- Developer Info -->
+                <div class="flex items-center mb-6 p-4 bg-gray-50 rounded-lg">
+                    <div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-4">
+                        {{ submission.developer.first_name.0 }}{{ submission.developer.last_name.0 }}
                     </div>
-                    
-                    <!-- Project Info -->
-                    <div class="alert alert-light border mb-4">
-                        <h6 class="mb-1"><i class="fas fa-tasks me-2"></i>{{ submission.project.title }}</h6>
-                        <small class="text-muted">{{ submission.project.description|truncatewords:30 }}</small>
-                        <hr class="my-2">
-                        <div class="row text-center">
-                            <div class="col-4">
-                                <small class="text-muted">Max Score</small>
-                                <div class="fw-bold">{{ submission.project.max_score }}</div>
-                            </div>
-                            <div class="col-4">
-                                <small class="text-muted">To Pass</small>
-                                <div class="fw-bold text-success">{{ submission.project.passing_score }}</div>
-                            </div>
-                            <div class="col-4">
-                                <small class="text-muted">Due</small>
-                                <div class="fw-bold">{% if submission.project.due_date %}{{ submission.project.due_date|date:"M d" }}{% else %}-{% endif %}</div>
-                            </div>
-                        </div>
+                    <div>
+                        <div class="font-medium text-gray-900">{{ submission.developer.first_name }} {{ submission.developer.last_name }}</div>
+                        <div class="text-sm text-gray-500">{{ submission.developer.user.email }}</div>
                     </div>
-                    
-                    <!-- GitHub URL -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold"><i class="fab fa-github me-2"></i>GitHub Repository</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control bg-light" value="{{ submission.github_url }}" readonly>
-                            <a href="{{ submission.github_url }}" target="_blank" class="btn btn-outline-primary">
-                                <i class="fas fa-external-link-alt"></i>
-                            </a>
-                        </div>
-                    </div>
-                    
-                    <!-- Student Description -->
-                    {% if submission.student_description %}
-                    <div class="mb-4">
-                        <label class="form-label fw-bold"><i class="fas fa-align-left me-2"></i>Student's Description</label>
-                        <div class="bg-light p-3 rounded border">
-                            {{ submission.student_description|linebreaks }}
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- Student Notes -->
-                    {% if submission.student_notes %}
-                    <div class="mb-4">
-                        <label class="form-label fw-bold"><i class="fas fa-sticky-note me-2"></i>Student's Notes</label>
-                        <div class="bg-light p-3 rounded border">
-                            {{ submission.student_notes|linebreaks }}
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- Timeline -->
-                    <div class="border-top pt-3">
-                        <small class="text-muted">
-                            <i class="fas fa-clock me-1"></i>
-                            Created: {{ submission.created_at|date:"M d, Y H:i" }}
-                        </small>
-                        {% if submission.submitted_at %}
-                        <br><small class="text-muted">
-                            <i class="fas fa-paper-plane me-1"></i>
-                            Submitted: {{ submission.submitted_at|date:"M d, Y H:i" }}
-                        </small>
-                        {% endif %}
-                        {% if submission.reviewed_at %}
-                        <br><small class="text-muted">
-                            <i class="fas fa-gavel me-1"></i>
-                            Reviewed: {{ submission.reviewed_at|date:"M d, Y H:i" }}
-                            {% if submission.reviewed_by %}by {{ submission.reviewed_by.username }}{% endif %}
-                        </small>
+                </div>
+
+                <!-- Project Info -->
+                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h3 class="font-medium text-blue-900 mb-1">{{ submission.project.title }}</h3>
+                    <p class="text-sm text-blue-700">{{ submission.project.description|truncatewords:30 }}</p>
+                    <div class="mt-3 flex gap-4 text-sm">
+                        <span class="text-blue-700">Max Score: <strong>{{ submission.project.max_score }}</strong></span>
+                        <span class="text-green-700">Passing: <strong>{{ submission.project.passing_score }}</strong></span>
+                        {% if submission.project.due_date %}
+                        <span class="text-gray-600">Due: <strong>{{ submission.project.due_date|date:"M d" }}</strong></span>
                         {% endif %}
                     </div>
+                </div>
+
+                <!-- GitHub URL -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">GitHub Repository</label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" value="{{ submission.github_url }}" readonly 
+                               class="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded text-sm">
+                        <a href="{{ submission.github_url }}" target="_blank" 
+                           class="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-900 text-sm">
+                            Open →
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Student Description -->
+                {% if submission.student_description %}
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Student's Description</label>
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-700">
+                        {{ submission.student_description|linebreaks }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Student Notes -->
+                {% if submission.student_notes %}
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Student's Notes</label>
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-700">
+                        {{ submission.student_notes|linebreaks }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Timeline -->
+                <div class="pt-4 border-t border-gray-200 text-xs text-gray-500 space-y-1">
+                    <p>Created: {{ submission.created_at|date:"M d, Y H:i" }}</p>
+                    {% if submission.submitted_at %}
+                    <p>Submitted: {{ submission.submitted_at|date:"M d, Y H:i" }}</p>
+                    {% endif %}
+                    {% if submission.reviewed_at %}
+                    <p>Reviewed: {{ submission.reviewed_at|date:"M d, Y H:i" }} {% if submission.reviewed_by %}by {{ submission.reviewed_by.username }}{% endif %}</p>
+                    {% endif %}
                 </div>
             </div>
-        </div>
 
-        <!-- Review Form -->
-        <div class="col-lg-5 mb-4">
-            <div class="card {% if submission.status == 'submitted' %}border-warning{% endif %}">
-                <div class="card-header {% if submission.status == 'submitted' %}bg-warning text-dark{% else %}bg-primary text-white{% endif %}">
-                    <h5 class="mb-0"><i class="fas fa-gavel me-2"></i>Review & Score</h5>
-                </div>
-                <div class="card-body">
-                    {% if submission.score %}
-                    <div class="text-center mb-4">
-                        <div class="display-4 {% if submission.score >= submission.project.passing_score %}text-success{% else %}text-danger{% endif %}">
-                            {{ submission.score }}<small class="text-muted">/{{ submission.project.max_score }}</small>
-                        </div>
-                        {% if submission.score >= submission.project.passing_score %}
-                        <span class="badge bg-success">PASSED</span>
-                        {% else %}
-                        <span class="badge bg-danger">BELOW PASSING</span>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-
-                    <form method="post">
-                        {% csrf_token %}
-                        
-                        <div class="mb-3">
-                            <label for="score" class="form-label fw-bold">Score (1-{{ submission.project.max_score }})</label>
-                            <input type="number" class="form-control form-control-lg" id="score" name="score" 
-                                   min="1" max="{{ submission.project.max_score }}" 
-                                   value="{{ submission.score }}"
-                                   {% if submission.status == 'approved' or submission.status == 'rejected' %}readonly{% endif %}>
-                            <div class="form-text">Passing score is {{ submission.project.passing_score }}</div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="teacher_notes" class="form-label fw-bold">Feedback / Notes</label>
-                            <textarea class="form-control" id="teacher_notes" name="teacher_notes" rows="5"
-                                      placeholder="Provide constructive feedback for the student..."
-                                      {% if submission.status == 'approved' or submission.status == 'rejected' %}readonly{% endif %}>{{ submission.teacher_notes }}</textarea>
-                        </div>
-                        
-                        {% if submission.status != 'approved' and submission.status != 'rejected' and submission.status != 'draft' %}
-                        <hr>
-                        
-                        <div class="d-grid gap-2">
-                            <button type="submit" name="action" value="approve" class="btn btn-success btn-lg">
-                                <i class="fas fa-check-circle me-2"></i>Approve Submission
-                            </button>
-                            <button type="submit" name="action" value="request_revision" class="btn btn-warning">
-                                <i class="fas fa-redo me-2"></i>Request Revision
-                            </button>
-                            <button type="submit" name="action" value="reject" class="btn btn-outline-danger">
-                                <i class="fas fa-times-circle me-2"></i>Reject
-                            </button>
-                        </div>
-                        
-                        {% if submission.status == 'submitted' %}
-                        <hr>
-                        <button type="submit" name="action" value="in_review" class="btn btn-outline-primary btn-sm w-100">
-                            <i class="fas fa-search me-2"></i>Mark as In Review
-                        </button>
-                        {% endif %}
-                        {% endif %}
-                    </form>
-                </div>
-            </div>
-            
             <!-- Requirements Reference -->
             {% if submission.project.requirements %}
-            <div class="card mt-4">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Requirements Checklist</h6>
-                </div>
-                <div class="card-body">
-                    <small>{{ submission.project.requirements|linebreaks }}</small>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="font-medium text-gray-900 mb-3">Requirements Checklist</h3>
+                <div class="text-sm text-gray-700">
+                    {{ submission.project.requirements|linebreaks }}
                 </div>
             </div>
             {% endif %}
         </div>
+
+        <!-- Review Form -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow p-6 {% if submission.status == 'submitted' %}ring-2 ring-yellow-400{% endif %}">
+                <h2 class="text-xl font-bold text-gray-900 mb-6">Review & Score</h2>
+
+                {% if submission.score %}
+                <div class="text-center mb-6 p-4 rounded-lg {% if submission.score >= submission.project.passing_score %}bg-green-50{% else %}bg-red-50{% endif %}">
+                    <div class="text-4xl font-bold {% if submission.score >= submission.project.passing_score %}text-green-600{% else %}text-red-600{% endif %}">
+                        {{ submission.score }}<span class="text-lg text-gray-400">/{{ submission.project.max_score }}</span>
+                    </div>
+                    {% if submission.score >= submission.project.passing_score %}
+                    <span class="inline-block mt-2 px-3 py-1 text-sm bg-green-100 text-green-700 rounded">PASSED</span>
+                    {% else %}
+                    <span class="inline-block mt-2 px-3 py-1 text-sm bg-red-100 text-red-700 rounded">BELOW PASSING</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label for="score" class="block text-sm font-medium text-gray-700 mb-1">
+                                Score (1-{{ submission.project.max_score }})
+                            </label>
+                            <input type="number" id="score" name="score" min="1" max="{{ submission.project.max_score }}"
+                                   value="{{ submission.score }}"
+                                   {% if submission.status == 'approved' or submission.status == 'rejected' %}readonly{% endif %}
+                                   class="w-full px-3 py-2 border border-gray-300 rounded text-lg font-medium">
+                            <p class="mt-1 text-xs text-gray-500">Passing score is {{ submission.project.passing_score }}</p>
+                        </div>
+
+                        <div>
+                            <label for="teacher_notes" class="block text-sm font-medium text-gray-700 mb-1">
+                                Feedback / Notes
+                            </label>
+                            <textarea id="teacher_notes" name="teacher_notes" rows="5"
+                                      {% if submission.status == 'approved' or submission.status == 'rejected' %}readonly{% endif %}
+                                      class="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                                      placeholder="Provide constructive feedback for the student...">{{ submission.teacher_notes }}</textarea>
+                        </div>
+                    </div>
+
+                    {% if submission.status != 'approved' and submission.status != 'rejected' and submission.status != 'draft' %}
+                    <div class="mt-6 space-y-3">
+                        <button type="submit" name="action" value="approve" 
+                                class="w-full px-4 py-3 bg-green-600 text-white rounded hover:bg-green-700 font-medium">
+                            ✓ Approve Submission
+                        </button>
+                        <button type="submit" name="action" value="request_revision" 
+                                class="w-full px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
+                            ↺ Request Revision
+                        </button>
+                        <button type="submit" name="action" value="reject" 
+                                class="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 border border-gray-300">
+                            ✕ Reject
+                        </button>
+                        
+                        {% if submission.status == 'submitted' %}
+                        <hr class="my-4">
+                        <button type="submit" name="action" value="in_review" 
+                                class="w-full px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
+                            Mark as In Review
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
     </div>
 
-    <div class="mt-4">
-        <a href="{% url 'onboarding:admin_submission_list' training_id=submission.project.training.id %}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left me-2"></i>Back to Submissions
-        </a>
+    <!-- Back Link -->
+    <div class="mt-6">
+        <a href="{% url 'onboarding:admin_submission_list' training_id=submission.project.training.id %}" 
+           class="text-gray-600 hover:text-gray-800">← Back to Submissions</a>
     </div>
 </div>
 {% endblock %}

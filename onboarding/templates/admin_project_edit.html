@@ -1,119 +1,142 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends "base.html" %}
 
-{% block title %}Edit Project | Admin{% endblock %}
+{% block page_title %}Edit Project{% endblock %}
 
-{% block content %}
-<div class="container py-4">
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'onboarding:admin_training_list' %}">Trainings</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'onboarding:admin_training_detail' training_id=project.training.id %}">{{ project.training.name }}</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'onboarding:admin_project_list' training_id=project.training.id %}">Projects</a></li>
-            <li class="breadcrumb-item active">Edit: {{ project.title }}</li>
+{% block page_content %}
+<div class="max-w-3xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm text-gray-600">
+            <li><a href="{% url 'onboarding:admin_training_list' %}" class="hover:text-blue-600">Trainings</a></li>
+            <li class="text-gray-400">/</li>
+            <li><a href="{% url 'onboarding:admin_training_detail' training_id=project.training.id %}" class="hover:text-blue-600">{{ project.training.name }}</a></li>
+            <li class="text-gray-400">/</li>
+            <li><a href="{% url 'onboarding:admin_project_list' training_id=project.training.id %}" class="hover:text-blue-600">Projects</a></li>
+            <li class="text-gray-400">/</li>
+            <li class="text-gray-900 font-medium">Edit</li>
         </ol>
     </nav>
 
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="fas fa-edit me-2"></i>Edit Project</h4>
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Edit Project</h1>
+            <p class="text-sm text-gray-600 mt-1">{{ project.title }}</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="space-y-6">
+                <!-- Title -->
+                <div>
+                    <label for="id_title" class="block text-sm font-medium text-gray-700 mb-1">
+                        Project Title <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.title.errors }}</p>
+                    {% endif %}
                 </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        
-                        <div class="mb-3">
-                            <label for="id_title" class="form-label fw-bold">Project Title <span class="text-danger">*</span></label>
-                            {{ form.title }}
-                            {% if form.title.errors %}
-                            <div class="text-danger">{{ form.title.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="id_description" class="form-label fw-bold">Description <span class="text-danger">*</span></label>
-                            {{ form.description }}
-                            {% if form.description.errors %}
-                            <div class="text-danger">{{ form.description.errors }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="id_requirements" class="form-label fw-bold">Requirements / Acceptance Criteria</label>
-                            {{ form.requirements }}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="id_resources_hint" class="form-label fw-bold">Helpful Resources / Hints</label>
-                            {{ form.resources_hint }}
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label for="id_max_score" class="form-label fw-bold">Max Score</label>
-                                {{ form.max_score }}
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="id_passing_score" class="form-label fw-bold">Passing Score</label>
-                                {{ form.passing_score }}
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="id_order" class="form-label fw-bold">Display Order</label>
-                                {{ form.order }}
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="id_due_date" class="form-label fw-bold">Due Date</label>
-                                {{ form.due_date }}
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <div class="form-check">
-                                    {{ form.is_required }}
-                                    <label class="form-check-label" for="id_is_required">
-                                        Required Project
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="form-check">
-                                    {{ form.is_active }}
-                                    <label class="form-check-label" for="id_is_active">
-                                        Active (visible to students)
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <hr>
-                        
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'onboarding:admin_project_list' training_id=project.training.id %}" class="btn btn-secondary">
-                                <i class="fas fa-times me-2"></i>Cancel
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>Save Changes
-                            </button>
-                        </div>
-                    </form>
+
+                <!-- Description -->
+                <div>
+                    <label for="id_description" class="block text-sm font-medium text-gray-700 mb-1">
+                        Description <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Requirements -->
+                <div>
+                    <label for="id_requirements" class="block text-sm font-medium text-gray-700 mb-1">
+                        Requirements / Acceptance Criteria
+                    </label>
+                    {{ form.requirements }}
+                </div>
+
+                <!-- Resources Hint -->
+                <div>
+                    <label for="id_resources_hint" class="block text-sm font-medium text-gray-700 mb-1">
+                        Helpful Resources / Hints
+                    </label>
+                    {{ form.resources_hint }}
+                </div>
+
+                <!-- Scoring Row -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="id_max_score" class="block text-sm font-medium text-gray-700 mb-1">Max Score</label>
+                        {{ form.max_score }}
+                    </div>
+                    <div>
+                        <label for="id_passing_score" class="block text-sm font-medium text-gray-700 mb-1">Passing Score</label>
+                        {{ form.passing_score }}
+                    </div>
+                    <div>
+                        <label for="id_order" class="block text-sm font-medium text-gray-700 mb-1">Display Order</label>
+                        {{ form.order }}
+                    </div>
+                </div>
+
+                <!-- Due Date -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="id_due_date" class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                        {{ form.due_date }}
+                    </div>
+                </div>
+
+                <!-- Checkboxes -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex items-center gap-2">
+                        {{ form.is_required }}
+                        <label for="id_is_required" class="text-sm text-gray-700">Required Project</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        {{ form.is_active }}
+                        <label for="id_is_active" class="text-sm text-gray-700">Active (visible to students)</label>
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <!-- Actions -->
+            <div class="mt-8 pt-6 border-t border-gray-200 flex items-center justify-between">
+                <a href="{% url 'onboarding:admin_project_list' training_id=project.training.id %}" 
+                   class="text-gray-600 hover:text-gray-800">Cancel</a>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Save Changes
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
 <style>
-    .form-control, .form-select {
+    /* Form field styling */
+    input[type="text"], input[type="number"], input[type="date"], input[type="url"], textarea, select {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
         border-radius: 0.375rem;
+        font-size: 0.875rem;
+        background: #fff;
+        color: #111827;
     }
-    textarea.form-control {
-        min-height: 100px;
+    input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, 
+    input[type="url"]:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    textarea { min-height: 100px; resize: vertical; }
+    input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
+        border-radius: 0.25rem;
+        border: 1px solid #d1d5db;
     }
 </style>
 {% endblock %}

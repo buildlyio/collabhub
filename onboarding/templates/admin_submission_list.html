@@ -1,190 +1,155 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends "base.html" %}
 
-{% block title %}Submissions - {{ training.name }} | Admin{% endblock %}
+{% block page_title %}Submissions - {{ training.name }}{% endblock %}
 
-{% block content %}
-<div class="container py-4">
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'onboarding:admin_training_list' %}">Trainings</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'onboarding:admin_training_detail' training_id=training.id %}">{{ training.name }}</a></li>
-            <li class="breadcrumb-item active">Submissions</li>
+{% block page_content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm text-gray-600">
+            <li><a href="{% url 'onboarding:admin_training_list' %}" class="hover:text-blue-600">Trainings</a></li>
+            <li class="text-gray-400">/</li>
+            <li><a href="{% url 'onboarding:admin_training_detail' training_id=training.id %}" class="hover:text-blue-600">{{ training.name }}</a></li>
+            <li class="text-gray-400">/</li>
+            <li class="text-gray-900 font-medium">Submissions</li>
         </ol>
     </nav>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2><i class="fas fa-inbox me-2"></i>Project Submissions</h2>
-            <p class="text-muted mb-0">{{ training.name }} - {{ training.customer.company_name }}</p>
+    <div class="bg-white rounded-lg shadow">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Project Submissions</h1>
+                <p class="text-sm text-gray-600">{{ training.name }} - {{ training.customer.company_name }}</p>
+            </div>
+            <a href="{% url 'onboarding:admin_project_list' training_id=training.id %}" 
+               class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
+                Manage Projects
+            </a>
         </div>
-        <a href="{% url 'onboarding:admin_project_list' training_id=training.id %}" class="btn btn-outline-primary">
-            <i class="fas fa-tasks me-2"></i>Manage Projects
-        </a>
-    </div>
 
-    <!-- Filters -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-4">
-                    <label for="status" class="form-label">Status</label>
-                    <select name="status" id="status" class="form-select">
+        <!-- Filters -->
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <form method="get" class="flex flex-wrap gap-4 items-end">
+                <div class="flex-1 min-w-[200px]">
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select name="status" id="status" class="w-full px-3 py-2 border border-gray-300 rounded text-sm">
                         <option value="">All Statuses</option>
                         {% for value, label in status_choices %}
                         <option value="{{ value }}" {% if value == status_filter %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <label for="project" class="form-label">Project</label>
-                    <select name="project" id="project" class="form-select">
+                <div class="flex-1 min-w-[200px]">
+                    <label for="project" class="block text-sm font-medium text-gray-700 mb-1">Project</label>
+                    <select name="project" id="project" class="w-full px-3 py-2 border border-gray-300 rounded text-sm">
                         <option value="">All Projects</option>
                         {% for proj in projects %}
                         <option value="{{ proj.id }}" {% if proj.id|stringformat:"i" == project_filter %}selected{% endif %}>{{ proj.title }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary me-2">
-                        <i class="fas fa-filter me-1"></i>Filter
+                <div class="flex gap-2">
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+                        Filter
                     </button>
-                    <a href="{% url 'onboarding:admin_submission_list' training_id=training.id %}" class="btn btn-outline-secondary">
+                    <a href="{% url 'onboarding:admin_submission_list' training_id=training.id %}" 
+                       class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm">
                         Clear
                     </a>
                 </div>
             </form>
         </div>
+
+        <!-- Submissions Table -->
+        <div class="p-6">
+            {% if submissions %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Developer</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Project</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Submitted</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reviewer</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for submission in submissions %}
+                        <tr class="{% if submission.status == 'submitted' %}bg-yellow-50{% elif submission.status == 'revision_requested' %}bg-red-50{% elif submission.status == 'approved' %}bg-green-50{% endif %}">
+                            <td class="px-4 py-3">
+                                <div class="text-sm font-medium text-gray-900">{{ submission.developer.first_name }} {{ submission.developer.last_name }}</div>
+                                <div class="text-xs text-gray-500">{{ submission.developer.user.email }}</div>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-700">{{ submission.project.title }}</td>
+                            <td class="px-4 py-3">
+                                {% if submission.status == 'draft' %}
+                                <span class="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">Draft</span>
+                                {% elif submission.status == 'submitted' %}
+                                <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded">Submitted</span>
+                                {% elif submission.status == 'in_review' %}
+                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">In Review</span>
+                                {% elif submission.status == 'revision_requested' %}
+                                <span class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">Revision Requested</span>
+                                {% elif submission.status == 'approved' %}
+                                <span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">Approved</span>
+                                {% elif submission.status == 'rejected' %}
+                                <span class="px-2 py-1 text-xs bg-gray-800 text-white rounded">Rejected</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3">
+                                {% if submission.score %}
+                                <span class="text-sm font-medium {% if submission.score >= submission.project.passing_score %}text-green-600{% else %}text-red-600{% endif %}">
+                                    {{ submission.score }}/{{ submission.project.max_score }}
+                                </span>
+                                {% else %}
+                                <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-700">
+                                {% if submission.submitted_at %}
+                                {{ submission.submitted_at|date:"M d, Y" }}
+                                {% else %}
+                                <span class="text-gray-400">Not submitted</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-700">
+                                {% if submission.reviewed_by %}
+                                {{ submission.reviewed_by.username }}
+                                {% else %}
+                                <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <a href="{% url 'onboarding:admin_submission_review' submission_id=submission.id %}" 
+                                   class="{% if submission.status == 'submitted' %}px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600{% else %}text-blue-600 hover:text-blue-800{% endif %} text-sm">
+                                    {% if submission.status == 'submitted' %}Review{% else %}View{% endif %}
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No submissions found</h3>
+                <p class="mt-1 text-sm text-gray-500">No submissions match your current filters.</p>
+            </div>
+            {% endif %}
+        </div>
     </div>
 
-    <!-- Submissions Stats -->
-    <div class="row mb-4">
-        <div class="col-md-2">
-            <div class="card text-center border-warning">
-                <div class="card-body py-2">
-                    <h4 class="mb-0 text-warning">{{ submissions|length }}</h4>
-                    <small>Total</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card text-center border-info">
-                <div class="card-body py-2">
-                    <h4 class="mb-0 text-info">{% with pending=0 %}{% for s in submissions %}{% if s.status == 'submitted' %}{% with pending=pending|add:1 %}{% endwith %}{% endif %}{% endfor %}{{ pending }}{% endwith %}</h4>
-                    <small>Pending</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card text-center border-primary">
-                <div class="card-body py-2">
-                    <h4 class="mb-0 text-primary">{% with in_review=0 %}{% for s in submissions %}{% if s.status == 'in_review' %}{% with in_review=in_review|add:1 %}{% endwith %}{% endif %}{% endfor %}{{ in_review }}{% endwith %}</h4>
-                    <small>In Review</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card text-center border-success">
-                <div class="card-body py-2">
-                    <h4 class="mb-0 text-success">{% with approved=0 %}{% for s in submissions %}{% if s.status == 'approved' %}{% with approved=approved|add:1 %}{% endwith %}{% endif %}{% endfor %}{{ approved }}{% endwith %}</h4>
-                    <small>Approved</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card text-center border-danger">
-                <div class="card-body py-2">
-                    <h4 class="mb-0 text-danger">{% with revision=0 %}{% for s in submissions %}{% if s.status == 'revision_requested' %}{% with revision=revision|add:1 %}{% endwith %}{% endif %}{% endfor %}{{ revision }}{% endwith %}</h4>
-                    <small>Needs Revision</small>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {% if not submissions %}
-    <div class="alert alert-info">
-        <i class="fas fa-info-circle me-2"></i>
-        No submissions found matching your filters.
-    </div>
-    {% else %}
-    <div class="table-responsive">
-        <table class="table table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>Developer</th>
-                    <th>Project</th>
-                    <th>Status</th>
-                    <th>Score</th>
-                    <th>Submitted</th>
-                    <th>Reviewer</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for submission in submissions %}
-                <tr class="{% if submission.status == 'submitted' %}table-warning{% elif submission.status == 'revision_requested' %}table-danger{% elif submission.status == 'approved' %}table-success{% endif %}">
-                    <td>
-                        <strong>{{ submission.developer.first_name }} {{ submission.developer.last_name }}</strong>
-                        <br><small class="text-muted">{{ submission.developer.user.email }}</small>
-                    </td>
-                    <td>{{ submission.project.title }}</td>
-                    <td>
-                        {% if submission.status == 'draft' %}
-                        <span class="badge bg-secondary">Draft</span>
-                        {% elif submission.status == 'submitted' %}
-                        <span class="badge bg-warning text-dark">Submitted</span>
-                        {% elif submission.status == 'in_review' %}
-                        <span class="badge bg-primary">In Review</span>
-                        {% elif submission.status == 'revision_requested' %}
-                        <span class="badge bg-danger">Revision Requested</span>
-                        {% elif submission.status == 'approved' %}
-                        <span class="badge bg-success">Approved</span>
-                        {% elif submission.status == 'rejected' %}
-                        <span class="badge bg-dark">Rejected</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if submission.score %}
-                        <span class="{% if submission.score >= submission.project.passing_score %}text-success{% else %}text-danger{% endif %} fw-bold">
-                            {{ submission.score }}/{{ submission.project.max_score }}
-                        </span>
-                        {% else %}
-                        <span class="text-muted">-</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if submission.submitted_at %}
-                        {{ submission.submitted_at|date:"M d, Y" }}
-                        <br><small class="text-muted">{{ submission.submitted_at|time:"H:i" }}</small>
-                        {% else %}
-                        <span class="text-muted">Not submitted</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if submission.reviewed_by %}
-                        {{ submission.reviewed_by.username }}
-                        {% else %}
-                        <span class="text-muted">-</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-end">
-                        <a href="{% url 'onboarding:admin_submission_review' submission_id=submission.id %}" 
-                           class="btn btn-sm {% if submission.status == 'submitted' %}btn-warning{% else %}btn-outline-primary{% endif %}">
-                            <i class="fas fa-{% if submission.status == 'submitted' %}gavel{% else %}eye{% endif %} me-1"></i>
-                            {% if submission.status == 'submitted' %}Review{% else %}View{% endif %}
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% endif %}
-
-    <div class="mt-4">
-        <a href="{% url 'onboarding:admin_training_detail' training_id=training.id %}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left me-2"></i>Back to Training
-        </a>
+    <!-- Back Link -->
+    <div class="mt-6">
+        <a href="{% url 'onboarding:admin_training_detail' training_id=training.id %}" 
+           class="text-gray-600 hover:text-gray-800">← Back to Training</a>
     </div>
 </div>
 {% endblock %}

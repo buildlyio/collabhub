@@ -1,104 +1,122 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends "base.html" %}
 
-{% block title %}Projects - {{ training.name }} | Admin{% endblock %}
+{% block page_title %}Projects - {{ training.name }}{% endblock %}
 
-{% block content %}
-<div class="container py-4">
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'onboarding:admin_training_list' %}">Trainings</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'onboarding:admin_training_detail' training_id=training.id %}">{{ training.name }}</a></li>
-            <li class="breadcrumb-item active">Projects</li>
+{% block page_content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm text-gray-600">
+            <li><a href="{% url 'onboarding:admin_training_list' %}" class="hover:text-blue-600">Trainings</a></li>
+            <li class="text-gray-400">/</li>
+            <li><a href="{% url 'onboarding:admin_training_detail' training_id=training.id %}" class="hover:text-blue-600">{{ training.name }}</a></li>
+            <li class="text-gray-400">/</li>
+            <li class="text-gray-900 font-medium">Projects</li>
         </ol>
     </nav>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2><i class="fas fa-project-diagram me-2"></i>{{ training.name }} - Projects</h2>
-            <p class="text-muted mb-0">{{ training.customer.company_name }}</p>
+    <div class="bg-white rounded-lg shadow">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">{{ training.name }} - Projects</h1>
+                <p class="text-sm text-gray-600">{{ training.customer.company_name }}</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="{% url 'onboarding:admin_project_create' training_id=training.id %}" 
+                   class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                    + Add Project
+                </a>
+                <a href="{% url 'onboarding:admin_submission_list' training_id=training.id %}" 
+                   class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    View Submissions
+                </a>
+            </div>
         </div>
-        <div>
-            <a href="{% url 'onboarding:admin_project_create' training_id=training.id %}" class="btn btn-success">
-                <i class="fas fa-plus me-2"></i>Add Project
-            </a>
-            <a href="{% url 'onboarding:admin_submission_list' training_id=training.id %}" class="btn btn-primary ms-2">
-                <i class="fas fa-inbox me-2"></i>View Submissions
-            </a>
+
+        <!-- Projects Table -->
+        <div class="p-6">
+            {% if projects %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Scoring</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due Date</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Required</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for project in projects %}
+                        <tr>
+                            <td class="px-4 py-3 text-sm text-gray-900">{{ project.order }}</td>
+                            <td class="px-4 py-3">
+                                <div class="text-sm font-medium text-gray-900">{{ project.title }}</div>
+                                <div class="text-xs text-gray-500">{{ project.description|truncatewords:15 }}</div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                                    {{ project.passing_score }}/{{ project.max_score }} to pass
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-700">
+                                {% if project.due_date %}
+                                {{ project.due_date|date:"M d, Y" }}
+                                {% else %}
+                                <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3">
+                                {% if project.is_required %}
+                                <span class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">Required</span>
+                                {% else %}
+                                <span class="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">Optional</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3">
+                                {% if project.is_active %}
+                                <span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">Active</span>
+                                {% else %}
+                                <span class="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <a href="{% url 'onboarding:admin_project_edit' project_id=project.id %}" 
+                                   class="text-blue-600 hover:text-blue-800 text-sm mr-3">Edit</a>
+                                <a href="{% url 'onboarding:admin_project_delete' project_id=project.id %}" 
+                                   class="text-red-600 hover:text-red-800 text-sm">Delete</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No projects</h3>
+                <p class="mt-1 text-sm text-gray-500">Get started by creating a new project.</p>
+                <div class="mt-6">
+                    <a href="{% url 'onboarding:admin_project_create' training_id=training.id %}" 
+                       class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                        + Add Project
+                    </a>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 
-    {% if not projects %}
-    <div class="alert alert-info">
-        <i class="fas fa-info-circle me-2"></i>
-        No projects have been created for this training yet.
-        <a href="{% url 'onboarding:admin_project_create' training_id=training.id %}">Create one now</a>.
-    </div>
-    {% else %}
-    <div class="table-responsive">
-        <table class="table table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>Order</th>
-                    <th>Title</th>
-                    <th>Scoring</th>
-                    <th>Due Date</th>
-                    <th>Required</th>
-                    <th>Status</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for project in projects %}
-                <tr>
-                    <td>{{ project.order }}</td>
-                    <td>
-                        <strong>{{ project.title }}</strong>
-                        <br><small class="text-muted">{{ project.description|truncatewords:15 }}</small>
-                    </td>
-                    <td>
-                        <span class="badge bg-primary">{{ project.passing_score }}/{{ project.max_score }} to pass</span>
-                    </td>
-                    <td>
-                        {% if project.due_date %}
-                        {{ project.due_date|date:"M d, Y" }}
-                        {% else %}
-                        <span class="text-muted">-</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if project.is_required %}
-                        <span class="badge bg-danger">Required</span>
-                        {% else %}
-                        <span class="badge bg-secondary">Optional</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if project.is_active %}
-                        <span class="badge bg-success">Active</span>
-                        {% else %}
-                        <span class="badge bg-secondary">Inactive</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-end">
-                        <a href="{% url 'onboarding:admin_project_edit' project_id=project.id %}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <a href="{% url 'onboarding:admin_project_delete' project_id=project.id %}" class="btn btn-sm btn-outline-danger">
-                            <i class="fas fa-trash"></i>
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% endif %}
-
-    <div class="mt-4">
-        <a href="{% url 'onboarding:admin_training_detail' training_id=training.id %}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left me-2"></i>Back to Training
-        </a>
+    <!-- Back Link -->
+    <div class="mt-6">
+        <a href="{% url 'onboarding:admin_training_detail' training_id=training.id %}" 
+           class="text-gray-600 hover:text-gray-800">← Back to Training</a>
     </div>
 </div>
 {% endblock %}
