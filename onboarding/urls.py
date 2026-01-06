@@ -60,6 +60,8 @@ urlpatterns = [
     path('client/shared/<str:token>/developer/<int:developer_id>/approve/', views.customer_shared_approve_developer, name='customer_shared_approve_developer'),
     path('client/shared/<str:token>/developer/<int:developer_id>/reject/', views.customer_shared_reject_developer, name='customer_shared_reject_developer'),
     path('client/shared/<str:token>/contract/<int:contract_id>/sign/', views.customer_shared_contract_sign, name='customer_shared_contract_sign'),
+    path('client/shared/<str:token>/training/<int:training_id>/', views.customer_shared_training_preview, name='customer_shared_training_preview'),
+    path('client/shared/<str:token>/quiz/<int:quiz_id>/', views.customer_shared_quiz_preview, name='customer_shared_quiz_preview'),
     
     # Custom Admin Dashboard URLs (Staff Only)
     path('admin/customers/', views.admin_customers_list, name='admin_customers_list'),

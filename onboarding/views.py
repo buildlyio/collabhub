@@ -1259,7 +1259,7 @@ def customer_shared_view(request, token):
     Token-based view for customers to review developers and sign contracts
     No login required - access via unique shareable URL
     """
-    from .models import Customer, CustomerDeveloperAssignment, Contract
+    from .models import Customer, CustomerDeveloperAssignment, Contract, TeamTraining
     
     try:
         customer = Customer.objects.get(share_token=token, is_active=True)
@@ -1277,6 +1277,12 @@ def customer_shared_view(request, token):
     pending_contracts = contracts.filter(status='pending')
     signed_contracts = contracts.filter(status='signed')
     
+    # Get trainings for this customer
+    trainings = TeamTraining.objects.filter(
+        customer=customer,
+        is_active=True
+    ).prefetch_related('resources', 'quiz')
+    
     # Calculate stats
     approved_count = assignments.filter(status='approved').count()
     rejected_count = assignments.filter(status='rejected').count()
@@ -1288,6 +1294,7 @@ def customer_shared_view(request, token):
         'contracts': contracts,
         'pending_contracts': pending_contracts,
         'signed_contracts': signed_contracts,
+        'trainings': trainings,
         'approved_count': approved_count,
         'rejected_count': rejected_count,
         'pending_count': pending_count,
@@ -1510,6 +1517,88 @@ def customer_shared_contract_sign(request, token, contract_id):
     }
     
     return render(request, 'customer_shared_contract_sign.html', context)
+
+
+def customer_shared_training_preview(request, token, training_id):
+    """
+    Token-based view for customers to preview a training program
+    Shows resources, quiz info, and content preview
+    """
+    from .models import Customer, TeamTraining
+    
+    try:
+        customer = Customer.objects.get(share_token=token, is_active=True)
+    except Customer.DoesNotExist:
+        messages.error(request, 'Invalid or expired access link.')
+        return redirect('onboarding:customer_login')
+    
+    try:
+        training = TeamTraining.objects.get(id=training_id, customer=customer)
+    except TeamTraining.DoesNotExist:
+        messages.error(request, 'Training not found.')
+        return redirect('onboarding:customer_shared_view', token=token)
+    
+    # Get resources with their details
+    resources = training.resources.all()
+    
+    # Get sections if any
+    sections = training.sections.filter(is_active=True).prefetch_related(
+        'section_resources', 'quizzes'
+    ).order_by('order')
+    
+    context = {
+        'customer': customer,
+        'training': training,
+        'resources': resources,
+        'sections': sections,
+        'token': token,
+    }
+    
+    return render(request, 'customer_shared_training_preview.html', context)
+
+
+def customer_shared_quiz_preview(request, token, quiz_id):
+    """
+    Token-based view for customers to preview a quiz
+    Shows quiz details and sample questions (without answers)
+    """
+    from .models import Customer, Quiz
+    
+    try:
+        customer = Customer.objects.get(share_token=token, is_active=True)
+    except Customer.DoesNotExist:
+        messages.error(request, 'Invalid or expired access link.')
+        return redirect('onboarding:customer_login')
+    
+    try:
+        quiz = Quiz.objects.get(id=quiz_id)
+        # Verify quiz belongs to one of customer's trainings
+        if not quiz.team_trainings.filter(customer=customer).exists():
+            # Also check if it's a section quiz
+            from .models import TrainingSection
+            section_training_ids = TrainingSection.objects.filter(
+                quizzes=quiz
+            ).values_list('training_id', flat=True)
+            if not TeamTraining.objects.filter(
+                id__in=section_training_ids, customer=customer
+            ).exists():
+                messages.error(request, 'Quiz not found.')
+                return redirect('onboarding:customer_shared_view', token=token)
+    except Quiz.DoesNotExist:
+        messages.error(request, 'Quiz not found.')
+        return redirect('onboarding:customer_shared_view', token=token)
+    
+    # Get questions for preview (hide correct answers)
+    questions = quiz.questions.all().prefetch_related('options')
+    
+    context = {
+        'customer': customer,
+        'quiz': quiz,
+        'questions': questions,
+        'token': token,
+    }
+    
+    return render(request, 'customer_shared_quiz_preview.html', context)
 
 
 # ============================================================

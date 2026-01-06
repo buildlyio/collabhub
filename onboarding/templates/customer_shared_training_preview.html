@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ training.name }} - Training Preview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-5xl mx-auto px-4 py-8">
+        <!-- Back Navigation -->
+        <a href="{% url 'onboarding:customer_shared_view' token %}" 
+           class="inline-flex items-center text-blue-600 hover:text-blue-800 mb-6">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Dashboard
+        </a>
+
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg p-8 mb-8 text-white">
+            <div class="flex items-start justify-between">
+                <div>
+                    <div class="flex items-center mb-2">
+                        <svg class="w-10 h-10 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                        <h1 class="text-3xl md:text-4xl font-bold">{{ training.name }}</h1>
+                    </div>
+                    {% if training.developer_team %}
+                    <p class="text-lg opacity-90">Team: {{ training.developer_team.name }}</p>
+                    {% endif %}
+                    <p class="text-sm opacity-75 mt-2">Training Preview for {{ customer.company_name }}</p>
+                </div>
+                
+                <!-- Schedule Badge -->
+                {% if training.due_date %}
+                <div class="bg-white/20 rounded-lg p-3 text-center">
+                    <p class="text-xs opacity-90">Complete By</p>
+                    <p class="text-lg font-bold">{{ training.due_date|date:"M d, Y" }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="{% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-green-50 text-green-800 border border-green-200{% endif %} rounded-lg p-4 mb-4">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Training Description -->
+        {% if training.description %}
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-3">About This Training</h2>
+            <p class="text-gray-700">{{ training.description }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Schedule Details -->
+        {% if training.start_date or training.end_date or training.due_date %}
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Training Schedule</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {% if training.start_date %}
+                <div class="p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div class="flex items-center mb-2">
+                        <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <span class="font-medium text-green-800">Start Date</span>
+                    </div>
+                    <p class="text-lg font-bold text-green-700">{{ training.start_date|date:"F d, Y" }}</p>
+                </div>
+                {% endif %}
+                {% if training.end_date %}
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex items-center mb-2">
+                        <svg class="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <span class="font-medium text-gray-700">End Date</span>
+                    </div>
+                    <p class="text-lg font-bold text-gray-700">{{ training.end_date|date:"F d, Y" }}</p>
+                </div>
+                {% endif %}
+                {% if training.due_date %}
+                <div class="p-4 bg-red-50 rounded-lg border border-red-200">
+                    <div class="flex items-center mb-2">
+                        <svg class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="font-medium text-red-800">Due Date</span>
+                    </div>
+                    <p class="text-lg font-bold text-red-700">{{ training.due_date|date:"F d, Y" }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Training Sections -->
+        {% if sections %}
+        <div class="bg-white rounded-lg shadow-md mb-6">
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-900">Training Sections</h2>
+                <p class="text-sm text-gray-600">Complete each section in order</p>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {% for section in sections %}
+                <div class="p-6">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center">
+                            <span class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-bold text-sm mr-3">
+                                {{ section.order|add:1 }}
+                            </span>
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-900">{{ section.name }}</h3>
+                                {% if section.description %}
+                                <p class="text-sm text-gray-600">{{ section.description }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if section.end_date %}
+                        <span class="text-xs text-gray-500">Due: {{ section.end_date|date:"M d, Y" }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Section Resources -->
+                    {% if section.section_resources.count > 0 %}
+                    <div class="ml-11 mb-3">
+                        <p class="text-sm font-medium text-gray-700 mb-2">Resources:</p>
+                        <ul class="space-y-2">
+                            {% for resource in section.section_resources.all %}
+                            <li class="flex items-center text-sm">
+                                {% if resource.video_source != 'none' %}
+                                <svg class="w-4 h-4 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                {% else %}
+                                <svg class="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                {% endif %}
+                                <span class="text-gray-700">{{ resource.title }}</span>
+                                {% if resource.estimated_time_minutes %}
+                                <span class="ml-2 text-xs text-gray-500">({{ resource.estimated_time_minutes }} min)</span>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Section Quiz -->
+                    {% if section.quizzes.count > 0 %}
+                    <div class="ml-11">
+                        <p class="text-sm font-medium text-gray-700 mb-2">Quiz:</p>
+                        <div class="flex flex-wrap gap-2">
+                            {% for quiz in section.quizzes.all %}
+                            <a href="{% url 'onboarding:customer_shared_quiz_preview' token quiz.id %}"
+                               class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-green-100 text-green-700 hover:bg-green-200 transition-colors">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                                </svg>
+                                {{ quiz.name }} - Preview
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Training Resources -->
+        {% if resources %}
+        <div class="bg-white rounded-lg shadow-md mb-6">
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-900">Training Resources</h2>
+                <p class="text-sm text-gray-600">{{ resources.count }} resource{{ resources.count|pluralize }} included</p>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {% for resource in resources %}
+                <div class="p-6 flex items-start">
+                    <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center mr-4 flex-shrink-0">
+                        {% if resource.file %}
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        {% elif resource.link %}
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                        {% else %}
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900">{{ resource.title }}</h3>
+                        {% if resource.description %}
+                        <p class="text-sm text-gray-600 mt-1">{{ resource.description|truncatechars:200 }}</p>
+                        {% endif %}
+                        <div class="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                            {% if resource.resource_type %}
+                            <span class="px-2 py-1 bg-gray-100 rounded">{{ resource.resource_type }}</span>
+                            {% endif %}
+                            {% if resource.link %}
+                            <a href="{{ resource.link }}" target="_blank" class="text-blue-600 hover:underline flex items-center">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                </svg>
+                                View Resource
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Training Quiz -->
+        {% if training.quiz %}
+        <div class="bg-white rounded-lg shadow-md mb-6">
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">Training Assessment</h2>
+                        <p class="text-sm text-gray-600">Quiz to complete after training</p>
+                    </div>
+                    <a href="{% url 'onboarding:customer_shared_quiz_preview' token training.quiz.id %}"
+                       class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                        Preview Quiz
+                    </a>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="flex items-start">
+                    <div class="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 text-lg">{{ training.quiz.name }}</h3>
+                        {% if training.quiz.description %}
+                        <p class="text-sm text-gray-600 mt-1">{{ training.quiz.description }}</p>
+                        {% endif %}
+                        <div class="mt-3 flex items-center gap-4 text-sm text-gray-500">
+                            <span class="flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                {{ training.quiz.questions.count }} Questions
+                            </span>
+                            {% if training.quiz.passing_score %}
+                            <span class="flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                {{ training.quiz.passing_score }}% to pass
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="mt-12 text-center text-sm text-gray-600">
+            <p>&copy; 2025 Buildly. All rights reserved.</p>
+            <p class="mt-2 text-xs">This is a secure, unique link for {{ customer.company_name }}. Do not share this URL.</p>
+        </div>
+    </div>
+</body>
+</html>
