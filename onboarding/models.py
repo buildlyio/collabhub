@@ -377,6 +377,12 @@ class TeamTraining(models.Model):
     description = models.TextField(blank=True)
     resources = models.ManyToManyField('onboarding.Resource', blank=True, related_name='team_trainings')
     quiz = models.ForeignKey('onboarding.Quiz', null=True, blank=True, on_delete=models.SET_NULL, related_name='team_trainings')
+    
+    # Date fields for training schedule
+    start_date = models.DateField(null=True, blank=True, help_text="When this training becomes available")
+    end_date = models.DateField(null=True, blank=True, help_text="When this training closes/expires")
+    due_date = models.DateField(null=True, blank=True, help_text="Complete by date for this training")
+    
     is_active = models.BooleanField(default=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='team_trainings_created')
     created_at = models.DateTimeField(auto_now_add=True)

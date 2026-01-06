@@ -30,6 +30,29 @@
           {{ form.description }}
           {% if form.description.errors %}<div class="text-sm text-red-600">{{ form.description.errors }}</div>{% endif %}
         </div>
+        
+        <!-- Date Fields -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+            {{ form.start_date }}
+            {% if form.start_date.errors %}<div class="text-sm text-red-600">{{ form.start_date.errors }}</div>{% endif %}
+            <p class="text-xs text-gray-500 mt-1">When training becomes available</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+            {{ form.end_date }}
+            {% if form.end_date.errors %}<div class="text-sm text-red-600">{{ form.end_date.errors }}</div>{% endif %}
+            <p class="text-xs text-gray-500 mt-1">When training closes/expires</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Due Date (Complete By)</label>
+            {{ form.due_date }}
+            {% if form.due_date.errors %}<div class="text-sm text-red-600">{{ form.due_date.errors }}</div>{% endif %}
+            <p class="text-xs text-gray-500 mt-1">Deadline for completion</p>
+          </div>
+        </div>
+        
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Resources</label>
           {{ form.resources }}

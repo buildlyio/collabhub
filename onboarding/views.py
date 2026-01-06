@@ -3367,9 +3367,12 @@ def admin_training_create(request):
     class TeamTrainingForm(forms.ModelForm):
         class Meta:
             model = TeamTraining
-            fields = ['customer', 'developer_team', 'name', 'description', 'resources', 'quiz', 'is_active']
+            fields = ['customer', 'developer_team', 'name', 'description', 'start_date', 'end_date', 'due_date', 'resources', 'quiz', 'is_active']
             widgets = {
                 'resources': forms.SelectMultiple(attrs={'size': 10}),
+                'start_date': forms.DateInput(attrs={'type': 'date'}),
+                'end_date': forms.DateInput(attrs={'type': 'date'}),
+                'due_date': forms.DateInput(attrs={'type': 'date'}),
             }
         
         def __init__(self, *args, **kwargs):
@@ -3421,9 +3424,12 @@ def admin_training_edit(request, training_id):
     class TeamTrainingForm(forms.ModelForm):
         class Meta:
             model = TeamTraining
-            fields = ['customer', 'developer_team', 'name', 'description', 'resources', 'quiz', 'is_active']
+            fields = ['customer', 'developer_team', 'name', 'description', 'start_date', 'end_date', 'due_date', 'resources', 'quiz', 'is_active']
             widgets = {
                 'resources': forms.SelectMultiple(attrs={'size': 10}),
+                'start_date': forms.DateInput(attrs={'type': 'date'}),
+                'end_date': forms.DateInput(attrs={'type': 'date'}),
+                'due_date': forms.DateInput(attrs={'type': 'date'}),
             }
         
         def __init__(self, *args, **kwargs):
