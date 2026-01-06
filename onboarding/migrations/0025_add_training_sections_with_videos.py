@@ -106,9 +106,5 @@ class Migration(migrations.Migration):
             name='required_quizzes',
             field=models.ManyToManyField(blank=True, help_text='Quizzes that must be passed for this certification', related_name='certifications', to='onboarding.Quiz'),
         ),
-        migrations.AddField(
-            model_name='certificationlevel',
-            name='min_quiz_score',
-            field=models.PositiveIntegerField(default=70, help_text='Minimum passing score percentage for quizzes'),
-        ),
+        # min_quiz_score moved to migration 0026
     ]
