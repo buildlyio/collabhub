@@ -415,6 +415,346 @@ class TeamTrainingAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
 
 
+class TrainingSection(models.Model):
+    """
+    A section within a team training with start/end dates.
+    Each section can have multiple resources and quizzes.
+    """
+    training = models.ForeignKey(TeamTraining, on_delete=models.CASCADE, related_name='sections')
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    order = models.PositiveIntegerField(default=0, help_text="Order of this section within the training")
+    
+    # Date constraints for the section
+    start_date = models.DateField(null=True, blank=True, help_text="When this section becomes available")
+    end_date = models.DateField(null=True, blank=True, help_text="Complete by date for this section")
+    
+    # Quizzes for this section (can have multiple)
+    quizzes = models.ManyToManyField('onboarding.Quiz', blank=True, related_name='training_sections', help_text="Quizzes to complete at the end of this section")
+    
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['training', 'order', 'start_date']
+        unique_together = ('training', 'order')
+    
+    def __str__(self):
+        return f"{self.training.name} - Section {self.order}: {self.name}"
+    
+    def total_resources(self):
+        return self.section_resources.count()
+    
+    def is_available(self):
+        """Check if the section is currently available based on dates"""
+        from django.utils import timezone
+        today = timezone.now().date()
+        if self.start_date and today < self.start_date:
+            return False
+        return True
+    
+    def is_overdue(self):
+        """Check if the section is past its end date"""
+        from django.utils import timezone
+        today = timezone.now().date()
+        if self.end_date and today > self.end_date:
+            return True
+        return False
+    
+    def days_until_due(self):
+        """Calculate days remaining until due date"""
+        from django.utils import timezone
+        today = timezone.now().date()
+        if self.end_date:
+            delta = self.end_date - today
+            return delta.days
+        return None
+
+
+class TrainingSectionAdmin(admin.ModelAdmin):
+    list_display = ('name', 'training', 'order', 'start_date', 'end_date', 'is_active', 'total_resources', 'status_display')
+    list_filter = ('is_active', 'training', 'training__customer')
+    search_fields = ('name', 'description', 'training__name', 'training__customer__company_name')
+    readonly_fields = ('created_at', 'updated_at')
+    filter_horizontal = ('quizzes',)
+    ordering = ('training', 'order')
+    
+    def status_display(self, obj):
+        from django.utils.html import format_html
+        if obj.is_overdue():
+            return format_html('<span style="color: red;">⚠️ Overdue</span>')
+        elif obj.is_available():
+            days = obj.days_until_due()
+            if days is not None and days <= 7:
+                return format_html('<span style="color: orange;">⏰ {} days left</span>', days)
+            return format_html('<span style="color: green;">✅ Available</span>')
+        else:
+            return format_html('<span style="color: gray;">🔒 Not yet available</span>')
+    status_display.short_description = 'Status'
+    
+    fieldsets = (
+        ('Section Information', {
+            'fields': ('training', 'name', 'description', 'order', 'is_active')
+        }),
+        ('Schedule', {
+            'fields': ('start_date', 'end_date'),
+            'description': 'Set when this section becomes available and when it should be completed by.'
+        }),
+        ('Quizzes', {
+            'fields': ('quizzes',),
+            'description': 'Select quizzes that must be completed at the end of this section.'
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+class SectionResource(models.Model):
+    """
+    A resource within a training section, with support for video embeds.
+    """
+    VIDEO_SOURCE_CHOICES = [
+        ('none', 'No Video'),
+        ('youtube', 'YouTube'),
+        ('cloudflare', 'CloudFlare Stream'),
+        ('mp4', 'Direct MP4 URL'),
+        ('vimeo', 'Vimeo'),
+    ]
+    
+    section = models.ForeignKey(TrainingSection, on_delete=models.CASCADE, related_name='section_resources')
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    order = models.PositiveIntegerField(default=0, help_text="Order of this resource within the section")
+    
+    # Standard resource fields
+    link = models.URLField(blank=True, help_text="URL to external resource")
+    document = models.FileField(upload_to='section_resources/', blank=True, help_text="Upload a document or file")
+    
+    # Video embed fields
+    video_source = models.CharField(max_length=20, choices=VIDEO_SOURCE_CHOICES, default='none')
+    video_url = models.URLField(blank=True, help_text="Video URL (YouTube, CloudFlare, Vimeo link, or direct MP4 URL)")
+    video_embed_code = models.TextField(blank=True, help_text="Custom embed code if needed (optional - auto-generated for YouTube/CloudFlare/Vimeo)")
+    video_duration_minutes = models.PositiveIntegerField(null=True, blank=True, help_text="Estimated video duration in minutes")
+    
+    # Estimated time to complete this resource
+    estimated_time_minutes = models.PositiveIntegerField(null=True, blank=True, help_text="Estimated time to complete this resource in minutes")
+    
+    is_required = models.BooleanField(default=True, help_text="Is this resource required to complete the section?")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['section', 'order']
+        unique_together = ('section', 'order')
+    
+    def __str__(self):
+        return f"{self.section.name} - {self.title}"
+    
+    def get_video_embed_html(self):
+        """Generate embed HTML based on video source"""
+        if self.video_embed_code:
+            return self.video_embed_code
+        
+        if not self.video_url:
+            return ''
+        
+        if self.video_source == 'youtube':
+            # Extract video ID from various YouTube URL formats
+            video_id = self._extract_youtube_id()
+            if video_id:
+                return f'<iframe width="560" height="315" src="https://www.youtube.com/embed/{video_id}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+        
+        elif self.video_source == 'cloudflare':
+            # CloudFlare Stream embed
+            # URL format: https://watch.cloudflarestream.com/{video_id}
+            # or: https://customer-{code}.cloudflarestream.com/{video_id}/iframe
+            video_id = self._extract_cloudflare_id()
+            if video_id:
+                return f'<iframe src="https://iframe.cloudflarestream.com/{video_id}" style="border: none;" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen="true" width="560" height="315"></iframe>'
+        
+        elif self.video_source == 'vimeo':
+            # Extract Vimeo video ID
+            video_id = self._extract_vimeo_id()
+            if video_id:
+                return f'<iframe src="https://player.vimeo.com/video/{video_id}" width="560" height="315" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>'
+        
+        elif self.video_source == 'mp4':
+            return f'<video width="560" height="315" controls><source src="{self.video_url}" type="video/mp4">Your browser does not support the video tag.</video>'
+        
+        return ''
+    
+    def _extract_youtube_id(self):
+        """Extract YouTube video ID from URL"""
+        import re
+        if not self.video_url:
+            return None
+        # Match various YouTube URL formats
+        patterns = [
+            r'(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})',
+            r'youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})',
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, self.video_url)
+            if match:
+                return match.group(1)
+        return None
+    
+    def _extract_cloudflare_id(self):
+        """Extract CloudFlare Stream video ID from URL"""
+        import re
+        if not self.video_url:
+            return None
+        # Match CloudFlare stream URLs
+        patterns = [
+            r'cloudflarestream\.com\/([a-zA-Z0-9]+)',
+            r'videodelivery\.net\/([a-zA-Z0-9]+)',
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, self.video_url)
+            if match:
+                return match.group(1)
+        return None
+    
+    def _extract_vimeo_id(self):
+        """Extract Vimeo video ID from URL"""
+        import re
+        if not self.video_url:
+            return None
+        # Match Vimeo URLs
+        pattern = r'vimeo\.com\/(?:video\/)?(\d+)'
+        match = re.search(pattern, self.video_url)
+        if match:
+            return match.group(1)
+        return None
+    
+    def has_video(self):
+        return self.video_source != 'none' and bool(self.video_url)
+
+
+class SectionResourceAdmin(admin.ModelAdmin):
+    list_display = ('title', 'section', 'order', 'video_source', 'is_required', 'estimated_time_minutes', 'is_active')
+    list_filter = ('is_active', 'is_required', 'video_source', 'section__training', 'section__training__customer')
+    search_fields = ('title', 'description', 'section__name', 'section__training__name')
+    readonly_fields = ('created_at', 'updated_at', 'video_preview')
+    ordering = ('section', 'order')
+    
+    def video_preview(self, obj):
+        from django.utils.html import format_html
+        if obj.has_video():
+            embed = obj.get_video_embed_html()
+            if embed:
+                return format_html('<div style="max-width: 400px;">{}</div>', embed)
+        return '-'
+    video_preview.short_description = 'Video Preview'
+    
+    fieldsets = (
+        ('Resource Information', {
+            'fields': ('section', 'title', 'description', 'order', 'is_required', 'is_active')
+        }),
+        ('Content', {
+            'fields': ('link', 'document', 'estimated_time_minutes')
+        }),
+        ('Video Embed', {
+            'fields': ('video_source', 'video_url', 'video_embed_code', 'video_duration_minutes', 'video_preview'),
+            'description': 'Add a video from YouTube, CloudFlare Stream, Vimeo, or a direct MP4 URL. The embed code will be auto-generated, or you can provide custom embed code.'
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+class SectionProgress(models.Model):
+    """
+    Tracks a developer's progress through a training section.
+    """
+    STATUS_CHOICES = [
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+    ]
+    
+    enrollment = models.ForeignKey('DeveloperTrainingEnrollment', on_delete=models.CASCADE, related_name='section_progress')
+    section = models.ForeignKey(TrainingSection, on_delete=models.CASCADE, related_name='progress_records')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_started')
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        unique_together = ('enrollment', 'section')
+        ordering = ['section__order']
+    
+    def __str__(self):
+        return f"{self.enrollment.developer} - {self.section.name} ({self.status})"
+    
+    def resources_completed(self):
+        """Count resources completed in this section"""
+        return self.resource_progress.filter(is_completed=True).count()
+    
+    def resources_total(self):
+        """Total resources in this section"""
+        return self.section.section_resources.filter(is_active=True, is_required=True).count()
+    
+    def progress_percent(self):
+        """Calculate completion percentage"""
+        total = self.resources_total()
+        if total == 0:
+            return 100 if self.status == 'completed' else 0
+        return int((self.resources_completed() / total) * 100)
+    
+    def quizzes_passed(self):
+        """Check if all section quizzes have been passed"""
+        from django.db.models import Q
+        required_quizzes = self.section.quizzes.all()
+        if not required_quizzes.exists():
+            return True
+        # Check quiz answers for this developer
+        passed_count = QuizAnswer.objects.filter(
+            team_member=self.enrollment.developer,
+            question__quiz__in=required_quizzes,
+            evaluator_score__gte=3  # Assuming 3+ is passing
+        ).values('question__quiz').distinct().count()
+        return passed_count >= required_quizzes.count()
+
+
+class SectionProgressAdmin(admin.ModelAdmin):
+    list_display = ('enrollment', 'section', 'status', 'progress_percent', 'started_at', 'completed_at')
+    list_filter = ('status', 'section__training', 'section__training__customer')
+    search_fields = ('enrollment__developer__first_name', 'enrollment__developer__last_name', 'section__name')
+    readonly_fields = ('started_at', 'completed_at')
+
+
+class ResourceProgress(models.Model):
+    """
+    Tracks a developer's progress on individual resources within a section.
+    """
+    section_progress = models.ForeignKey(SectionProgress, on_delete=models.CASCADE, related_name='resource_progress')
+    resource = models.ForeignKey(SectionResource, on_delete=models.CASCADE, related_name='progress_records')
+    is_completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    time_spent_minutes = models.PositiveIntegerField(default=0, help_text="Time spent on this resource in minutes")
+    notes = models.TextField(blank=True, help_text="Developer notes on this resource")
+    
+    class Meta:
+        unique_together = ('section_progress', 'resource')
+    
+    def __str__(self):
+        status = "✓" if self.is_completed else "○"
+        return f"{status} {self.section_progress.enrollment.developer} - {self.resource.title}"
+
+
+class ResourceProgressAdmin(admin.ModelAdmin):
+    list_display = ('section_progress', 'resource', 'is_completed', 'time_spent_minutes', 'completed_at')
+    list_filter = ('is_completed', 'resource__section__training')
+    search_fields = ('section_progress__enrollment__developer__first_name', 'resource__title')
+    readonly_fields = ('completed_at',)
+
+
 class DeveloperTrainingEnrollment(models.Model):
     """Enrollment of a developer into a specific team training."""
     STATUS_CHOICES = [

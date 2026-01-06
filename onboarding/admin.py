@@ -32,3 +32,9 @@ admin.site.register(LabsAccount)
 admin.site.register(DeveloperTeam, DeveloperTeamAdmin)
 admin.site.register(TeamTraining, TeamTrainingAdmin)
 admin.site.register(DeveloperTrainingEnrollment, DeveloperTrainingEnrollmentAdmin)
+
+# Training Sections and Resources
+admin.site.register(TrainingSection, TrainingSectionAdmin)
+admin.site.register(SectionResource, SectionResourceAdmin)
+admin.site.register(SectionProgress, SectionProgressAdmin)
+admin.site.register(ResourceProgress, ResourceProgressAdmin)
