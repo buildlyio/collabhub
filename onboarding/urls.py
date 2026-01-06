@@ -148,6 +148,22 @@ urlpatterns = [
     path('admin/trainings/<int:training_id>/submissions/', views.admin_submission_list, name='admin_submission_list'),
     path('admin/submissions/<int:submission_id>/review/', views.admin_submission_review, name='admin_submission_review'),
     
+    # Developer: Availability & Forge Project Requests
+    path('availability/', views.developer_availability, name='developer_availability'),
+    path('forge-request/create/', views.developer_forge_request_create, name='developer_forge_request_create'),
+    path('forge-request/<int:request_id>/edit/', views.developer_forge_request_edit, name='developer_forge_request_edit'),
+    path('forge-request/<int:request_id>/delete/', views.developer_forge_request_delete, name='developer_forge_request_delete'),
+    
+    # Forge Project Browse & Apply
+    path('forge-projects/', views.forge_project_browse, name='forge_project_browse'),
+    path('forge-projects/<int:request_id>/', views.forge_project_detail, name='forge_project_detail'),
+    path('forge-projects/<int:request_id>/apply/', views.forge_project_apply, name='forge_project_apply'),
+    path('forge-projects/<int:request_id>/applications/', views.forge_project_manage_applications, name='forge_project_manage_applications'),
+    
+    # Admin: Forge Project Requests
+    path('admin/forge-requests/', views.admin_forge_requests_list, name='admin_forge_requests_list'),
+    path('admin/forge-requests/<int:request_id>/review/', views.admin_forge_request_review, name='admin_forge_request_review'),
+    
     # API endpoints
     path('api/teams/', views.api_teams_list, name='api_teams_list'),
 ]

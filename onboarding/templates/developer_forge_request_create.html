@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block page_title %}Request New Forge Project{% endblock %}
+
+{% block page_content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm text-gray-600">
+            <li><a href="{% url 'onboarding:developer_availability' %}" class="hover:text-indigo-600">Availability & Projects</a></li>
+            <li class="text-gray-400">/</li>
+            <li class="text-gray-900 font-medium">Request New Project</li>
+        </ol>
+    </nav>
+
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-6 border-b">
+            <h1 class="text-2xl font-bold text-gray-900">Request a Forge Project</h1>
+            <p class="text-gray-600 mt-1">Start a new project, fork an existing one, or contribute to the Forge ecosystem</p>
+        </div>
+
+        <form method="post" class="p-6">
+            {% csrf_token %}
+            
+            <div class="space-y-8">
+                <!-- Request Type -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">What would you like to do?</label>
+                    {{ form.request_type }}
+                </div>
+
+                <!-- Project Info Section -->
+                <div class="border-t pt-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Project Information</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Project Name <span class="text-red-500">*</span></label>
+                            {{ form.project_name }}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Project Description <span class="text-red-500">*</span></label>
+                            {{ form.project_description }}
+                            <p class="mt-1 text-xs text-gray-500">Describe your project idea, goals, and the problem it solves.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Target Category</label>
+                                {{ form.target_category }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Estimated Duration</label>
+                                {{ form.estimated_duration }}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Technologies</label>
+                            {{ form.technologies }}
+                            <p class="mt-1 text-xs text-gray-500">List the main technologies, frameworks, and tools you plan to use.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fork/Contribute Section (shown conditionally) -->
+                <div id="existing_project_section" class="border-t pt-6 hidden">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Existing Project</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Select Forge App (optional)</label>
+                            {{ form.existing_forge_app }}
+                            <p class="mt-1 text-xs text-gray-500">Select an existing Forge app to fork or contribute to.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">GitHub Repository URL</label>
+                            {{ form.github_repo_url }}
+                            <p class="mt-1 text-xs text-gray-500">Or provide a GitHub URL directly if not in the Forge catalog.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Recruitment Section -->
+                <div class="border-t pt-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Team Recruitment</h2>
+                    
+                    <div class="space-y-4">
+                        <div class="p-4 border rounded-lg bg-purple-50">
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="checkbox" name="needs_team" id="needs_team"
+                                       {% if form.instance.needs_team %}checked{% endif %}
+                                       class="mt-1 h-5 w-5 text-purple-600 rounded">
+                                <div>
+                                    <span class="font-medium text-gray-900">I'm looking for team members</span>
+                                    <p class="text-sm text-gray-600 mt-1">Allow other developers to apply and join your project team.</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div id="team_details" class="space-y-4 {% if not form.instance.needs_team %}hidden{% endif %}">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Team Size</label>
+                                    {{ form.team_size }}
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Planned Start Date</label>
+                                    {{ form.planned_start_date }}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Roles/Skills Needed</label>
+                                {{ form.roles_needed }}
+                                <p class="mt-1 text-xs text-gray-500">What skills are you looking for in team members?</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Team Description</label>
+                                {{ form.team_description }}
+                                <p class="mt-1 text-xs text-gray-500">Describe your collaboration expectations, meeting schedule, communication tools, etc.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-8 pt-6 border-t flex items-center justify-between">
+                <a href="{% url 'onboarding:developer_availability' %}" class="text-gray-600 hover:text-gray-800">
+                    ← Cancel
+                </a>
+                <div class="flex items-center gap-3">
+                    <button type="submit" name="action" value="save" 
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
+                        Save as Draft
+                    </button>
+                    <button type="submit" name="action" value="submit" 
+                            class="px-6 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-medium">
+                        Submit for Review
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const requestType = document.querySelector('[name="request_type"]');
+    const existingSection = document.getElementById('existing_project_section');
+    const needsTeam = document.getElementById('needs_team');
+    const teamDetails = document.getElementById('team_details');
+    
+    // Show/hide existing project section based on request type
+    if (requestType && existingSection) {
+        function updateExistingSection() {
+            if (requestType.value === 'fork_existing' || requestType.value === 'contribute') {
+                existingSection.classList.remove('hidden');
+            } else {
+                existingSection.classList.add('hidden');
+            }
+        }
+        requestType.addEventListener('change', updateExistingSection);
+        updateExistingSection();
+    }
+    
+    // Show/hide team details based on needs_team checkbox
+    if (needsTeam && teamDetails) {
+        needsTeam.addEventListener('change', function() {
+            if (this.checked) {
+                teamDetails.classList.remove('hidden');
+            } else {
+                teamDetails.classList.add('hidden');
+            }
+        });
+    }
+});
+</script>
+
+<style>
+    input[type="text"], input[type="url"], input[type="number"], input[type="date"], textarea, select {
+        font-size: 0.875rem;
+    }
+    input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+    textarea { resize: vertical; }
+</style>
+{% endblock %}

@@ -77,6 +77,23 @@ class TeamMember(models.Model):
     community_approval_date = models.DateTimeField(null=True, blank=True, help_text="When approved to Buildly community")
     community_approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='community_approvals', help_text="Staff member who approved")
     community_approval_notification_sent = models.BooleanField(default=False, help_text="Notification sent to developer")
+    
+    # Availability & Capacity Settings
+    AVAILABILITY_START_CHOICES = [
+        ('immediate', 'Immediately Available'),
+        ('1_week', '1 Week from Now'),
+        ('2_weeks', '2 Weeks from Now'),
+        ('1_month', '1 Month from Now'),
+        ('custom', 'Custom Date'),
+    ]
+    
+    available_for_public_projects = models.BooleanField(default=False, help_text="Available to work on public/open source Forge projects")
+    available_for_customer_work = models.BooleanField(default=False, help_text="Available to work for Buildly customers")
+    availability_start = models.CharField(max_length=20, choices=AVAILABILITY_START_CHOICES, default='immediate', blank=True)
+    availability_start_date = models.DateField(null=True, blank=True, help_text="Custom start date if 'Custom Date' selected")
+    hours_per_week = models.PositiveIntegerField(default=0, help_text="Hours per week available for work")
+    availability_notes = models.TextField(blank=True, help_text="Additional notes about availability")
+    availability_updated_at = models.DateTimeField(null=True, blank=True, help_text="When availability was last updated")
 
     @property
     def types(self):
@@ -1813,3 +1830,190 @@ class CustomerIntakeRequest(models.Model):
         self.save()
         
         return customer
+
+
+# ==================== FORGE PROJECT REQUESTS ====================
+
+class ForgeProjectRequest(models.Model):
+    """Developer request to start or contribute to a Forge project"""
+    
+    REQUEST_TYPE_CHOICES = [
+        ('start_new', 'Start a New Project'),
+        ('fork_existing', 'Fork an Existing Project'),
+        ('contribute', 'Contribute to Existing Project'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('submitted', 'Submitted'),
+        ('under_review', 'Under Review'),
+        ('approved', 'Approved'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('rejected', 'Rejected'),
+    ]
+    
+    TEAM_SIZE_CHOICES = [
+        ('solo', 'Solo (Just me)'),
+        ('small', 'Small (2-3 people)'),
+        ('medium', 'Medium (4-6 people)'),
+        ('large', 'Large (7+ people)'),
+    ]
+    
+    # Core request info
+    developer = models.ForeignKey(TeamMember, on_delete=models.CASCADE, related_name='forge_project_requests')
+    request_type = models.CharField(max_length=20, choices=REQUEST_TYPE_CHOICES, default='start_new')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    
+    # Project details
+    project_name = models.CharField(max_length=200, help_text="Proposed project name")
+    project_description = models.TextField(help_text="Describe the project, its goals, and intended features")
+    target_category = models.CharField(max_length=100, blank=True, help_text="Target category (e.g., AI, Analytics, CRM)")
+    technologies = models.TextField(blank=True, help_text="Technologies you plan to use")
+    github_repo_url = models.URLField(blank=True, help_text="GitHub repo URL (if forking or contributing)")
+    
+    # Existing Forge app reference (for fork/contribute)
+    existing_forge_app = models.ForeignKey('forge.ForgeApp', on_delete=models.SET_NULL, null=True, blank=True,
+                                           related_name='fork_requests', help_text="Existing Forge app to fork/contribute to")
+    
+    # Team recruitment
+    needs_team = models.BooleanField(default=False, help_text="Looking for team members to help")
+    team_size = models.CharField(max_length=20, choices=TEAM_SIZE_CHOICES, default='solo', blank=True)
+    roles_needed = models.TextField(blank=True, help_text="Roles/skills you're looking for (e.g., Frontend, Backend, DevOps)")
+    team_description = models.TextField(blank=True, help_text="Describe the team and collaboration expectations")
+    
+    # Recruited team members
+    team_members = models.ManyToManyField(TeamMember, blank=True, related_name='forge_project_teams',
+                                          help_text="Developers who joined this project")
+    
+    # Timeline
+    estimated_duration = models.CharField(max_length=100, blank=True, help_text="Estimated project duration")
+    planned_start_date = models.DateField(null=True, blank=True, help_text="When you plan to start")
+    
+    # Admin review
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='reviewed_forge_requests')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_notes = models.TextField(blank=True, help_text="Admin notes/feedback")
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Forge Project Request'
+        verbose_name_plural = 'Forge Project Requests'
+    
+    def __str__(self):
+        return f"{self.project_name} by {self.developer.first_name} {self.developer.last_name}"
+    
+    def submit(self):
+        """Submit the request for review"""
+        self.status = 'submitted'
+        self.submitted_at = timezone.now()
+        self.save()
+    
+    def approve(self, reviewer):
+        """Approve the project request"""
+        self.status = 'approved'
+        self.reviewed_by = reviewer
+        self.reviewed_at = timezone.now()
+        self.save()
+    
+    def reject(self, reviewer, notes=''):
+        """Reject the project request"""
+        self.status = 'rejected'
+        self.reviewed_by = reviewer
+        self.reviewed_at = timezone.now()
+        if notes:
+            self.review_notes = notes
+        self.save()
+    
+    def start_project(self):
+        """Mark project as in progress"""
+        self.status = 'in_progress'
+        self.save()
+    
+    def complete_project(self):
+        """Mark project as completed"""
+        self.status = 'completed'
+        self.save()
+
+
+class ForgeProjectRequestAdmin(admin.ModelAdmin):
+    list_display = ('project_name', 'developer', 'request_type', 'status', 'needs_team', 'created_at')
+    list_filter = ('status', 'request_type', 'needs_team')
+    search_fields = ('project_name', 'developer__first_name', 'developer__last_name', 'project_description')
+    readonly_fields = ('created_at', 'updated_at', 'submitted_at', 'reviewed_at')
+    filter_horizontal = ('team_members',)
+
+admin.site.register(ForgeProjectRequest, ForgeProjectRequestAdmin)
+
+
+class ForgeTeamApplication(models.Model):
+    """Application from a developer to join a Forge project team"""
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+        ('withdrawn', 'Withdrawn'),
+    ]
+    
+    project_request = models.ForeignKey(ForgeProjectRequest, on_delete=models.CASCADE, related_name='applications')
+    applicant = models.ForeignKey(TeamMember, on_delete=models.CASCADE, related_name='forge_team_applications')
+    
+    # Application details
+    message = models.TextField(help_text="Why do you want to join this project?")
+    skills_offered = models.TextField(help_text="What skills/experience can you contribute?")
+    hours_available = models.PositiveIntegerField(default=10, help_text="Hours per week you can contribute")
+    
+    # Status
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    response_message = models.TextField(blank=True, help_text="Response from project lead")
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    responded_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ['project_request', 'applicant']
+        verbose_name = 'Forge Team Application'
+        verbose_name_plural = 'Forge Team Applications'
+    
+    def __str__(self):
+        return f"{self.applicant.first_name} applying to {self.project_request.project_name}"
+    
+    def accept(self, response=''):
+        """Accept the application"""
+        self.status = 'accepted'
+        self.response_message = response
+        self.responded_at = timezone.now()
+        self.save()
+        # Add applicant to project team
+        self.project_request.team_members.add(self.applicant)
+    
+    def reject(self, response=''):
+        """Reject the application"""
+        self.status = 'rejected'
+        self.response_message = response
+        self.responded_at = timezone.now()
+        self.save()
+    
+    def withdraw(self):
+        """Withdraw the application"""
+        self.status = 'withdrawn'
+        self.responded_at = timezone.now()
+        self.save()
+
+
+class ForgeTeamApplicationAdmin(admin.ModelAdmin):
+    list_display = ('applicant', 'project_request', 'status', 'hours_available', 'created_at')
+    list_filter = ('status',)
+    search_fields = ('applicant__first_name', 'applicant__last_name', 'project_request__project_name')
+    readonly_fields = ('created_at', 'responded_at')
+
+admin.site.register(ForgeTeamApplication, ForgeTeamApplicationAdmin)

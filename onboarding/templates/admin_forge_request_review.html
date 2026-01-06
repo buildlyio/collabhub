@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block page_title %}Review Project Request - {{ project_request.project_name }}{% endblock %}
+
+{% block page_content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm text-gray-600">
+            <li><a href="{% url 'onboarding:admin_forge_requests_list' %}" class="hover:text-indigo-600">Forge Requests</a></li>
+            <li class="text-gray-400">/</li>
+            <li class="text-gray-900 font-medium">{{ project_request.project_name }}</li>
+        </ol>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Project Details -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">{{ project_request.project_name }}</h1>
+                        <p class="text-gray-600">{{ project_request.get_request_type_display }}</p>
+                    </div>
+                    <span class="px-3 py-1 text-sm rounded 
+                        {% if project_request.status == 'submitted' %}bg-yellow-100 text-yellow-700
+                        {% elif project_request.status == 'under_review' %}bg-blue-100 text-blue-700
+                        {% elif project_request.status == 'approved' %}bg-green-100 text-green-700
+                        {% elif project_request.status == 'rejected' %}bg-red-100 text-red-700
+                        {% else %}bg-gray-100 text-gray-600{% endif %}">
+                        {{ project_request.get_status_display }}
+                    </span>
+                </div>
+
+                <div class="prose prose-sm max-w-none text-gray-700 mb-6">
+                    {{ project_request.project_description|linebreaks }}
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 border-t pt-4">
+                    {% if project_request.target_category %}
+                    <div>
+                        <dt class="text-xs text-gray-500">Category</dt>
+                        <dd class="font-medium text-gray-900">{{ project_request.target_category }}</dd>
+                    </div>
+                    {% endif %}
+                    
+                    {% if project_request.technologies %}
+                    <div>
+                        <dt class="text-xs text-gray-500">Technologies</dt>
+                        <dd class="text-sm text-gray-900">{{ project_request.technologies }}</dd>
+                    </div>
+                    {% endif %}
+                    
+                    {% if project_request.estimated_duration %}
+                    <div>
+                        <dt class="text-xs text-gray-500">Estimated Duration</dt>
+                        <dd class="font-medium text-gray-900">{{ project_request.estimated_duration }}</dd>
+                    </div>
+                    {% endif %}
+                    
+                    {% if project_request.planned_start_date %}
+                    <div>
+                        <dt class="text-xs text-gray-500">Planned Start</dt>
+                        <dd class="font-medium text-gray-900">{{ project_request.planned_start_date|date:"M d, Y" }}</dd>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Existing Project (for fork/contribute) -->
+            {% if project_request.existing_forge_app or project_request.github_repo_url %}
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Existing Project Reference</h2>
+                
+                {% if project_request.existing_forge_app %}
+                <div class="p-4 bg-gray-50 rounded-lg mb-3">
+                    <div class="font-medium text-gray-900">{{ project_request.existing_forge_app.name }}</div>
+                    <div class="text-sm text-gray-600">{{ project_request.existing_forge_app.summary|truncatewords:20 }}</div>
+                </div>
+                {% endif %}
+                
+                {% if project_request.github_repo_url %}
+                <div>
+                    <dt class="text-xs text-gray-500">GitHub URL</dt>
+                    <dd>
+                        <a href="{{ project_request.github_repo_url }}" target="_blank" 
+                           class="text-indigo-600 hover:text-indigo-800 text-sm">
+                            {{ project_request.github_repo_url }}
+                        </a>
+                    </dd>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Team Recruitment -->
+            {% if project_request.needs_team %}
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Team Recruitment</h2>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center gap-4">
+                        <span class="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded">
+                            {{ project_request.get_team_size_display }}
+                        </span>
+                        <span class="text-sm text-gray-600">
+                            {{ project_request.team_members.count }} member{{ project_request.team_members.count|pluralize }} so far
+                        </span>
+                    </div>
+                    
+                    {% if project_request.roles_needed %}
+                    <div>
+                        <dt class="text-xs text-gray-500">Roles Needed</dt>
+                        <dd class="text-sm text-gray-700 mt-1">{{ project_request.roles_needed }}</dd>
+                    </div>
+                    {% endif %}
+                    
+                    {% if project_request.team_description %}
+                    <div>
+                        <dt class="text-xs text-gray-500">Team Description</dt>
+                        <dd class="text-sm text-gray-700 mt-1">{{ project_request.team_description }}</dd>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Review Form -->
+            {% if project_request.status in 'submitted,under_review' %}
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Review Decision</h2>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Review Notes</label>
+                        <textarea name="review_notes" rows="4" 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded"
+                                  placeholder="Add feedback for the developer...">{{ project_request.review_notes }}</textarea>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <button type="submit" name="action" value="approve" 
+                                class="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium">
+                            Approve Project
+                        </button>
+                        <button type="submit" name="action" value="under_review" 
+                                class="px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200">
+                            Mark Under Review
+                        </button>
+                        <button type="submit" name="action" value="reject" 
+                                class="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200">
+                            Reject
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Developer Info -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="font-semibold text-gray-900 mb-4">Developer</h3>
+                
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                        <span class="text-indigo-600 font-medium text-lg">
+                            {{ project_request.developer.first_name.0 }}{{ project_request.developer.last_name.0 }}
+                        </span>
+                    </div>
+                    <div>
+                        <div class="font-medium text-gray-900">
+                            {{ project_request.developer.first_name }} {{ project_request.developer.last_name }}
+                        </div>
+                        <div class="text-sm text-gray-500">{{ project_request.developer.email }}</div>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 text-sm">
+                    {% if project_request.developer.github_account %}
+                    <a href="{{ project_request.developer.github_account }}" target="_blank" 
+                       class="block text-indigo-600 hover:text-indigo-800">
+                        GitHub Profile →
+                    </a>
+                    {% endif %}
+                    {% if project_request.developer.linkedin %}
+                    <a href="{{ project_request.developer.linkedin }}" target="_blank" 
+                       class="block text-indigo-600 hover:text-indigo-800">
+                        LinkedIn Profile →
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'onboarding:admin_developer_profile' project_request.developer.id %}" 
+                       class="block text-indigo-600 hover:text-indigo-800">
+                        View Full Profile →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="font-semibold text-gray-900 mb-4">Timeline</h3>
+                
+                <div class="space-y-3 text-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">Created</span>
+                        <span class="text-gray-900">{{ project_request.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    {% if project_request.submitted_at %}
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">Submitted</span>
+                        <span class="text-gray-900">{{ project_request.submitted_at|date:"M d, Y" }}</span>
+                    </div>
+                    {% endif %}
+                    {% if project_request.reviewed_at %}
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">Reviewed</span>
+                        <span class="text-gray-900">{{ project_request.reviewed_at|date:"M d, Y" }}</span>
+                    </div>
+                    {% endif %}
+                    {% if project_request.reviewed_by %}
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">Reviewed by</span>
+                        <span class="text-gray-900">{{ project_request.reviewed_by.get_full_name|default:project_request.reviewed_by.username }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Existing Review Notes -->
+            {% if project_request.review_notes and project_request.status not in 'submitted,under_review' %}
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="font-semibold text-gray-900 mb-4">Review Notes</h3>
+                <p class="text-sm text-gray-700">{{ project_request.review_notes }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Back Link -->
+    <div class="mt-6">
+        <a href="{% url 'onboarding:admin_forge_requests_list' %}" class="text-gray-600 hover:text-gray-800">
+            ← Back to Forge Requests
+        </a>
+    </div>
+</div>
+
+<style>
+    textarea:focus {
+        outline: none;
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+    textarea { resize: vertical; }
+</style>
+{% endblock %}

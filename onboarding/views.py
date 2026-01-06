@@ -4157,3 +4157,441 @@ def admin_submission_review(request, submission_id):
     return render(request, 'admin_submission_review.html', {
         'submission': submission,
     })
+
+
+# ==================== DEVELOPER AVAILABILITY & FORGE PROJECT REQUESTS ====================
+
+@login_required
+def developer_availability(request):
+    """Developer view to manage availability settings."""
+    from django import forms
+    from .models import TeamMember
+    
+    try:
+        developer = request.user.teammember
+    except TeamMember.DoesNotExist:
+        messages.error(request, 'Developer profile not found.')
+        return redirect('onboarding:dashboard')
+    
+    class AvailabilityForm(forms.ModelForm):
+        class Meta:
+            model = TeamMember
+            fields = ['available_for_public_projects', 'available_for_customer_work', 
+                      'availability_start', 'availability_start_date', 'hours_per_week', 'availability_notes']
+            widgets = {
+                'availability_start': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'availability_start_date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'hours_per_week': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded', 'min': 0, 'max': 80}),
+                'availability_notes': forms.Textarea(attrs={'rows': 3, 'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+            }
+            labels = {
+                'available_for_public_projects': 'Available for Public/Open Source Forge Projects',
+                'available_for_customer_work': 'Available for Buildly Customer Projects',
+                'availability_start': 'When Can You Start?',
+                'availability_start_date': 'Custom Start Date',
+                'hours_per_week': 'Hours Available Per Week',
+                'availability_notes': 'Additional Notes',
+            }
+    
+    if request.method == 'POST':
+        form = AvailabilityForm(request.POST, instance=developer)
+        if form.is_valid():
+            developer = form.save(commit=False)
+            developer.availability_updated_at = timezone.now()
+            developer.save()
+            messages.success(request, 'Availability settings updated.')
+            return redirect('onboarding:developer_availability')
+    else:
+        form = AvailabilityForm(instance=developer)
+    
+    # Get developer's project requests
+    project_requests = developer.forge_project_requests.all().order_by('-created_at')
+    
+    # Get projects recruiting for team members
+    from .models import ForgeProjectRequest
+    recruiting_projects = ForgeProjectRequest.objects.filter(
+        needs_team=True,
+        status__in=['approved', 'in_progress']
+    ).exclude(developer=developer).select_related('developer')[:10]
+    
+    return render(request, 'developer_availability.html', {
+        'developer': developer,
+        'form': form,
+        'project_requests': project_requests,
+        'recruiting_projects': recruiting_projects,
+    })
+
+
+@login_required
+def developer_forge_request_create(request):
+    """Create a new Forge project request."""
+    from django import forms
+    from .models import TeamMember, ForgeProjectRequest
+    from forge.models import ForgeApp
+    
+    try:
+        developer = request.user.teammember
+    except TeamMember.DoesNotExist:
+        messages.error(request, 'Developer profile not found.')
+        return redirect('onboarding:dashboard')
+    
+    class ForgeProjectRequestForm(forms.ModelForm):
+        class Meta:
+            model = ForgeProjectRequest
+            fields = ['request_type', 'project_name', 'project_description', 'target_category',
+                      'technologies', 'github_repo_url', 'existing_forge_app',
+                      'needs_team', 'team_size', 'roles_needed', 'team_description',
+                      'estimated_duration', 'planned_start_date']
+            widgets = {
+                'request_type': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'project_name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'project_description': forms.Textarea(attrs={'rows': 4, 'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'target_category': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded', 'placeholder': 'e.g., AI, Analytics, CRM'}),
+                'technologies': forms.Textarea(attrs={'rows': 2, 'class': 'w-full px-3 py-2 border border-gray-300 rounded', 'placeholder': 'e.g., Python, Django, React, PostgreSQL'}),
+                'github_repo_url': forms.URLInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded', 'placeholder': 'https://github.com/...'}),
+                'existing_forge_app': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'needs_team': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+                'team_size': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'roles_needed': forms.Textarea(attrs={'rows': 2, 'class': 'w-full px-3 py-2 border border-gray-300 rounded', 'placeholder': 'e.g., Frontend Developer, DevOps Engineer'}),
+                'team_description': forms.Textarea(attrs={'rows': 3, 'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'estimated_duration': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded', 'placeholder': 'e.g., 3 months, 6 weeks'}),
+                'planned_start_date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+            }
+    
+    if request.method == 'POST':
+        form = ForgeProjectRequestForm(request.POST)
+        action = request.POST.get('action', 'save')
+        
+        if form.is_valid():
+            project_request = form.save(commit=False)
+            project_request.developer = developer
+            
+            if action == 'submit':
+                project_request.submit()
+                messages.success(request, 'Project request submitted for review!')
+            else:
+                project_request.save()
+                messages.success(request, 'Project request saved as draft.')
+            
+            return redirect('onboarding:developer_availability')
+    else:
+        form = ForgeProjectRequestForm()
+    
+    # Get available Forge apps for forking/contributing
+    forge_apps = ForgeApp.objects.filter(is_published=True).order_by('name')
+    
+    return render(request, 'developer_forge_request_create.html', {
+        'developer': developer,
+        'form': form,
+        'forge_apps': forge_apps,
+    })
+
+
+@login_required
+def developer_forge_request_edit(request, request_id):
+    """Edit an existing Forge project request."""
+    from django import forms
+    from .models import TeamMember, ForgeProjectRequest
+    from forge.models import ForgeApp
+    
+    try:
+        developer = request.user.teammember
+    except TeamMember.DoesNotExist:
+        messages.error(request, 'Developer profile not found.')
+        return redirect('onboarding:dashboard')
+    
+    project_request = get_object_or_404(ForgeProjectRequest, id=request_id, developer=developer)
+    
+    # Can only edit drafts
+    if project_request.status not in ['draft', 'submitted']:
+        messages.error(request, 'This request can no longer be edited.')
+        return redirect('onboarding:developer_availability')
+    
+    class ForgeProjectRequestForm(forms.ModelForm):
+        class Meta:
+            model = ForgeProjectRequest
+            fields = ['request_type', 'project_name', 'project_description', 'target_category',
+                      'technologies', 'github_repo_url', 'existing_forge_app',
+                      'needs_team', 'team_size', 'roles_needed', 'team_description',
+                      'estimated_duration', 'planned_start_date']
+            widgets = {
+                'request_type': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'project_name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'project_description': forms.Textarea(attrs={'rows': 4, 'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'target_category': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'technologies': forms.Textarea(attrs={'rows': 2, 'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'github_repo_url': forms.URLInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'existing_forge_app': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'needs_team': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+                'team_size': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'roles_needed': forms.Textarea(attrs={'rows': 2, 'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'team_description': forms.Textarea(attrs={'rows': 3, 'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'estimated_duration': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'planned_start_date': forms.DateInput(attrs={'type': 'date', 'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+            }
+    
+    if request.method == 'POST':
+        form = ForgeProjectRequestForm(request.POST, instance=project_request)
+        action = request.POST.get('action', 'save')
+        
+        if form.is_valid():
+            project_request = form.save(commit=False)
+            
+            if action == 'submit':
+                project_request.submit()
+                messages.success(request, 'Project request submitted for review!')
+            else:
+                project_request.save()
+                messages.success(request, 'Project request updated.')
+            
+            return redirect('onboarding:developer_availability')
+    else:
+        form = ForgeProjectRequestForm(instance=project_request)
+    
+    forge_apps = ForgeApp.objects.filter(is_published=True).order_by('name')
+    
+    return render(request, 'developer_forge_request_edit.html', {
+        'developer': developer,
+        'project_request': project_request,
+        'form': form,
+        'forge_apps': forge_apps,
+    })
+
+
+@login_required
+def developer_forge_request_delete(request, request_id):
+    """Delete a draft Forge project request."""
+    from .models import TeamMember, ForgeProjectRequest
+    
+    try:
+        developer = request.user.teammember
+    except TeamMember.DoesNotExist:
+        messages.error(request, 'Developer profile not found.')
+        return redirect('onboarding:dashboard')
+    
+    project_request = get_object_or_404(ForgeProjectRequest, id=request_id, developer=developer)
+    
+    # Can only delete drafts
+    if project_request.status != 'draft':
+        messages.error(request, 'Only draft requests can be deleted.')
+        return redirect('onboarding:developer_availability')
+    
+    if request.method == 'POST':
+        project_request.delete()
+        messages.success(request, 'Project request deleted.')
+        return redirect('onboarding:developer_availability')
+    
+    return render(request, 'developer_forge_request_delete.html', {
+        'project_request': project_request,
+    })
+
+
+@login_required
+def forge_project_browse(request):
+    """Browse Forge projects that are recruiting team members."""
+    from .models import ForgeProjectRequest, TeamMember
+    
+    try:
+        developer = request.user.teammember
+    except TeamMember.DoesNotExist:
+        developer = None
+    
+    # Get projects recruiting team members
+    projects = ForgeProjectRequest.objects.filter(
+        needs_team=True,
+        status__in=['approved', 'in_progress']
+    ).select_related('developer').prefetch_related('team_members', 'applications')
+    
+    # Filter options
+    category = request.GET.get('category', '')
+    if category:
+        projects = projects.filter(target_category__icontains=category)
+    
+    return render(request, 'forge_project_browse.html', {
+        'projects': projects,
+        'developer': developer,
+        'category_filter': category,
+    })
+
+
+@login_required
+def forge_project_detail(request, request_id):
+    """View details of a Forge project and apply to join."""
+    from .models import ForgeProjectRequest, ForgeTeamApplication, TeamMember
+    
+    project = get_object_or_404(
+        ForgeProjectRequest.objects.select_related('developer').prefetch_related('team_members', 'applications'),
+        id=request_id
+    )
+    
+    try:
+        developer = request.user.teammember
+    except TeamMember.DoesNotExist:
+        developer = None
+    
+    # Check if user already applied
+    existing_application = None
+    if developer:
+        existing_application = ForgeTeamApplication.objects.filter(
+            project_request=project,
+            applicant=developer
+        ).first()
+    
+    # Check if user is project owner or team member
+    is_owner = developer and project.developer == developer
+    is_team_member = developer and developer in project.team_members.all()
+    
+    return render(request, 'forge_project_detail.html', {
+        'project': project,
+        'developer': developer,
+        'existing_application': existing_application,
+        'is_owner': is_owner,
+        'is_team_member': is_team_member,
+    })
+
+
+@login_required
+def forge_project_apply(request, request_id):
+    """Apply to join a Forge project team."""
+    from django import forms
+    from .models import ForgeProjectRequest, ForgeTeamApplication, TeamMember
+    
+    try:
+        developer = request.user.teammember
+    except TeamMember.DoesNotExist:
+        messages.error(request, 'Developer profile not found.')
+        return redirect('onboarding:forge_project_browse')
+    
+    project = get_object_or_404(ForgeProjectRequest, id=request_id, needs_team=True)
+    
+    # Check if already applied
+    if ForgeTeamApplication.objects.filter(project_request=project, applicant=developer).exists():
+        messages.info(request, 'You have already applied to this project.')
+        return redirect('onboarding:forge_project_detail', request_id=request_id)
+    
+    # Check if own project
+    if project.developer == developer:
+        messages.error(request, 'You cannot apply to your own project.')
+        return redirect('onboarding:forge_project_detail', request_id=request_id)
+    
+    class ApplicationForm(forms.ModelForm):
+        class Meta:
+            model = ForgeTeamApplication
+            fields = ['message', 'skills_offered', 'hours_available']
+            widgets = {
+                'message': forms.Textarea(attrs={'rows': 4, 'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'skills_offered': forms.Textarea(attrs={'rows': 3, 'class': 'w-full px-3 py-2 border border-gray-300 rounded'}),
+                'hours_available': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded', 'min': 1, 'max': 40}),
+            }
+    
+    if request.method == 'POST':
+        form = ApplicationForm(request.POST)
+        if form.is_valid():
+            application = form.save(commit=False)
+            application.project_request = project
+            application.applicant = developer
+            application.save()
+            messages.success(request, f'Application submitted to join "{project.project_name}"!')
+            return redirect('onboarding:forge_project_detail', request_id=request_id)
+    else:
+        form = ApplicationForm(initial={'hours_available': developer.hours_per_week or 10})
+    
+    return render(request, 'forge_project_apply.html', {
+        'project': project,
+        'form': form,
+    })
+
+
+@login_required
+def forge_project_manage_applications(request, request_id):
+    """Project owner view to manage team applications."""
+    from .models import ForgeProjectRequest, ForgeTeamApplication, TeamMember
+    
+    try:
+        developer = request.user.teammember
+    except TeamMember.DoesNotExist:
+        messages.error(request, 'Developer profile not found.')
+        return redirect('onboarding:developer_availability')
+    
+    project = get_object_or_404(ForgeProjectRequest, id=request_id, developer=developer)
+    
+    applications = project.applications.select_related('applicant').order_by('-created_at')
+    
+    if request.method == 'POST':
+        application_id = request.POST.get('application_id')
+        action = request.POST.get('action')
+        response = request.POST.get('response_message', '').strip()
+        
+        application = get_object_or_404(ForgeTeamApplication, id=application_id, project_request=project)
+        
+        if action == 'accept':
+            application.accept(response=response)
+            messages.success(request, f'{application.applicant.first_name} has been added to the team!')
+        elif action == 'reject':
+            application.reject(response=response)
+            messages.info(request, 'Application rejected.')
+        
+        return redirect('onboarding:forge_project_manage_applications', request_id=request_id)
+    
+    return render(request, 'forge_project_manage_applications.html', {
+        'project': project,
+        'applications': applications,
+    })
+
+
+# Admin views for Forge Project Requests
+@login_required
+@user_passes_test(_is_staff)
+def admin_forge_requests_list(request):
+    """Admin view to manage all Forge project requests."""
+    from .models import ForgeProjectRequest
+    
+    status_filter = request.GET.get('status', '')
+    
+    requests = ForgeProjectRequest.objects.select_related('developer', 'reviewed_by').order_by('-created_at')
+    
+    if status_filter:
+        requests = requests.filter(status=status_filter)
+    
+    return render(request, 'admin_forge_requests_list.html', {
+        'requests': requests,
+        'status_filter': status_filter,
+        'status_choices': ForgeProjectRequest.STATUS_CHOICES,
+    })
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_forge_request_review(request, request_id):
+    """Admin view to review a Forge project request."""
+    from .models import ForgeProjectRequest
+    
+    project_request = get_object_or_404(
+        ForgeProjectRequest.objects.select_related('developer', 'existing_forge_app'),
+        id=request_id
+    )
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        notes = request.POST.get('review_notes', '').strip()
+        
+        if action == 'approve':
+            project_request.approve(reviewer=request.user)
+            project_request.review_notes = notes
+            project_request.save()
+            messages.success(request, f'Project "{project_request.project_name}" approved!')
+        elif action == 'reject':
+            project_request.reject(reviewer=request.user, notes=notes)
+            messages.warning(request, 'Project request rejected.')
+        elif action == 'under_review':
+            project_request.status = 'under_review'
+            project_request.reviewed_by = request.user
+            project_request.review_notes = notes
+            project_request.save()
+            messages.info(request, 'Marked as under review.')
+        
+        return redirect('onboarding:admin_forge_requests_list')
+    
+    return render(request, 'admin_forge_request_review.html', {
+        'project_request': project_request,
+    })
