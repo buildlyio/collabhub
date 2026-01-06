@@ -33,6 +33,10 @@ admin.site.register(DeveloperTeam, DeveloperTeamAdmin)
 admin.site.register(TeamTraining, TeamTrainingAdmin)
 admin.site.register(DeveloperTrainingEnrollment, DeveloperTrainingEnrollmentAdmin)
 
+# Training Projects and Submissions
+admin.site.register(TrainingProject, TrainingProjectAdmin)
+admin.site.register(ProjectSubmission, ProjectSubmissionAdmin)
+
 # Training Sections and Resources
 admin.site.register(TrainingSection, TrainingSectionAdmin)
 admin.site.register(SectionResource, SectionResourceAdmin)

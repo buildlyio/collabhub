@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Project | Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'onboarding:admin_training_list' %}">Trainings</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'onboarding:admin_training_detail' training_id=project.training.id %}">{{ project.training.name }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'onboarding:admin_project_list' training_id=project.training.id %}">Projects</a></li>
+            <li class="breadcrumb-item active">Edit: {{ project.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-edit me-2"></i>Edit Project</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_title" class="form-label fw-bold">Project Title <span class="text-danger">*</span></label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                            <div class="text-danger">{{ form.title.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_description" class="form-label fw-bold">Description <span class="text-danger">*</span></label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="text-danger">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_requirements" class="form-label fw-bold">Requirements / Acceptance Criteria</label>
+                            {{ form.requirements }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_resources_hint" class="form-label fw-bold">Helpful Resources / Hints</label>
+                            {{ form.resources_hint }}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="id_max_score" class="form-label fw-bold">Max Score</label>
+                                {{ form.max_score }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="id_passing_score" class="form-label fw-bold">Passing Score</label>
+                                {{ form.passing_score }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="id_order" class="form-label fw-bold">Display Order</label>
+                                {{ form.order }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_due_date" class="form-label fw-bold">Due Date</label>
+                                {{ form.due_date }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    {{ form.is_required }}
+                                    <label class="form-check-label" for="id_is_required">
+                                        Required Project
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="id_is_active">
+                                        Active (visible to students)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'onboarding:admin_project_list' training_id=project.training.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control, .form-select {
+        border-radius: 0.375rem;
+    }
+    textarea.form-control {
+        min-height: 100px;
+    }
+</style>
+{% endblock %}

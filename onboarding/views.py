@@ -1281,7 +1281,7 @@ def customer_shared_view(request, token):
     trainings = TeamTraining.objects.filter(
         customer=customer,
         is_active=True
-    ).prefetch_related('resources', 'quiz')
+    ).prefetch_related('resources', 'quiz', 'projects', 'sections')
     
     # Calculate stats
     approved_count = assignments.filter(status='approved').count()
@@ -3838,3 +3838,322 @@ def admin_team_remove_member(request, team_id, member_id):
     team.members.remove(member)
     messages.success(request, f'Removed {member.first_name} {member.last_name} from team.')
     return redirect('onboarding:admin_team_detail', team_id=team.id)
+
+
+# ==================== PROJECT SUBMISSIONS ====================
+
+@login_required
+def developer_project_list(request, training_id):
+    """Show all projects for a training that the developer is enrolled in."""
+    from .models import TrainingProject, ProjectSubmission
+    
+    team_member = get_object_or_404(TeamMember, user=request.user)
+    training = get_object_or_404(TeamTraining, id=training_id)
+    
+    # Verify enrollment
+    enrollment = get_object_or_404(
+        DeveloperTrainingEnrollment,
+        developer=team_member,
+        training=training
+    )
+    
+    projects = TrainingProject.objects.filter(training=training, is_active=True).order_by('order')
+    
+    # Get existing submissions for this developer
+    submissions = {
+        s.project_id: s 
+        for s in ProjectSubmission.objects.filter(
+            project__training=training, 
+            developer=team_member
+        )
+    }
+    
+    project_data = []
+    for project in projects:
+        submission = submissions.get(project.id)
+        project_data.append({
+            'project': project,
+            'submission': submission,
+            'status': submission.status if submission else 'not_started',
+        })
+    
+    return render(request, 'developer_project_list.html', {
+        'training': training,
+        'enrollment': enrollment,
+        'projects': project_data,
+        'team_member': team_member,
+    })
+
+
+@login_required
+def developer_project_submit(request, project_id):
+    """Submit or update a project submission."""
+    from .models import TrainingProject, ProjectSubmission
+    
+    team_member = get_object_or_404(TeamMember, user=request.user)
+    project = get_object_or_404(TrainingProject, id=project_id, is_active=True)
+    
+    # Verify enrollment in training
+    enrollment = get_object_or_404(
+        DeveloperTrainingEnrollment,
+        developer=team_member,
+        training=project.training
+    )
+    
+    # Get or create submission
+    submission, created = ProjectSubmission.objects.get_or_create(
+        project=project,
+        developer=team_member,
+        defaults={'enrollment': enrollment}
+    )
+    
+    if request.method == 'POST':
+        github_url = request.POST.get('github_url', '').strip()
+        student_description = request.POST.get('student_description', '').strip()
+        student_notes = request.POST.get('student_notes', '').strip()
+        action = request.POST.get('action', 'save')
+        
+        # Validate GitHub URL
+        if not github_url:
+            messages.error(request, 'GitHub URL is required.')
+            return render(request, 'developer_project_submit.html', {
+                'project': project,
+                'submission': submission,
+                'enrollment': enrollment,
+            })
+        
+        submission.github_url = github_url
+        submission.student_description = student_description
+        submission.student_notes = student_notes
+        
+        if action == 'submit':
+            # Check if allowed to submit (not already approved)
+            if submission.status == 'approved':
+                messages.error(request, 'This project has already been approved.')
+            else:
+                submission.submit()
+                messages.success(request, 'Project submitted for review!')
+        else:
+            submission.status = 'draft'
+            submission.save()
+            messages.success(request, 'Project saved as draft.')
+        
+        return redirect('onboarding:developer_project_list', training_id=project.training.id)
+    
+    return render(request, 'developer_project_submit.html', {
+        'project': project,
+        'submission': submission,
+        'enrollment': enrollment,
+    })
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_project_list(request, training_id):
+    """Admin view of all projects for a training."""
+    from .models import TrainingProject
+    
+    training = get_object_or_404(TeamTraining, id=training_id)
+    projects = TrainingProject.objects.filter(training=training).order_by('order')
+    
+    return render(request, 'admin_project_list.html', {
+        'training': training,
+        'projects': projects,
+    })
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_project_create(request, training_id):
+    """Create a new project for a training."""
+    from django import forms
+    from .models import TrainingProject
+    
+    training = get_object_or_404(TeamTraining, id=training_id)
+    
+    class TrainingProjectForm(forms.ModelForm):
+        class Meta:
+            model = TrainingProject
+            fields = ['title', 'description', 'requirements', 'resources_hint', 
+                      'max_score', 'passing_score', 'due_date', 'is_required', 'order']
+            widgets = {
+                'title': forms.TextInput(attrs={'class': 'form-control'}),
+                'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
+                'requirements': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
+                'resources_hint': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+                'due_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+                'max_score': forms.NumberInput(attrs={'class': 'form-control'}),
+                'passing_score': forms.NumberInput(attrs={'class': 'form-control'}),
+                'order': forms.NumberInput(attrs={'class': 'form-control'}),
+                'is_required': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            }
+    
+    if request.method == 'POST':
+        form = TrainingProjectForm(request.POST)
+        if form.is_valid():
+            project = form.save(commit=False)
+            project.training = training
+            project.save()
+            messages.success(request, f'Project "{project.title}" created.')
+            return redirect('onboarding:admin_project_list', training_id=training.id)
+    else:
+        # Default order to next in sequence
+        max_order = TrainingProject.objects.filter(training=training).count()
+        form = TrainingProjectForm(initial={'order': max_order})
+    
+    return render(request, 'admin_project_create.html', {
+        'training': training,
+        'form': form,
+    })
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_project_edit(request, project_id):
+    """Edit an existing project."""
+    from django import forms
+    from .models import TrainingProject
+    
+    project = get_object_or_404(TrainingProject, id=project_id)
+    
+    class TrainingProjectForm(forms.ModelForm):
+        class Meta:
+            model = TrainingProject
+            fields = ['title', 'description', 'requirements', 'resources_hint', 
+                      'max_score', 'passing_score', 'due_date', 'is_required', 'is_active', 'order']
+            widgets = {
+                'title': forms.TextInput(attrs={'class': 'form-control'}),
+                'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
+                'requirements': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
+                'resources_hint': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+                'due_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+                'max_score': forms.NumberInput(attrs={'class': 'form-control'}),
+                'passing_score': forms.NumberInput(attrs={'class': 'form-control'}),
+                'order': forms.NumberInput(attrs={'class': 'form-control'}),
+                'is_required': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+                'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            }
+    
+    if request.method == 'POST':
+        form = TrainingProjectForm(request.POST, instance=project)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Project "{project.title}" updated.')
+            return redirect('onboarding:admin_project_list', training_id=project.training.id)
+    else:
+        form = TrainingProjectForm(instance=project)
+    
+    return render(request, 'admin_project_edit.html', {
+        'project': project,
+        'form': form,
+    })
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_project_delete(request, project_id):
+    """Delete a project."""
+    from .models import TrainingProject
+    
+    project = get_object_or_404(TrainingProject, id=project_id)
+    training_id = project.training.id
+    
+    if request.method == 'POST':
+        project.delete()
+        messages.success(request, 'Project deleted.')
+        return redirect('onboarding:admin_project_list', training_id=training_id)
+    
+    return render(request, 'admin_project_delete.html', {
+        'project': project,
+    })
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_submission_list(request, training_id):
+    """Admin view of all submissions for a training's projects."""
+    from .models import TrainingProject, ProjectSubmission
+    
+    training = get_object_or_404(TeamTraining, id=training_id)
+    
+    # Filter options
+    status_filter = request.GET.get('status', '')
+    project_filter = request.GET.get('project', '')
+    
+    submissions = ProjectSubmission.objects.filter(
+        project__training=training
+    ).select_related('project', 'developer', 'reviewed_by').order_by('-submitted_at', '-created_at')
+    
+    if status_filter:
+        submissions = submissions.filter(status=status_filter)
+    if project_filter:
+        submissions = submissions.filter(project_id=project_filter)
+    
+    projects = TrainingProject.objects.filter(training=training)
+    
+    return render(request, 'admin_submission_list.html', {
+        'training': training,
+        'submissions': submissions,
+        'projects': projects,
+        'status_filter': status_filter,
+        'project_filter': project_filter,
+        'status_choices': ProjectSubmission.STATUS_CHOICES,
+    })
+
+
+@login_required
+@user_passes_test(_is_staff)
+def admin_submission_review(request, submission_id):
+    """Review and score a project submission."""
+    from .models import ProjectSubmission
+    
+    submission = get_object_or_404(
+        ProjectSubmission.objects.select_related('project', 'developer', 'enrollment'),
+        id=submission_id
+    )
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        score = request.POST.get('score')
+        teacher_notes = request.POST.get('teacher_notes', '').strip()
+        
+        if action == 'approve':
+            if score:
+                try:
+                    score = int(score)
+                    if 1 <= score <= submission.project.max_score:
+                        submission.teacher_notes = teacher_notes
+                        submission.approve(reviewer=request.user, score=score)
+                        messages.success(request, f'Submission approved with score {score}.')
+                    else:
+                        messages.error(request, f'Score must be between 1 and {submission.project.max_score}.')
+                        return render(request, 'admin_submission_review.html', {'submission': submission})
+                except ValueError:
+                    messages.error(request, 'Invalid score.')
+                    return render(request, 'admin_submission_review.html', {'submission': submission})
+            else:
+                messages.error(request, 'Score is required to approve.')
+                return render(request, 'admin_submission_review.html', {'submission': submission})
+                
+        elif action == 'request_revision':
+            submission.teacher_notes = teacher_notes
+            submission.request_revision(reviewer=request.user)
+            messages.success(request, 'Revision requested. Developer will be notified.')
+            
+        elif action == 'reject':
+            submission.teacher_notes = teacher_notes
+            submission.reject(reviewer=request.user)
+            messages.warning(request, 'Submission rejected.')
+            
+        elif action == 'in_review':
+            submission.status = 'in_review'
+            submission.teacher_notes = teacher_notes
+            submission.reviewed_by = request.user
+            submission.save()
+            messages.info(request, 'Marked as in review.')
+        
+        return redirect('onboarding:admin_submission_list', training_id=submission.project.training.id)
+    
+    return render(request, 'admin_submission_review.html', {
+        'submission': submission,
+    })

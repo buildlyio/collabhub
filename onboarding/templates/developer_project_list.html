@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Projects - {{ training.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'onboarding:developer_teams' %}">Teams & Trainings</a></li>
+            <li class="breadcrumb-item active">{{ training.name }} Projects</li>
+        </ol>
+    </nav>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="fas fa-project-diagram me-2"></i>{{ training.name }} - Projects</h4>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-0">{{ training.description|truncatewords:30 }}</p>
+            {% if training.due_date %}
+            <p class="mt-2 mb-0">
+                <i class="fas fa-calendar-alt me-1"></i>
+                <strong>Due:</strong> {{ training.due_date|date:"M d, Y" }}
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if not projects %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        No projects have been assigned for this training yet.
+    </div>
+    {% else %}
+    <div class="row">
+        {% for item in projects %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 {% if item.status == 'approved' %}border-success{% elif item.status == 'submitted' or item.status == 'in_review' %}border-warning{% elif item.status == 'revision_requested' %}border-danger{% endif %}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">{{ item.project.title }}</span>
+                    {% if item.project.is_required %}
+                    <span class="badge bg-danger">Required</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Optional</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-muted">{{ item.project.description|truncatewords:25 }}</p>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            <i class="fas fa-star me-1"></i>
+                            Max Score: {{ item.project.max_score }} | Passing: {{ item.project.passing_score }}
+                        </small>
+                    </div>
+                    
+                    {% if item.project.due_date %}
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-1"></i>
+                            Due: {{ item.project.due_date|date:"M d, Y" }}
+                        </small>
+                    </div>
+                    {% endif %}
+
+                    <!-- Status Badge -->
+                    <div class="mb-3">
+                        {% if item.status == 'not_started' %}
+                        <span class="badge bg-secondary"><i class="fas fa-circle me-1"></i>Not Started</span>
+                        {% elif item.status == 'draft' %}
+                        <span class="badge bg-info"><i class="fas fa-edit me-1"></i>Draft</span>
+                        {% elif item.status == 'submitted' %}
+                        <span class="badge bg-warning text-dark"><i class="fas fa-paper-plane me-1"></i>Submitted</span>
+                        {% elif item.status == 'in_review' %}
+                        <span class="badge bg-primary"><i class="fas fa-search me-1"></i>In Review</span>
+                        {% elif item.status == 'revision_requested' %}
+                        <span class="badge bg-danger"><i class="fas fa-exclamation-circle me-1"></i>Revision Requested</span>
+                        {% elif item.status == 'approved' %}
+                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Approved</span>
+                        {% if item.submission.score %}
+                        <span class="badge bg-success ms-1">Score: {{ item.submission.score }}/{{ item.project.max_score }}</span>
+                        {% endif %}
+                        {% elif item.status == 'rejected' %}
+                        <span class="badge bg-dark"><i class="fas fa-times-circle me-1"></i>Rejected</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Teacher Notes (if any) -->
+                    {% if item.submission and item.submission.teacher_notes %}
+                    <div class="alert alert-info py-2 small">
+                        <i class="fas fa-comment me-1"></i>
+                        <strong>Feedback:</strong> {{ item.submission.teacher_notes|truncatewords:20 }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    {% if item.status == 'approved' %}
+                    <a href="{% url 'onboarding:developer_project_submit' project_id=item.project.id %}" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-eye me-1"></i>View Submission
+                    </a>
+                    {% elif item.status == 'rejected' %}
+                    <span class="text-muted small">This project has been rejected.</span>
+                    {% else %}
+                    <a href="{% url 'onboarding:developer_project_submit' project_id=item.project.id %}" class="btn btn-primary btn-sm">
+                        {% if item.status == 'not_started' %}
+                        <i class="fas fa-plus me-1"></i>Start Project
+                        {% elif item.status == 'revision_requested' %}
+                        <i class="fas fa-redo me-1"></i>Revise & Resubmit
+                        {% else %}
+                        <i class="fas fa-edit me-1"></i>Continue Working
+                        {% endif %}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="{% url 'onboarding:developer_teams' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Teams
+        </a>
+    </div>
+</div>
+{% endblock %}

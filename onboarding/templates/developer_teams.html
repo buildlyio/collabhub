@@ -69,6 +69,19 @@
                   </ul>
                 </div>
               {% endif %}
+
+              <!-- Projects Link -->
+              {% if t.enrollment and t.training.projects.count > 0 %}
+              <div class="mt-4 pt-4 border-t">
+                <a href="{% url 'onboarding:developer_project_list' training_id=t.training.id %}" 
+                   class="inline-flex items-center gap-2 text-sm px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                  </svg>
+                  View Projects ({{ t.training.projects.count }})
+                </a>
+              </div>
+              {% endif %}
             </div>
             {% endfor %}
           </div>

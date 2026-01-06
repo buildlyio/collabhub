@@ -134,6 +134,20 @@ urlpatterns = [
     path('admin/developer-teams/<int:team_id>/add-member/', views.admin_team_add_member, name='admin_team_add_member'),
     path('admin/developer-teams/<int:team_id>/remove-member/<int:member_id>/', views.admin_team_remove_member, name='admin_team_remove_member'),
     
+    # Developer: Project Submissions
+    path('training/<int:training_id>/projects/', views.developer_project_list, name='developer_project_list'),
+    path('project/<int:project_id>/submit/', views.developer_project_submit, name='developer_project_submit'),
+    
+    # Admin: Project Management
+    path('admin/trainings/<int:training_id>/projects/', views.admin_project_list, name='admin_project_list'),
+    path('admin/trainings/<int:training_id>/projects/create/', views.admin_project_create, name='admin_project_create'),
+    path('admin/projects/<int:project_id>/edit/', views.admin_project_edit, name='admin_project_edit'),
+    path('admin/projects/<int:project_id>/delete/', views.admin_project_delete, name='admin_project_delete'),
+    
+    # Admin: Submission Review
+    path('admin/trainings/<int:training_id>/submissions/', views.admin_submission_list, name='admin_submission_list'),
+    path('admin/submissions/<int:submission_id>/review/', views.admin_submission_review, name='admin_submission_review'),
+    
     # API endpoints
     path('api/teams/', views.api_teams_list, name='api_teams_list'),
 ]

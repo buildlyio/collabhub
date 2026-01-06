@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Submissions - {{ training.name }} | Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'onboarding:admin_training_list' %}">Trainings</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'onboarding:admin_training_detail' training_id=training.id %}">{{ training.name }}</a></li>
+            <li class="breadcrumb-item active">Submissions</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-inbox me-2"></i>Project Submissions</h2>
+            <p class="text-muted mb-0">{{ training.name }} - {{ training.customer.company_name }}</p>
+        </div>
+        <a href="{% url 'onboarding:admin_project_list' training_id=training.id %}" class="btn btn-outline-primary">
+            <i class="fas fa-tasks me-2"></i>Manage Projects
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="status" class="form-label">Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if value == status_filter %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="project" class="form-label">Project</label>
+                    <select name="project" id="project" class="form-select">
+                        <option value="">All Projects</option>
+                        {% for proj in projects %}
+                        <option value="{{ proj.id }}" {% if proj.id|stringformat:"i" == project_filter %}selected{% endif %}>{{ proj.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-filter me-1"></i>Filter
+                    </button>
+                    <a href="{% url 'onboarding:admin_submission_list' training_id=training.id %}" class="btn btn-outline-secondary">
+                        Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Submissions Stats -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card text-center border-warning">
+                <div class="card-body py-2">
+                    <h4 class="mb-0 text-warning">{{ submissions|length }}</h4>
+                    <small>Total</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-info">
+                <div class="card-body py-2">
+                    <h4 class="mb-0 text-info">{% with pending=0 %}{% for s in submissions %}{% if s.status == 'submitted' %}{% with pending=pending|add:1 %}{% endwith %}{% endif %}{% endfor %}{{ pending }}{% endwith %}</h4>
+                    <small>Pending</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-primary">
+                <div class="card-body py-2">
+                    <h4 class="mb-0 text-primary">{% with in_review=0 %}{% for s in submissions %}{% if s.status == 'in_review' %}{% with in_review=in_review|add:1 %}{% endwith %}{% endif %}{% endfor %}{{ in_review }}{% endwith %}</h4>
+                    <small>In Review</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-success">
+                <div class="card-body py-2">
+                    <h4 class="mb-0 text-success">{% with approved=0 %}{% for s in submissions %}{% if s.status == 'approved' %}{% with approved=approved|add:1 %}{% endwith %}{% endif %}{% endfor %}{{ approved }}{% endwith %}</h4>
+                    <small>Approved</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-danger">
+                <div class="card-body py-2">
+                    <h4 class="mb-0 text-danger">{% with revision=0 %}{% for s in submissions %}{% if s.status == 'revision_requested' %}{% with revision=revision|add:1 %}{% endwith %}{% endif %}{% endfor %}{{ revision }}{% endwith %}</h4>
+                    <small>Needs Revision</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if not submissions %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        No submissions found matching your filters.
+    </div>
+    {% else %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Developer</th>
+                    <th>Project</th>
+                    <th>Status</th>
+                    <th>Score</th>
+                    <th>Submitted</th>
+                    <th>Reviewer</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for submission in submissions %}
+                <tr class="{% if submission.status == 'submitted' %}table-warning{% elif submission.status == 'revision_requested' %}table-danger{% elif submission.status == 'approved' %}table-success{% endif %}">
+                    <td>
+                        <strong>{{ submission.developer.first_name }} {{ submission.developer.last_name }}</strong>
+                        <br><small class="text-muted">{{ submission.developer.user.email }}</small>
+                    </td>
+                    <td>{{ submission.project.title }}</td>
+                    <td>
+                        {% if submission.status == 'draft' %}
+                        <span class="badge bg-secondary">Draft</span>
+                        {% elif submission.status == 'submitted' %}
+                        <span class="badge bg-warning text-dark">Submitted</span>
+                        {% elif submission.status == 'in_review' %}
+                        <span class="badge bg-primary">In Review</span>
+                        {% elif submission.status == 'revision_requested' %}
+                        <span class="badge bg-danger">Revision Requested</span>
+                        {% elif submission.status == 'approved' %}
+                        <span class="badge bg-success">Approved</span>
+                        {% elif submission.status == 'rejected' %}
+                        <span class="badge bg-dark">Rejected</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if submission.score %}
+                        <span class="{% if submission.score >= submission.project.passing_score %}text-success{% else %}text-danger{% endif %} fw-bold">
+                            {{ submission.score }}/{{ submission.project.max_score }}
+                        </span>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if submission.submitted_at %}
+                        {{ submission.submitted_at|date:"M d, Y" }}
+                        <br><small class="text-muted">{{ submission.submitted_at|time:"H:i" }}</small>
+                        {% else %}
+                        <span class="text-muted">Not submitted</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if submission.reviewed_by %}
+                        {{ submission.reviewed_by.username }}
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'onboarding:admin_submission_review' submission_id=submission.id %}" 
+                           class="btn btn-sm {% if submission.status == 'submitted' %}btn-warning{% else %}btn-outline-primary{% endif %}">
+                            <i class="fas fa-{% if submission.status == 'submitted' %}gavel{% else %}eye{% endif %} me-1"></i>
+                            {% if submission.status == 'submitted' %}Review{% else %}View{% endif %}
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="{% url 'onboarding:admin_training_detail' training_id=training.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Training
+        </a>
+    </div>
+</div>
+{% endblock %}

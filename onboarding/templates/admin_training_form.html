@@ -66,6 +66,35 @@
           {{ form.is_active }}
           <label class="text-sm text-gray-700">Active</label>
         </div>
+        
+        <!-- Projects Note -->
+        {% if training %}
+        <div class="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+          <div class="flex items-start">
+            <svg class="w-5 h-5 text-indigo-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+            <div>
+              <p class="text-sm font-medium text-indigo-900">Projects</p>
+              <p class="text-xs text-indigo-700 mt-1">
+                {% if training.projects.count > 0 %}
+                This training has {{ training.projects.count }} project{{ training.projects.count|pluralize }}.
+                <a href="{% url 'onboarding:admin_project_list' training_id=training.id %}" class="underline hover:text-indigo-900">Manage Projects</a>
+                {% else %}
+                Add projects for students to submit.
+                <a href="{% url 'onboarding:admin_project_create' training_id=training.id %}" class="underline hover:text-indigo-900">Add a Project</a>
+                {% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <p class="text-xs text-gray-600">
+            <strong>Note:</strong> You can add projects for students to submit after creating the training.
+          </p>
+        </div>
+        {% endif %}
       </div>
       <div class="mt-6 flex items-center justify-between">
         {% if training %}

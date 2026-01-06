@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Projects - {{ training.name }} | Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'onboarding:admin_training_list' %}">Trainings</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'onboarding:admin_training_detail' training_id=training.id %}">{{ training.name }}</a></li>
+            <li class="breadcrumb-item active">Projects</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-project-diagram me-2"></i>{{ training.name }} - Projects</h2>
+            <p class="text-muted mb-0">{{ training.customer.company_name }}</p>
+        </div>
+        <div>
+            <a href="{% url 'onboarding:admin_project_create' training_id=training.id %}" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i>Add Project
+            </a>
+            <a href="{% url 'onboarding:admin_submission_list' training_id=training.id %}" class="btn btn-primary ms-2">
+                <i class="fas fa-inbox me-2"></i>View Submissions
+            </a>
+        </div>
+    </div>
+
+    {% if not projects %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        No projects have been created for this training yet.
+        <a href="{% url 'onboarding:admin_project_create' training_id=training.id %}">Create one now</a>.
+    </div>
+    {% else %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Order</th>
+                    <th>Title</th>
+                    <th>Scoring</th>
+                    <th>Due Date</th>
+                    <th>Required</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for project in projects %}
+                <tr>
+                    <td>{{ project.order }}</td>
+                    <td>
+                        <strong>{{ project.title }}</strong>
+                        <br><small class="text-muted">{{ project.description|truncatewords:15 }}</small>
+                    </td>
+                    <td>
+                        <span class="badge bg-primary">{{ project.passing_score }}/{{ project.max_score }} to pass</span>
+                    </td>
+                    <td>
+                        {% if project.due_date %}
+                        {{ project.due_date|date:"M d, Y" }}
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if project.is_required %}
+                        <span class="badge bg-danger">Required</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Optional</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if project.is_active %}
+                        <span class="badge bg-success">Active</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'onboarding:admin_project_edit' project_id=project.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'onboarding:admin_project_delete' project_id=project.id %}" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="mt-4">
+        <a href="{% url 'onboarding:admin_training_detail' training_id=training.id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Training
+        </a>
+    </div>
+</div>
+{% endblock %}

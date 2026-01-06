@@ -45,6 +45,45 @@
         {% endif %}
       </div>
 
+      <!-- Projects -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-semibold text-gray-900">Projects ({{ training.projects.count }})</h2>
+          <div class="flex gap-2">
+            <a href="{% url 'onboarding:admin_project_list' training_id=training.id %}" 
+               class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
+              Manage Projects
+            </a>
+            <a href="{% url 'onboarding:admin_submission_list' training_id=training.id %}" 
+               class="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
+              View Submissions
+            </a>
+          </div>
+        </div>
+        {% if training.projects.all %}
+          <ul class="divide-y">
+            {% for proj in training.projects.all %}
+              <li class="py-3 flex items-center justify-between">
+                <div>
+                  <div class="text-sm font-medium text-gray-900">{{ proj.title }}</div>
+                  <div class="text-xs text-gray-600">{{ proj.description|truncatewords:15 }}</div>
+                  <div class="text-xs text-gray-500 mt-1">
+                    Score: {{ proj.passing_score }}/{{ proj.max_score }} to pass
+                    {% if proj.is_required %}<span class="ml-2 text-red-600">• Required</span>{% endif %}
+                  </div>
+                </div>
+                <a href="{% url 'onboarding:admin_project_edit' project_id=proj.id %}" 
+                   class="text-xs text-blue-600 hover:underline">Edit</a>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-sm text-gray-500">No projects added yet. 
+            <a href="{% url 'onboarding:admin_project_create' training_id=training.id %}" class="text-blue-600 hover:underline">Add a project</a>
+          </p>
+        {% endif %}
+      </div>
+
       <!-- Team Assignment -->
       <div class="bg-white rounded-lg shadow p-6">
         <h2 class="text-lg font-semibold text-gray-900 mb-3">Team Assignment</h2>

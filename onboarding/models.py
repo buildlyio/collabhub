@@ -421,6 +421,141 @@ class TeamTrainingAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
 
 
+class TrainingProject(models.Model):
+    """
+    A project assignment within a training that students must complete and submit.
+    """
+    training = models.ForeignKey(TeamTraining, on_delete=models.CASCADE, related_name='projects')
+    title = models.CharField(max_length=200)
+    description = models.TextField(help_text="Detailed description of the project requirements")
+    order = models.PositiveIntegerField(default=0, help_text="Order of this project within the training")
+    
+    # Optional requirements
+    requirements = models.TextField(blank=True, help_text="Specific requirements or acceptance criteria")
+    resources_hint = models.TextField(blank=True, help_text="Helpful resources or hints for completing the project")
+    
+    # Grading
+    max_score = models.PositiveIntegerField(default=10, help_text="Maximum score (default 1-10)")
+    passing_score = models.PositiveIntegerField(default=7, help_text="Minimum score to pass")
+    
+    # Due date
+    due_date = models.DateField(null=True, blank=True, help_text="Due date for this project")
+    
+    is_required = models.BooleanField(default=True, help_text="Is this project required to complete the training?")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['training', 'order']
+        unique_together = ('training', 'order')
+    
+    def __str__(self):
+        return f"{self.training.name} - Project: {self.title}"
+
+
+class TrainingProjectAdmin(admin.ModelAdmin):
+    list_display = ('title', 'training', 'order', 'max_score', 'passing_score', 'due_date', 'is_required', 'is_active')
+    list_filter = ('is_active', 'is_required', 'training__customer')
+    search_fields = ('title', 'training__name', 'description')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+class ProjectSubmission(models.Model):
+    """
+    A student's submission for a training project.
+    """
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('submitted', 'Submitted'),
+        ('in_review', 'In Review'),
+        ('revision_requested', 'Revision Requested'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    
+    project = models.ForeignKey(TrainingProject, on_delete=models.CASCADE, related_name='submissions')
+    developer = models.ForeignKey('onboarding.TeamMember', on_delete=models.CASCADE, related_name='project_submissions')
+    enrollment = models.ForeignKey('onboarding.DeveloperTrainingEnrollment', on_delete=models.CASCADE, related_name='project_submissions', null=True, blank=True)
+    
+    # Student submission
+    github_url = models.URLField(help_text="GitHub repository URL for the project")
+    student_description = models.TextField(blank=True, help_text="Student's description of their submission")
+    student_notes = models.TextField(blank=True, help_text="Additional notes from the student")
+    
+    # Submission status
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    
+    # Teacher/Admin review
+    score = models.PositiveIntegerField(null=True, blank=True, help_text="Score from 1-10 (or up to max_score)")
+    teacher_notes = models.TextField(blank=True, help_text="Feedback and notes from the reviewer")
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_submissions')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-submitted_at', '-created_at']
+        unique_together = ('project', 'developer')
+    
+    def __str__(self):
+        return f"{self.developer} - {self.project.title}"
+    
+    def is_passing(self):
+        """Check if the submission has a passing score"""
+        if self.score is None:
+            return False
+        return self.score >= self.project.passing_score
+    
+    def submit(self):
+        """Mark the submission as submitted"""
+        from django.utils import timezone
+        self.status = 'submitted'
+        self.submitted_at = timezone.now()
+        self.save()
+    
+    def approve(self, reviewer, score, notes=''):
+        """Approve the submission with a score"""
+        from django.utils import timezone
+        self.status = 'approved'
+        self.score = score
+        if notes:
+            self.teacher_notes = notes
+        self.reviewed_by = reviewer
+        self.reviewed_at = timezone.now()
+        self.save()
+    
+    def request_revision(self, reviewer, notes=''):
+        """Request revision from the student"""
+        from django.utils import timezone
+        self.status = 'revision_requested'
+        if notes:
+            self.teacher_notes = notes
+        self.reviewed_by = reviewer
+        self.reviewed_at = timezone.now()
+        self.save()
+    
+    def reject(self, reviewer, notes=''):
+        """Reject the submission"""
+        from django.utils import timezone
+        self.status = 'rejected'
+        if notes:
+            self.teacher_notes = notes
+        self.reviewed_by = reviewer
+        self.reviewed_at = timezone.now()
+        self.save()
+
+
+class ProjectSubmissionAdmin(admin.ModelAdmin):
+    list_display = ('developer', 'project', 'status', 'score', 'submitted_at', 'reviewed_at')
+    list_filter = ('status', 'project__training__customer', 'project__training')
+    search_fields = ('developer__first_name', 'developer__last_name', 'project__title', 'github_url')
+    readonly_fields = ('created_at', 'updated_at', 'submitted_at', 'reviewed_at')
+
+
 class TrainingSection(models.Model):
     """
     A section within a team training with start/end dates.
