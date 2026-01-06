@@ -1589,7 +1589,7 @@ def customer_shared_quiz_preview(request, token, quiz_id):
         return redirect('onboarding:customer_shared_view', token=token)
     
     # Get questions for preview (hide correct answers)
-    questions = quiz.questions.all().prefetch_related('options')
+    questions = quiz.questions.all()
     
     context = {
         'customer': customer,
