@@ -26,13 +26,63 @@
         <div class="lg:col-span-2 space-y-8">
             
             <!-- Resources Section -->
-            {% if resources %}
             <div>
-                <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center justify-between mb-4">
                     <h2 class="text-2xl font-bold text-gray-900">Your Resources</h2>
-                    <a href="/onboarding/resources" class="text-blue-600 hover:text-blue-500 text-sm font-medium">View All →</a>
+                    <a href="{% url 'onboarding:developer_availability' %}" class="text-blue-600 hover:text-blue-500 text-sm font-medium">Availability & Projects →</a>
                 </div>
                 
+                <!-- Resource Filters -->
+                <div class="bg-white rounded-lg shadow p-4 mb-6">
+                    <form method="get" class="flex flex-wrap items-center gap-3">
+                        <!-- Search -->
+                        <div class="flex-1 min-w-[200px]">
+                            <input type="text" name="search" value="{{ search_query }}" 
+                                   placeholder="Search resources..."
+                                   class="w-full px-3 py-2 border border-gray-300 rounded text-sm">
+                        </div>
+                        
+                        <!-- Type Filter -->
+                        <div class="min-w-[180px]">
+                            <select name="type" class="w-full px-3 py-2 border border-gray-300 rounded text-sm">
+                                <option value="">My Types (Default)</option>
+                                {% for key, label in available_types %}
+                                <option value="{{ key }}" {% if type_filter == key %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Show All Toggle -->
+                        <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                            <input type="checkbox" name="show_all" value="1" {% if show_all %}checked{% endif %}
+                                   class="rounded text-blue-600">
+                            Show All
+                        </label>
+                        
+                        <!-- Submit -->
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                            Filter
+                        </button>
+                        
+                        {% if search_query or type_filter or show_all %}
+                        <a href="{% url 'onboarding:dashboard' %}" class="text-gray-500 hover:text-gray-700 text-sm">
+                            Clear
+                        </a>
+                        {% endif %}
+                    </form>
+                    
+                    {% if not show_all and not type_filter %}
+                    <p class="text-xs text-gray-500 mt-2">
+                        Showing resources for your profile type{% if team_member.profile_types.count > 0 %}s{% endif %}: 
+                        <span class="font-medium">{{ team_member.get_team_member_type_display }}</span>
+                        {% for pt in team_member.profile_types.all %}
+                            , <span class="font-medium">{{ pt.label }}</span>
+                        {% endfor %}
+                    </p>
+                    {% endif %}
+                </div>
+                
+                {% if resources %}
                 <div class="grid gap-6 md:grid-cols-2">
                     {% for resource in resources %}
                     <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-200 overflow-hidden">
@@ -51,9 +101,13 @@
                                             </svg>
                                         {% endif %}
                                     </div>
-                                    <h3 class="font-semibold text-gray-900">{{ resource.title }}</h3>
+                                    <div>
+                                        <h3 class="font-semibold text-gray-900">{{ resource.title }}</h3>
+                                        <span class="text-xs text-gray-500">{{ resource.get_team_member_type_display }}</span>
+                                    </div>
                                 </div>
                             </div>
+
 
                             <!-- Resource Description -->
                             {% if resource.descr %}
@@ -121,16 +175,29 @@
                 {% endif %}
             </div>
             {% else %}
-            <div class="text-center py-12 bg-gray-50 rounded-lg">
+            <!-- No resources found message -->
+            <div class="text-center py-12 bg-white rounded-lg shadow">
                 <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                     <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                     </svg>
                 </div>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">No Resources Available</h3>
-                <p class="text-gray-600">Resources will appear here as they become available.</p>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No Resources Found</h3>
+                <p class="text-gray-600 mb-4">
+                    {% if search_query or type_filter %}
+                    No resources match your current filters. Try adjusting your search or filter criteria.
+                    {% else %}
+                    No resources available for your profile type yet.
+                    {% endif %}
+                </p>
+                {% if search_query or type_filter or show_all %}
+                <a href="{% url 'onboarding:dashboard' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                    Clear Filters →
+                </a>
+                {% endif %}
             </div>
             {% endif %}
+            </div>
 
             <!-- Contracts Section (for Company Admins) -->
             {% if company_admin and contracts %}

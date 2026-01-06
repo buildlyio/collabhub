@@ -108,7 +108,64 @@ def dashboard(request):
         return render(request, 'not_approved.html')
 
     if team_member is not None:
-        resources = Resource.objects.filter(team_member_type=team_member.team_member_type) | Resource.objects.filter(team_member_type='all')
+        # Get filter parameters
+        type_filter = request.GET.get('type', '')
+        search_query = request.GET.get('search', '')
+        show_all = request.GET.get('show_all', '') == '1'
+        
+        # Get the developer's teams and customers (for customer-specific resources)
+        developer_teams = team_member.developer_teams.all()
+        developer_customers = set()
+        for team in developer_teams:
+            developer_customers.add(team.customer_id)
+        
+        # Base resource query - exclude resources that belong to customer trainings
+        # unless the developer is part of that customer
+        base_resources = Resource.objects.all()
+        
+        # Get resources that are linked to customer trainings
+        # These should only be visible to members of that customer
+        from django.db.models import Q
+        
+        # Start with resources NOT linked to any customer training (public resources)
+        public_resources = base_resources.filter(team_trainings__isnull=True)
+        
+        # Also include resources linked to trainings for the developer's customers
+        if developer_customers:
+            customer_resources = base_resources.filter(
+                team_trainings__customer_id__in=developer_customers
+            ).distinct()
+            resources = (public_resources | customer_resources).distinct()
+        else:
+            resources = public_resources
+        
+        # Apply type filter
+        if type_filter:
+            # Filter by specific type
+            resources = resources.filter(Q(team_member_type=type_filter) | Q(team_member_type='all'))
+        elif not show_all:
+            # Default: filter by developer's types
+            developer_types = [team_member.team_member_type]
+            # Also include profile_types if available
+            try:
+                profile_type_keys = list(team_member.profile_types.values_list('key', flat=True))
+                developer_types.extend(profile_type_keys)
+            except:
+                pass
+            
+            # Filter resources by developer's types or 'all'
+            type_q = Q(team_member_type='all')
+            for dev_type in developer_types:
+                type_q |= Q(team_member_type=dev_type)
+            resources = resources.filter(type_q)
+        
+        # Apply search filter
+        if search_query:
+            resources = resources.filter(
+                Q(title__icontains=search_query) | Q(descr__icontains=search_query)
+            )
+        
+        resources = resources.distinct().order_by('team_member_type', 'title')
         
         # Add progress data to resources
         for resource in resources:
@@ -154,6 +211,9 @@ def dashboard(request):
         developer_certifications = DeveloperCertification.objects.filter(
             developer=team_member
         ).select_related('certification_level')
+        
+        # Get available types for filter dropdown
+        available_types = TEAM_MEMBER_TYPES
 
         return render(request, 'dashboard.html', {
             'resources': resources,
@@ -167,6 +227,11 @@ def dashboard(request):
             'contracts': contracts,
             'company_admin': company_admin,
             'developer_certifications': developer_certifications,
+            # Filter state
+            'type_filter': type_filter,
+            'search_query': search_query,
+            'show_all': show_all,
+            'available_types': available_types,
             # 'startups_open': startups_open,
         })
     else:
@@ -186,8 +251,47 @@ def upload_resource(request):
 
 @user_passes_test(lambda u: u.is_superuser)
 def resource_list(request):
-    resources = Resource.objects.all().order_by('team_member_type', 'title')
-    return render(request, 'resource_list.html', {'resources': resources})
+    from django.db.models import Q
+    
+    # Get filter parameters
+    type_filter = request.GET.get('type', '')
+    search_query = request.GET.get('search', '')
+    customer_filter = request.GET.get('customer', '')
+    
+    resources = Resource.objects.all()
+    
+    # Filter by type
+    if type_filter:
+        resources = resources.filter(team_member_type=type_filter)
+    
+    # Search filter
+    if search_query:
+        resources = resources.filter(
+            Q(title__icontains=search_query) | Q(descr__icontains=search_query)
+        )
+    
+    # Customer filter - show resources linked to specific customer trainings
+    if customer_filter == 'none':
+        # Only show resources NOT linked to any customer training
+        resources = resources.filter(team_trainings__isnull=True)
+    elif customer_filter:
+        # Show resources linked to a specific customer's trainings
+        resources = resources.filter(team_trainings__customer_id=customer_filter).distinct()
+    
+    resources = resources.order_by('team_member_type', 'title')
+    
+    # Get customers for filter dropdown
+    from .models import Customer
+    customers = Customer.objects.all().order_by('company_name')
+    
+    return render(request, 'resource_list.html', {
+        'resources': resources,
+        'available_types': TEAM_MEMBER_TYPES,
+        'type_filter': type_filter,
+        'search_query': search_query,
+        'customer_filter': customer_filter,
+        'customers': customers,
+    })
 
 
 @user_passes_test(lambda u: u.is_superuser)
