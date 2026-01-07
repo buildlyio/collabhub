@@ -61,7 +61,7 @@ class Command(BaseCommand):
         module1_resources = []
         
         r1 = Resource.objects.create(
-            team_member_type='architect',
+            team_member_type='all',
             title='What Makes a Great CTO',
             link='https://www.youtube.com/watch?v=nNSvMNyh4vs',
             descr='Video: Understanding the CTO role and responsibilities in modern software teams.'
@@ -69,7 +69,7 @@ class Command(BaseCommand):
         module1_resources.append(r1)
         
         r2 = Resource.objects.create(
-            team_member_type='architect',
+            team_member_type='all',
             title='Radical Candor by Kim Scott',
             link='https://www.youtube.com/watch?v=4yODalLQ2lM',
             descr='Video: Learn radical candor principles for effective team communication.'
@@ -77,7 +77,7 @@ class Command(BaseCommand):
         module1_resources.append(r2)
         
         r3 = Resource.objects.create(
-            team_member_type='architect',
+            team_member_type='all',
             title='Transparency Builds Stability - Gallup Research',
             link='http://www.gallup.com/workplace/236189/transparency-builds-stability-remote-workers.aspx',
             descr='Article: Research on how transparency impacts remote team stability and trust.'
@@ -93,14 +93,14 @@ class Command(BaseCommand):
         )
         
         QuizQuestion.objects.create(
-            team_member_type='architect',
+            team_member_type='all',
             quiz=quiz1,
             question='What is an outcome of radical transparency in remote teams?',
             question_type='multiple_choice'
         )
         
         QuizQuestion.objects.create(
-            team_member_type='architect',
+            team_member_type='all',
             quiz=quiz1,
             question='Describe how you would implement radical transparency in a distributed development team. Provide specific examples.',
             question_type='essay'
@@ -125,7 +125,7 @@ class Command(BaseCommand):
         module2_resources = []
         
         r4 = Resource.objects.create(
-            team_member_type='architect',
+            team_member_type='all',
             title='Ethical AI by Harvard Business Review',
             link='https://www.youtube.com/watch?v=6zfhUe8H3Kw',
             descr='Video: Understanding ethical considerations in AI development and deployment.'
@@ -140,7 +140,7 @@ class Command(BaseCommand):
         )
         
         QuizQuestion.objects.create(
-            team_member_type='architect',
+            team_member_type='all',
             quiz=quiz2,
             question='What are the key ethical considerations when deploying AI systems in production?',
             question_type='essay'
@@ -170,7 +170,7 @@ class Command(BaseCommand):
         module1_resources = []
         
         r1 = Resource.objects.create(
-            team_member_type='frontend_developer',
+            team_member_type='community-frontend',
             title='React Official Documentation',
             link='https://react.dev/',
             descr='Official React documentation covering hooks, components, and best practices.'
@@ -178,7 +178,7 @@ class Command(BaseCommand):
         module1_resources.append(r1)
         
         r2 = Resource.objects.create(
-            team_member_type='frontend_developer',
+            team_member_type='community-frontend',
             title='TypeScript Handbook',
             link='https://www.typescriptlang.org/docs/handbook/intro.html',
             descr='Comprehensive guide to TypeScript for frontend developers.'
@@ -193,7 +193,7 @@ class Command(BaseCommand):
         )
         
         QuizQuestion.objects.create(
-            team_member_type='frontend_developer',
+            team_member_type='community-frontend',
             quiz=quiz1,
             question='Explain the difference between controlled and uncontrolled components in React.',
             question_type='essay'
@@ -223,7 +223,7 @@ class Command(BaseCommand):
         module1_resources = []
         
         r1 = Resource.objects.create(
-            team_member_type='backend_developer',
+            team_member_type='community-backend',
             title='Django Official Documentation',
             link='https://docs.djangoproject.com/en/stable/',
             descr='Official Django documentation for building scalable web applications.'
@@ -231,7 +231,7 @@ class Command(BaseCommand):
         module1_resources.append(r1)
         
         r2 = Resource.objects.create(
-            team_member_type='backend_developer',
+            team_member_type='community-backend',
             title='RESTful API Design Best Practices',
             link='https://restfulapi.net/',
             descr='Guide to designing clean, maintainable REST APIs.'
@@ -246,7 +246,7 @@ class Command(BaseCommand):
         )
         
         QuizQuestion.objects.create(
-            team_member_type='backend_developer',
+            team_member_type='community-backend',
             quiz=quiz1,
             question='Describe the Django ORM and how it differs from raw SQL queries. When would you use each?',
             question_type='essay'
