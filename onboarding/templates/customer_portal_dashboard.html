@@ -9,22 +9,20 @@
     <div class="flex justify-between items-center mb-8">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">{{ customer.company_name }}</h1>
-            <p class="text-gray-600">Welcome, {{ company_admin.user.get_full_name }}</p>
+            <p class="text-gray-600">Welcome{% if company_admin %}, {{ company_admin.user.get_full_name|default:company_admin.user.username }}{% endif %}</p>
         </div>
         <div class="flex gap-4">
-            <a href="{% url 'onboarding:notification_center' %}" class="relative">
-                <button class="btn btn-outline">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                    {% if recent_notifications|length > 0 %}
-                    <span class="absolute top-0 right-0 bg-red-500 text-white rounded-full px-2 py-1 text-xs">
-                        {{ recent_notifications|length }}
-                    </span>
-                    {% endif %}
-                </button>
+            <a href="{% url 'onboarding:notification_center' %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                {% if recent_notifications|length > 0 %}
+                <span class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full px-2 py-0.5 text-xs">
+                    {{ recent_notifications|length }}
+                </span>
+                {% endif %}
             </a>
-            <a href="{% url 'onboarding:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+            <a href="{% url 'onboarding:dashboard' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50">Back to Dashboard</a>
         </div>
     </div>
 
@@ -125,22 +123,22 @@
                             <div class="flex items-center">
                                 <div>
                                     <div class="text-sm font-medium text-gray-900">
-                                        {{ assignment.team_member.first_name }} {{ assignment.team_member.last_name }}
+                                        {{ assignment.developer.first_name }} {{ assignment.developer.last_name }}
                                     </div>
-                                    <div class="text-sm text-gray-500">{{ assignment.team_member.email }}</div>
+                                    <div class="text-sm text-gray-500">{{ assignment.developer.email }}</div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                {{ assignment.team_member.get_team_member_type_display }}
+                                {{ assignment.developer.get_team_member_type_display }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ assignment.team_member.experience_years }} years
+                            {{ assignment.developer.experience_years|default:"N/A" }} years
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-500">
-                            {{ assignment.team_member.skills|truncatewords:5 }}
+                            {{ assignment.developer.skills|default:""|truncatewords:5 }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <form method="post" action="{% url 'onboarding:customer_approve_developer' assignment.id %}" class="inline">
@@ -174,21 +172,20 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for assignment in team_assignments %}
-                    {% if assignment.approved %}
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div>
                                     <div class="text-sm font-medium text-gray-900">
-                                        {{ assignment.team_member.first_name }} {{ assignment.team_member.last_name }}
+                                        {{ assignment.developer.first_name }} {{ assignment.developer.last_name }}
                                     </div>
-                                    <div class="text-sm text-gray-500">{{ assignment.team_member.email }}</div>
+                                    <div class="text-sm text-gray-500">{{ assignment.developer.email }}</div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                {{ assignment.team_member.get_team_member_type_display }}
+                                {{ assignment.developer.get_team_member_type_display }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -197,7 +194,7 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ assignment.approval_date|date:"M d, Y" }}
+                            {{ assignment.reviewed_at|date:"M d, Y"|default:assignment.assigned_at|date:"M d, Y" }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <form method="post" action="{% url 'onboarding:request_developer_removal' assignment.id %}" class="inline" onsubmit="return confirm('Are you sure you want to request removal? This will initiate a 30-day notice period.');">
@@ -206,7 +203,6 @@
                             </form>
                         </td>
                     </tr>
-                    {% endif %}
                     {% endfor %}
                 </tbody>
             </table>
@@ -239,13 +235,21 @@
                             {{ contract.get_contract_type_display|default:"Standard" }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            {% if contract.signed %}
+                            {% if contract.status == 'signed' %}
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                 Signed
                             </span>
-                            {% else %}
+                            {% elif contract.status == 'pending' %}
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
                                 Pending Signature
+                            </span>
+                            {% elif contract.status == 'draft' %}
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                Draft
+                            </span>
+                            {% else %}
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                {{ contract.get_status_display }}
                             </span>
                             {% endif %}
                         </td>
@@ -253,9 +257,9 @@
                             {{ contract.created_at|date:"M d, Y" }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            {% if not contract.signed and company_admin.can_sign_contracts %}
+                            {% if contract.status != 'signed' and company_admin and company_admin.can_sign_contracts %}
                             <a href="{% url 'onboarding:contract_sign_form' contract.id %}" class="text-indigo-600 hover:text-indigo-900">Sign Contract</a>
-                            {% elif contract.signed %}
+                            {% elif contract.status == 'signed' %}
                             <a href="{% url 'onboarding:contract_pdf_download' contract.id %}" class="text-blue-600 hover:text-blue-900">Download PDF</a>
                             {% endif %}
                         </td>
