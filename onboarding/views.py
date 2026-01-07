@@ -16,6 +16,11 @@ from datetime import timedelta
 # from punchlist.models import Product
 
 
+def landing_page(request):
+    """Marketing landing page for the Buildly Developer Community"""
+    return render(request, 'onboarding_landing.html')
+
+
 def register(request):
     if request.method == 'POST':
         form = TeamMemberRegistrationForm(request.POST)

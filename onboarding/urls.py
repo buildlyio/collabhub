@@ -4,6 +4,7 @@ from . import views
 app_name = 'onboarding'
 
 urlpatterns = [
+    path('', views.landing_page, name='landing_page'),
     path('register/', views.register, name='register'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('upload_resource/', views.upload_resource, name='upload_resource'),

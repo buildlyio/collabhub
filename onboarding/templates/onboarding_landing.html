@@ -1,0 +1,417 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Join the Buildly Developer Community{% endblock %}
+
+{% block page_content %}
+<!-- Hero Section -->
+<div class="relative bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 overflow-hidden">
+    <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%239C92AC\" fill-opacity=\"0.08\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30"></div>
+    <div class="max-w-7xl mx-auto px-4 py-24 sm:px-6 lg:px-8 relative">
+        <div class="text-center">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-6">
+                Build Your Future with
+                <span class="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-400">Buildly</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-indigo-200 max-w-3xl mx-auto mb-10">
+                Join a global community of developers growing their careers through structured training, 
+                real-world projects, and mentorship from industry leaders.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{% url 'onboarding:register' %}" class="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-indigo-900 bg-white rounded-lg hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                    </svg>
+                    Join the Community
+                </a>
+                <a href="#for-customers" class="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white border-2 border-white/30 rounded-lg hover:bg-white/10 transition-all">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                    For Companies
+                </a>
+            </div>
+        </div>
+    </div>
+    <!-- Wave divider -->
+    <div class="absolute bottom-0 left-0 right-0">
+        <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 120L60 105C120 90 240 60 360 45C480 30 600 30 720 37.5C840 45 960 60 1080 67.5C1200 75 1320 75 1380 75L1440 75V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="white"/>
+        </svg>
+    </div>
+</div>
+
+<!-- Developer Paths Section -->
+<div class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Choose Your Developer Path</h2>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                Whether you're starting out or advancing your career, we have a structured path to help you grow from developer to technical leader.
+            </p>
+        </div>
+        
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- Frontend Developer -->
+            <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-8 border border-blue-100 hover:shadow-xl transition-all group">
+                <div class="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">Frontend Developer</h3>
+                <p class="text-gray-600 mb-4">Master React, Angular, Vue.js and modern UI/UX practices. Build beautiful, performant web applications.</p>
+                <ul class="text-sm text-gray-500 space-y-2">
+                    <li class="flex items-center"><svg class="w-4 h-4 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg> React & Next.js</li>
+                    <li class="flex items-center"><svg class="w-4 h-4 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg> TypeScript</li>
+                    <li class="flex items-center"><svg class="w-4 h-4 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg> Tailwind CSS</li>
+                </ul>
+            </div>
+
+            <!-- Backend Developer -->
+            <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8 border border-green-100 hover:shadow-xl transition-all group">
+                <div class="w-16 h-16 bg-green-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">Backend Developer</h3>
+                <p class="text-gray-600 mb-4">Build scalable APIs, microservices, and data pipelines. Master cloud infrastructure and DevOps.</p>
+                <ul class="text-sm text-gray-500 space-y-2">
+                    <li class="flex items-center"><svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg> Python & Django</li>
+                    <li class="flex items-center"><svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg> Node.js & FastAPI</li>
+                    <li class="flex items-center"><svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg> PostgreSQL & Redis</li>
+                </ul>
+            </div>
+
+            <!-- Fullstack Developer -->
+            <div class="bg-gradient-to-br from-purple-50 to-violet-50 rounded-2xl p-8 border border-purple-100 hover:shadow-xl transition-all group">
+                <div class="w-16 h-16 bg-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">Fullstack Developer</h3>
+                <p class="text-gray-600 mb-4">Master both frontend and backend. Ship complete features independently and lead small teams.</p>
+                <ul class="text-sm text-gray-500 space-y-2">
+                    <li class="flex items-center"><svg class="w-4 h-4 text-purple-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg> End-to-end features</li>
+                    <li class="flex items-center"><svg class="w-4 h-4 text-purple-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg> API design</li>
+                    <li class="flex items-center"><svg class="w-4 h-4 text-purple-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg> System integration</li>
+                </ul>
+            </div>
+
+            <!-- Architect / Lead -->
+            <div class="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-8 border border-orange-100 hover:shadow-xl transition-all group">
+                <div class="w-16 h-16 bg-orange-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">Architect / Tech Lead</h3>
+                <p class="text-gray-600 mb-4">Design systems at scale. Lead teams, make architectural decisions, and mentor developers on their path to CTO.</p>
+                <ul class="text-sm text-gray-500 space-y-2">
+                    <li class="flex items-center"><svg class="w-4 h-4 text-orange-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg> System design</li>
+                    <li class="flex items-center"><svg class="w-4 h-4 text-orange-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg> Team leadership</li>
+                    <li class="flex items-center"><svg class="w-4 h-4 text-orange-500 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg> Technical strategy</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Benefits Section -->
+<div class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Why Join the Buildly Community?</h2>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                We provide everything you need to accelerate your developer career.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Structured Training -->
+            <div class="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow">
+                <div class="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center mb-6">
+                    <svg class="w-7 h-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">Structured Training Programs</h3>
+                <p class="text-gray-600">Comprehensive learning modules designed by industry experts. Progress through certifications at your own pace with hands-on projects.</p>
+            </div>
+
+            <!-- Mentorship -->
+            <div class="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow">
+                <div class="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center mb-6">
+                    <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">1-on-1 Mentorship</h3>
+                <p class="text-gray-600">Get paired with experienced developers who guide your career growth. Regular check-ins, code reviews, and personalized advice.</p>
+            </div>
+
+            <!-- Real Projects -->
+            <div class="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow">
+                <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6">
+                    <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">Real Customer Projects</h3>
+                <p class="text-gray-600">Work on actual projects for real customers. Build your portfolio with production code and get paid while you learn.</p>
+            </div>
+
+            <!-- Open Source -->
+            <div class="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow">
+                <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-6">
+                    <svg class="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">Open Source Collaboration</h3>
+                <p class="text-gray-600">Contribute to Buildly's open source tools alongside talented developers worldwide. Build your GitHub profile and reputation.</p>
+            </div>
+
+            <!-- Team Experience -->
+            <div class="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow">
+                <div class="w-14 h-14 bg-cyan-100 rounded-xl flex items-center justify-center mb-6">
+                    <svg class="w-7 h-7 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">Team-Based Learning</h3>
+                <p class="text-gray-600">Work in small teams on projects, just like a real software company. Learn agile practices, code reviews, and collaboration.</p>
+            </div>
+
+            <!-- Career Path -->
+            <div class="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow">
+                <div class="w-14 h-14 bg-yellow-100 rounded-xl flex items-center justify-center mb-6">
+                    <svg class="w-7 h-7 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-3">Clear Career Progression</h3>
+                <p class="text-gray-600">From junior developer to Tech Lead or CTO. Clear milestones, certifications, and opportunities at every level.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Career Path Timeline -->
+<div class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Your Path to Leadership</h2>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                A clear roadmap from developer to technical leader
+            </p>
+        </div>
+
+        <div class="relative">
+            <!-- Timeline line -->
+            <div class="hidden lg:block absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-blue-500 via-purple-500 to-orange-500"></div>
+            
+            <div class="space-y-12 lg:space-y-0">
+                <!-- Step 1 -->
+                <div class="lg:flex lg:items-center lg:justify-between">
+                    <div class="lg:w-5/12 lg:pr-12">
+                        <div class="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                            <div class="flex items-center mb-3">
+                                <span class="bg-blue-600 text-white text-sm font-bold px-3 py-1 rounded-full mr-3">1</span>
+                                <h3 class="text-xl font-bold text-gray-900">Join & Assess</h3>
+                            </div>
+                            <p class="text-gray-600">Complete your profile and take our skills assessment. We'll identify your current level and create a personalized learning path.</p>
+                        </div>
+                    </div>
+                    <div class="hidden lg:flex lg:w-2/12 lg:justify-center">
+                        <div class="w-8 h-8 bg-blue-600 rounded-full border-4 border-white shadow-lg"></div>
+                    </div>
+                    <div class="lg:w-5/12"></div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="lg:flex lg:items-center lg:justify-between lg:flex-row-reverse">
+                    <div class="lg:w-5/12 lg:pl-12">
+                        <div class="bg-indigo-50 rounded-xl p-6 border border-indigo-200">
+                            <div class="flex items-center mb-3">
+                                <span class="bg-indigo-600 text-white text-sm font-bold px-3 py-1 rounded-full mr-3">2</span>
+                                <h3 class="text-xl font-bold text-gray-900">Learn & Certify</h3>
+                            </div>
+                            <p class="text-gray-600">Complete training modules and earn certifications. Learn Buildly tools, best practices, and industry-standard technologies.</p>
+                        </div>
+                    </div>
+                    <div class="hidden lg:flex lg:w-2/12 lg:justify-center">
+                        <div class="w-8 h-8 bg-indigo-600 rounded-full border-4 border-white shadow-lg"></div>
+                    </div>
+                    <div class="lg:w-5/12"></div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="lg:flex lg:items-center lg:justify-between">
+                    <div class="lg:w-5/12 lg:pr-12">
+                        <div class="bg-purple-50 rounded-xl p-6 border border-purple-200">
+                            <div class="flex items-center mb-3">
+                                <span class="bg-purple-600 text-white text-sm font-bold px-3 py-1 rounded-full mr-3">3</span>
+                                <h3 class="text-xl font-bold text-gray-900">Build & Collaborate</h3>
+                            </div>
+                            <p class="text-gray-600">Work on open source projects and customer work. Collaborate with teams, contribute code, and build your portfolio.</p>
+                        </div>
+                    </div>
+                    <div class="hidden lg:flex lg:w-2/12 lg:justify-center">
+                        <div class="w-8 h-8 bg-purple-600 rounded-full border-4 border-white shadow-lg"></div>
+                    </div>
+                    <div class="lg:w-5/12"></div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="lg:flex lg:items-center lg:justify-between lg:flex-row-reverse">
+                    <div class="lg:w-5/12 lg:pl-12">
+                        <div class="bg-orange-50 rounded-xl p-6 border border-orange-200">
+                            <div class="flex items-center mb-3">
+                                <span class="bg-orange-600 text-white text-sm font-bold px-3 py-1 rounded-full mr-3">4</span>
+                                <h3 class="text-xl font-bold text-gray-900">Lead & Grow</h3>
+                            </div>
+                            <p class="text-gray-600">Advance to Tech Lead, Architect, or CTO track. Mentor other developers, lead projects, and shape technical strategy.</p>
+                        </div>
+                    </div>
+                    <div class="hidden lg:flex lg:w-2/12 lg:justify-center">
+                        <div class="w-8 h-8 bg-orange-600 rounded-full border-4 border-white shadow-lg"></div>
+                    </div>
+                    <div class="lg:w-5/12"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- For Customers Section -->
+<div id="for-customers" class="py-20 bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <span class="bg-blue-500 text-white text-sm font-semibold px-4 py-1 rounded-full">For Companies</span>
+            <h2 class="text-3xl md:text-4xl font-bold text-white mt-6 mb-4">Hire Pre-Trained Developers</h2>
+            <p class="text-xl text-gray-300 max-w-2xl mx-auto">
+                Access a talent pool of developers already trained in open source tools and modern best practices.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="bg-white/10 backdrop-blur rounded-xl p-8 border border-white/10">
+                <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mb-5">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold mb-3">Pre-Vetted Talent</h3>
+                <p class="text-gray-300">Every developer has completed assessments and certifications. Verified skills, not just resumes.</p>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur rounded-xl p-8 border border-white/10">
+                <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mb-5">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold mb-3">Faster Onboarding</h3>
+                <p class="text-gray-300">Developers already know Buildly tools and best practices. Reduce ramp-up time significantly.</p>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur rounded-xl p-8 border border-white/10">
+                <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center mb-5">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold mb-3">Team-Ready</h3>
+                <p class="text-gray-300">Experienced in agile, code reviews, and collaboration. Ready to integrate with your existing teams.</p>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur rounded-xl p-8 border border-white/10">
+                <div class="w-12 h-12 bg-cyan-500 rounded-lg flex items-center justify-center mb-5">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold mb-3">Open Source Expertise</h3>
+                <p class="text-gray-300">Familiar with contributing to and maintaining open source projects. Community-driven mindset.</p>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur rounded-xl p-8 border border-white/10">
+                <div class="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center mb-5">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold mb-3">Flexible Engagement</h3>
+                <p class="text-gray-300">Hire for projects or full-time. Scale your team up or down as your needs change.</p>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur rounded-xl p-8 border border-white/10">
+                <div class="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center mb-5">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold mb-3">Continuous Growth</h3>
+                <p class="text-gray-300">Developers continue learning through the community. Your team stays current with evolving tech.</p>
+            </div>
+        </div>
+
+        <div class="text-center mt-12">
+            <a href="{% url 'onboarding:customer_login' %}" class="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-slate-900 bg-white rounded-lg hover:bg-gray-100 transition-all shadow-lg">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+                Partner With Us
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Section -->
+<div class="py-20 bg-gradient-to-r from-indigo-600 to-purple-600">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">Ready to Accelerate Your Career?</h2>
+        <p class="text-xl text-indigo-100 mb-10">
+            Join thousands of developers building their futures with Buildly. Start your journey today.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% url 'onboarding:register' %}" class="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-indigo-600 bg-white rounded-lg hover:bg-gray-100 transition-all shadow-lg">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                </svg>
+                Join Free Today
+            </a>
+            <a href="{% url 'account_login' %}" class="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white border-2 border-white/50 rounded-lg hover:bg-white/10 transition-all">
+                Already a member? Sign In
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Section -->
+<div class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div>
+                <div class="text-4xl font-bold text-indigo-600 mb-2">500+</div>
+                <div class="text-gray-600">Community Members</div>
+            </div>
+            <div>
+                <div class="text-4xl font-bold text-indigo-600 mb-2">50+</div>
+                <div class="text-gray-600">Training Modules</div>
+            </div>
+            <div>
+                <div class="text-4xl font-bold text-indigo-600 mb-2">100+</div>
+                <div class="text-gray-600">Projects Delivered</div>
+            </div>
+            <div>
+                <div class="text-4xl font-bold text-indigo-600 mb-2">25+</div>
+                <div class="text-gray-600">Customer Partners</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
