@@ -4438,7 +4438,7 @@ def developer_availability(request):
         form = AvailabilityForm(request.POST, instance=developer)
         if form.is_valid():
             developer = form.save(commit=False)
-            developer.availability_updated_at = timezone.now()
+            developer.availability_updated_at = now()
             developer.save()
             messages.success(request, 'Availability settings updated.')
             return redirect('onboarding:developer_availability')
@@ -4872,7 +4872,7 @@ def admin_community_newsletter(request):
     ).count()
     
     # Open source projects from Forge
-    open_source_projects = ForgeApp.objects.filter(is_active=True).count()
+    open_source_projects = ForgeApp.objects.filter(is_published=True).count()
     
     # Get past newsletters
     past_newsletters = CommunityNewsletter.objects.all()[:10]
@@ -4971,11 +4971,39 @@ def admin_community_newsletter(request):
 @login_required
 @user_passes_test(lambda u: u.is_superuser)
 def admin_newsletter_history(request):
-    """View all sent newsletters"""
+    """View all sent newsletters (admin view with delete option)"""
     from onboarding.models import CommunityNewsletter
     
     newsletters = CommunityNewsletter.objects.all()
     
     return render(request, 'admin_newsletter_history.html', {
+        'newsletters': newsletters,
+    })
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_newsletter_delete(request, newsletter_id):
+    """Delete a newsletter (superuser only)"""
+    from onboarding.models import CommunityNewsletter
+    
+    newsletter = get_object_or_404(CommunityNewsletter, id=newsletter_id)
+    
+    if request.method == 'POST':
+        subject = newsletter.subject
+        newsletter.delete()
+        messages.success(request, f'Newsletter "{subject}" has been deleted.')
+    
+    return redirect('onboarding:admin_newsletter_history')
+
+
+@login_required
+def community_newsletters(request):
+    """Public view of past newsletters (read-only for all authenticated users)"""
+    from onboarding.models import CommunityNewsletter
+    
+    newsletters = CommunityNewsletter.objects.all()
+    
+    return render(request, 'community_newsletters.html', {
         'newsletters': newsletters,
     })

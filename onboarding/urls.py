@@ -166,9 +166,13 @@ urlpatterns = [
     path('admin/forge-requests/', views.admin_forge_requests_list, name='admin_forge_requests_list'),
     path('admin/forge-requests/<int:request_id>/review/', views.admin_forge_request_review, name='admin_forge_request_review'),
     
-    # Admin: Community Newsletter
+    # Admin: Community Newsletter (CRUD for superusers)
     path('admin/newsletter/', views.admin_community_newsletter, name='admin_community_newsletter'),
     path('admin/newsletter/history/', views.admin_newsletter_history, name='admin_newsletter_history'),
+    path('admin/newsletter/<int:newsletter_id>/delete/', views.admin_newsletter_delete, name='admin_newsletter_delete'),
+    
+    # Public: Community Newsletters (read-only for all authenticated users)
+    path('newsletters/', views.community_newsletters, name='community_newsletters'),
     
     # API endpoints
     path('api/teams/', views.api_teams_list, name='api_teams_list'),
