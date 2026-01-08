@@ -4918,65 +4918,43 @@ def admin_community_newsletter(request):
         }
         
         try:
-            # Send individual emails to each developer (MailerSend has BCC limits)
-            successful_sends = 0
-            failed_sends = 0
+            from onboarding.models import NewsletterRecipient
             
-            for email in recipient_emails:
-                try:
-                    result = send_email(
-                        to_email=email,
-                        subject=subject,
-                        template_name='emails/community_newsletter.html',
-                        context=context,
-                    )
-                    if result:
-                        successful_sends += 1
-                    else:
-                        failed_sends += 1
-                except Exception as email_error:
-                    failed_sends += 1
-                    import logging
-                    logging.getLogger(__name__).error(f"Failed to send newsletter to {email}: {str(email_error)}")
-            
-            # Also send a copy to team@buildly.io for records
-            send_email(
-                to_email='team@buildly.io',
-                subject=f"[COPY] {subject}",
-                template_name='emails/community_newsletter.html',
-                context=context,
+            # Create newsletter record first with 'sending' status
+            newsletter = CommunityNewsletter.objects.create(
+                subject=subject,
+                custom_message=custom_message,
+                total_customers=total_customers,
+                total_developers=total_developers,
+                new_customers_this_month=new_customers_this_month,
+                new_developers_this_month=new_developers_this_month,
+                active_opportunities=active_opportunities,
+                open_source_projects=open_source_projects,
+                status='sending',
+                recipient_count=0,
+                failed_count=0,
+                pending_count=len(approved_developers),
+                sent_by=request.user,
             )
             
-            if successful_sends > 0:
-                # Save newsletter record
-                newsletter = CommunityNewsletter.objects.create(
-                    subject=subject,
-                    custom_message=custom_message,
-                    total_customers=total_customers,
-                    total_developers=total_developers,
-                    new_customers_this_month=new_customers_this_month,
-                    new_developers_this_month=new_developers_this_month,
-                    active_opportunities=active_opportunities,
-                    open_source_projects=open_source_projects,
-                    recipient_count=successful_sends,
-                    sent_by=request.user,
+            # Create all recipients as pending
+            for developer in approved_developers:
+                NewsletterRecipient.objects.create(
+                    newsletter=newsletter,
+                    developer=developer,
+                    email=developer.email,
+                    status='pending',
                 )
-                
-                if failed_sends > 0:
-                    messages.warning(
-                        request, 
-                        f'Newsletter sent to {successful_sends} developers. {failed_sends} emails failed to send.'
-                    )
-                else:
-                    messages.success(
-                        request, 
-                        f'Newsletter sent successfully to {successful_sends} developers!'
-                    )
-            else:
-                messages.error(request, 'Failed to send newsletter to any recipients. Please try again.')
+            
+            # Redirect to the detail page where processing will happen
+            messages.info(
+                request, 
+                f'Newsletter created with {len(approved_developers)} recipients. Processing will begin shortly.'
+            )
+            return redirect('onboarding:admin_newsletter_detail', newsletter_id=newsletter.id)
                 
         except Exception as e:
-            messages.error(request, f'Error sending newsletter: {str(e)}')
+            messages.error(request, f'Error creating newsletter: {str(e)}')
         
         return redirect('onboarding:admin_community_newsletter')
     
@@ -4992,6 +4970,182 @@ def admin_community_newsletter(request):
     }
     
     return render(request, 'admin_community_newsletter.html', context)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_newsletter_detail(request, newsletter_id):
+    """View newsletter details including recipient status"""
+    from onboarding.models import CommunityNewsletter, NewsletterRecipient
+    
+    newsletter = get_object_or_404(CommunityNewsletter, id=newsletter_id)
+    
+    # Get recipients grouped by status
+    sent_recipients = newsletter.recipients.filter(status='sent')
+    failed_recipients = newsletter.recipients.filter(status='failed')
+    pending_recipients = newsletter.recipients.filter(status='pending')
+    
+    total_recipients = sent_recipients.count() + failed_recipients.count() + pending_recipients.count()
+    
+    context = {
+        'newsletter': newsletter,
+        'sent_recipients': sent_recipients,
+        'failed_recipients': failed_recipients,
+        'pending_recipients': pending_recipients,
+        'total_intended': total_recipients,
+        'is_processing': newsletter.status == 'sending' and pending_recipients.exists(),
+    }
+    
+    return render(request, 'admin_newsletter_detail.html', context)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_newsletter_process(request, newsletter_id):
+    """Process a batch of pending newsletter emails with rate limiting"""
+    from onboarding.models import CommunityNewsletter, NewsletterRecipient
+    from onboarding.utils import send_email, get_site_url
+    from django.http import JsonResponse
+    import calendar
+    import time
+    
+    newsletter = get_object_or_404(CommunityNewsletter, id=newsletter_id)
+    
+    # Get pending recipients (process in batches of 5)
+    BATCH_SIZE = 5
+    DELAY_BETWEEN_EMAILS = 2  # seconds
+    
+    pending_recipients = newsletter.recipients.filter(status='pending')[:BATCH_SIZE]
+    
+    if not pending_recipients.exists():
+        # No more pending, mark as completed
+        newsletter.update_counts()
+        return JsonResponse({
+            'status': 'completed',
+            'sent': newsletter.recipient_count,
+            'failed': newsletter.failed_count,
+            'pending': 0,
+            'message': 'All emails processed!'
+        })
+    
+    # Prepare email context
+    site_url = get_site_url()
+    today = now()
+    month_name = calendar.month_name[today.month]
+    
+    email_context = {
+        'custom_message': newsletter.custom_message,
+        'month_name': month_name,
+        'year': today.year,
+        'total_developers': newsletter.total_developers,
+        'total_customers': newsletter.total_customers,
+        'new_developers_this_month': newsletter.new_developers_this_month,
+        'new_customers_this_month': newsletter.new_customers_this_month,
+        'active_opportunities': newsletter.active_opportunities,
+        'open_source_projects': newsletter.open_source_projects,
+        'dashboard_url': f"{site_url}/onboarding/dashboard/",
+        'certifications_url': f"{site_url}/onboarding/certifications/",
+        'resources_url': f"{site_url}/onboarding/resources/",
+        'unsubscribe_url': f"{site_url}/onboarding/unsubscribe/",
+    }
+    
+    processed_in_batch = 0
+    
+    for recipient in pending_recipients:
+        try:
+            result = send_email(
+                to_email=recipient.email,
+                subject=newsletter.subject,
+                template_name='emails/community_newsletter.html',
+                context=email_context,
+            )
+            if result:
+                recipient.status = 'sent'
+                recipient.sent_at = now()
+                recipient.error_message = None
+            else:
+                recipient.status = 'failed'
+                recipient.error_message = 'Email send returned False'
+                recipient.retry_count += 1
+        except Exception as e:
+            error_msg = str(e)
+            # Check if it's a rate limit error
+            if 'Too many requests' in error_msg or '450' in error_msg:
+                recipient.error_message = f'Rate limited: {error_msg}'
+                # Don't mark as failed, leave as pending for retry
+                recipient.retry_count += 1
+            else:
+                recipient.status = 'failed'
+                recipient.error_message = error_msg
+                recipient.retry_count += 1
+        
+        recipient.save()
+        processed_in_batch += 1
+        
+        # Add delay between emails to avoid rate limiting
+        if processed_in_batch < len(pending_recipients):
+            time.sleep(DELAY_BETWEEN_EMAILS)
+    
+    # Update counts
+    newsletter.update_counts()
+    
+    remaining = newsletter.recipients.filter(status='pending').count()
+    
+    return JsonResponse({
+        'status': 'processing' if remaining > 0 else 'completed',
+        'sent': newsletter.recipient_count,
+        'failed': newsletter.failed_count,
+        'pending': remaining,
+        'processed_batch': processed_in_batch,
+        'message': f'Processed {processed_in_batch} emails. {remaining} remaining.'
+    })
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_newsletter_status(request, newsletter_id):
+    """Get current newsletter status (for AJAX polling)"""
+    from onboarding.models import CommunityNewsletter
+    from django.http import JsonResponse
+    
+    newsletter = get_object_or_404(CommunityNewsletter, id=newsletter_id)
+    newsletter.update_counts()
+    
+    total = newsletter.recipient_count + newsletter.failed_count + newsletter.pending_count
+    progress = ((newsletter.recipient_count + newsletter.failed_count) / total * 100) if total > 0 else 100
+    
+    return JsonResponse({
+        'status': newsletter.status,
+        'sent': newsletter.recipient_count,
+        'failed': newsletter.failed_count,
+        'pending': newsletter.pending_count,
+        'total': total,
+        'progress': round(progress, 1),
+    })
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_newsletter_resend(request, newsletter_id):
+    """Mark failed recipients as pending for retry"""
+    from onboarding.models import CommunityNewsletter, NewsletterRecipient
+    
+    newsletter = get_object_or_404(CommunityNewsletter, id=newsletter_id)
+    
+    if request.method != 'POST':
+        return redirect('onboarding:admin_newsletter_detail', newsletter_id=newsletter_id)
+    
+    # Mark all failed as pending for retry
+    failed_count = newsletter.recipients.filter(status='failed').update(status='pending', error_message=None)
+    
+    if failed_count > 0:
+        newsletter.status = 'sending'
+        newsletter.update_counts()
+        messages.info(request, f'Marked {failed_count} failed recipients for retry. Processing will begin.')
+    else:
+        messages.info(request, 'No failed recipients to retry.')
+    
+    return redirect('onboarding:admin_newsletter_detail', newsletter_id=newsletter_id)
 
 
 @login_required
@@ -5014,6 +5168,7 @@ def admin_newsletter_delete(request, newsletter_id):
     from onboarding.models import CommunityNewsletter
     
     newsletter = get_object_or_404(CommunityNewsletter, id=newsletter_id)
+    
     
     if request.method == 'POST':
         subject = newsletter.subject

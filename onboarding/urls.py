@@ -169,7 +169,11 @@ urlpatterns = [
     # Admin: Community Newsletter (CRUD for superusers)
     path('admin/newsletter/', views.admin_community_newsletter, name='admin_community_newsletter'),
     path('admin/newsletter/history/', views.admin_newsletter_history, name='admin_newsletter_history'),
+    path('admin/newsletter/<int:newsletter_id>/', views.admin_newsletter_detail, name='admin_newsletter_detail'),
     path('admin/newsletter/<int:newsletter_id>/delete/', views.admin_newsletter_delete, name='admin_newsletter_delete'),
+    path('admin/newsletter/<int:newsletter_id>/resend/', views.admin_newsletter_resend, name='admin_newsletter_resend'),
+    path('admin/newsletter/<int:newsletter_id>/process/', views.admin_newsletter_process, name='admin_newsletter_process'),
+    path('admin/newsletter/<int:newsletter_id>/status/', views.admin_newsletter_status, name='admin_newsletter_status'),
     path('admin/email-analytics/', views.admin_email_analytics, name='admin_email_analytics'),
     
     # Public: Community Newsletters (read-only for all authenticated users)

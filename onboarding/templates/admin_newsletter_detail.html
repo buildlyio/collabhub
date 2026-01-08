@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block page_title %}Newsletter Details{% endblock %}
+
+{% block page_content %}
+<div class="max-w-6xl mx-auto px-4">
+    <!-- Header -->
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">📧 Newsletter Details</h1>
+            <p class="text-gray-600">View recipient delivery status and manage sending</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'onboarding:admin_newsletter_history' %}" 
+               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                ← Back to History
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="mb-6">
+        {% for message in messages %}
+        <div class="p-4 rounded-lg {% if 'error' in message.tags %}bg-red-100 text-red-800{% elif 'warning' in message.tags %}bg-yellow-100 text-yellow-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+            {% if 'safe' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Newsletter Info Card -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">{{ newsletter.subject }}</h2>
+                <p class="text-sm text-gray-500 mt-1">
+                    Sent by {{ newsletter.sent_by.username }} on {{ newsletter.sent_at|date:"M d, Y" }} at {{ newsletter.sent_at|time:"g:i A" }}
+                </p>
+            </div>
+            <div class="flex gap-2 items-center">
+                <span id="status-badge" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                    {% if newsletter.status == 'completed' %}bg-green-100 text-green-800
+                    {% elif newsletter.status == 'sending' %}bg-blue-100 text-blue-800
+                    {% elif newsletter.status == 'paused' %}bg-yellow-100 text-yellow-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {% if newsletter.status == 'sending' %}🔄 Sending...{% elif newsletter.status == 'completed' %}✅ Completed{% elif newsletter.status == 'paused' %}⏸️ Paused{% else %}📝 {{ newsletter.status|title }}{% endif %}
+                </span>
+            </div>
+        </div>
+        
+        {% if newsletter.custom_message %}
+        <div class="bg-gray-50 rounded-lg p-4 mb-4">
+            <h3 class="text-sm font-medium text-gray-700 mb-2">Custom Message:</h3>
+            <p class="text-gray-600">{{ newsletter.custom_message }}</p>
+        </div>
+        {% endif %}
+        
+        <!-- Progress Section -->
+        {% if pending_recipients or is_processing %}
+        <div id="progress-section" class="mb-6">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-gray-700">Sending Progress</span>
+                <span id="progress-text" class="text-sm text-gray-500">
+                    <span id="sent-count">{{ sent_recipients.count }}</span> sent, 
+                    <span id="failed-count">{{ failed_recipients.count }}</span> failed, 
+                    <span id="pending-count">{{ pending_recipients.count }}</span> pending
+                </span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                <div id="progress-bar" class="h-4 rounded-full transition-all duration-500 flex">
+                    <div id="sent-bar" class="bg-green-500 h-full" style="width: {% widthratio sent_recipients.count total_intended 100 %}%;"></div>
+                    <div id="failed-bar" class="bg-red-500 h-full" style="width: {% widthratio failed_recipients.count total_intended 100 %}%;"></div>
+                </div>
+            </div>
+            <div class="mt-3 flex gap-3">
+                <button id="start-processing-btn" onclick="startProcessing()" 
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                    ▶️ Start/Resume Sending
+                </button>
+                <span id="processing-indicator" class="hidden inline-flex items-center text-sm text-blue-600">
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing emails (2 sec delay between sends)...
+                </span>
+            </div>
+            <p class="mt-2 text-xs text-gray-500">You can leave this page and come back - progress is saved. Click Start/Resume to continue sending.</p>
+        </div>
+        {% endif %}
+        
+        <!-- Stats Summary -->
+        <div class="flex gap-4 mb-4">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                ✓ <span id="stat-sent">{{ sent_recipients.count }}</span> sent
+            </span>
+            {% if failed_recipients.count > 0 or pending_recipients.count > 0 %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                ✗ <span id="stat-failed">{{ failed_recipients.count }}</span> failed
+            </span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                ⏳ <span id="stat-pending">{{ pending_recipients.count }}</span> pending
+            </span>
+            {% endif %}
+        </div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-2xl font-bold text-gray-900">{{ newsletter.total_developers }}</p>
+                <p class="text-xs text-gray-500">Total Developers</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-2xl font-bold text-gray-900">{{ newsletter.total_customers }}</p>
+                <p class="text-xs text-gray-500">Total Customers</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-2xl font-bold text-gray-900">{{ newsletter.active_opportunities }}</p>
+                <p class="text-xs text-gray-500">Active Jobs</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-2xl font-bold text-gray-900">{{ newsletter.open_source_projects }}</p>
+                <p class="text-xs text-gray-500">Projects</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Recipients Section -->
+    {% if pending_recipients %}
+    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+        <div class="px-6 py-4 border-b border-gray-200 bg-blue-50">
+            <h2 class="text-lg font-medium text-blue-800">⏳ Pending Recipients (<span id="pending-section-count">{{ pending_recipients.count }}</span>)</h2>
+            <p class="text-sm text-blue-600">These emails are waiting to be sent.</p>
+        </div>
+        <div class="px-6 py-4 max-h-48 overflow-y-auto">
+            <div class="flex flex-wrap gap-2">
+                {% for recipient in pending_recipients %}
+                <span class="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-100 text-blue-800">
+                    {{ recipient.email }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Failed Recipients Section -->
+    {% if failed_recipients %}
+    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-red-50">
+            <div>
+                <h2 class="text-lg font-medium text-red-800">❌ Failed Recipients (<span id="failed-section-count">{{ failed_recipients.count }}</span>)</h2>
+                <p class="text-sm text-red-600">These emails failed to send. Click "Retry All Failed" to queue them for retry.</p>
+            </div>
+            <form method="post" action="{% url 'onboarding:admin_newsletter_resend' newsletter.id %}">
+                {% csrf_token %}
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+                    🔄 Retry All Failed
+                </button>
+            </form>
+        </div>
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Developer</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Error</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Retries</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for recipient in failed_recipients %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if recipient.developer %}
+                        <div class="text-sm font-medium text-gray-900">
+                            {{ recipient.developer.first_name }} {{ recipient.developer.last_name }}
+                        </div>
+                        {% else %}
+                        <span class="text-sm text-gray-400">Developer deleted</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {{ recipient.email }}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-red-600 max-w-xs truncate" title="{{ recipient.error_message }}">
+                        {{ recipient.error_message|default:"Unknown error"|truncatechars:50 }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ recipient.retry_count }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Successful Recipients Section -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-green-50">
+            <h2 class="text-lg font-medium text-green-800">✅ Successfully Sent (<span id="sent-section-count">{{ sent_recipients.count }}</span>)</h2>
+            <p class="text-sm text-green-600">These developers received the newsletter.</p>
+        </div>
+        
+        {% if sent_recipients %}
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Developer</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sent At</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for recipient in sent_recipients %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if recipient.developer %}
+                        <div class="flex items-center">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{ recipient.developer.first_name }} {{ recipient.developer.last_name }}
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    <a href="{% url 'onboarding:admin_developer_profile' recipient.developer.id %}" class="text-indigo-600 hover:underline">
+                                        View Profile
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <span class="text-sm text-gray-400">Developer deleted</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {{ recipient.email }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {% if recipient.sent_at %}
+                        {{ recipient.sent_at|date:"M d, Y g:i A" }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center py-8 text-gray-500">
+            <p>No emails sent yet.</p>
+            {% if pending_recipients %}
+            <p class="text-sm mt-2">Click "Start/Resume Sending" above to begin processing.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+let isProcessing = false;
+
+function startProcessing() {
+    if (isProcessing) return;
+    isProcessing = true;
+    
+    document.getElementById('start-processing-btn').classList.add('hidden');
+    document.getElementById('processing-indicator').classList.remove('hidden');
+    
+    processNextBatch();
+}
+
+function processNextBatch() {
+    fetch('{% url "onboarding:admin_newsletter_process" newsletter.id %}')
+        .then(response => response.json())
+        .then(data => {
+            updateProgress(data);
+            
+            if (data.status === 'processing' && data.pending > 0) {
+                // Continue processing after a short delay
+                setTimeout(processNextBatch, 1000);
+            } else {
+                // Done processing
+                isProcessing = false;
+                document.getElementById('processing-indicator').classList.add('hidden');
+                document.getElementById('start-processing-btn').classList.remove('hidden');
+                
+                if (data.pending === 0) {
+                    // Reload to show final state
+                    location.reload();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error processing:', error);
+            isProcessing = false;
+            document.getElementById('processing-indicator').classList.add('hidden');
+            document.getElementById('start-processing-btn').classList.remove('hidden');
+            alert('Error processing emails. Please try again.');
+        });
+}
+
+function updateProgress(data) {
+    const total = data.sent + data.failed + data.pending;
+    const sentPct = total > 0 ? (data.sent / total * 100) : 0;
+    const failedPct = total > 0 ? (data.failed / total * 100) : 0;
+    
+    // Update text counts
+    document.getElementById('sent-count').textContent = data.sent;
+    document.getElementById('failed-count').textContent = data.failed;
+    document.getElementById('pending-count').textContent = data.pending;
+    
+    // Update progress bars
+    document.getElementById('sent-bar').style.width = sentPct + '%';
+    document.getElementById('failed-bar').style.width = failedPct + '%';
+    
+    // Update stats
+    document.getElementById('stat-sent').textContent = data.sent;
+    document.getElementById('stat-failed').textContent = data.failed;
+    document.getElementById('stat-pending').textContent = data.pending;
+    
+    // Update section counts if they exist
+    const sentSection = document.getElementById('sent-section-count');
+    if (sentSection) sentSection.textContent = data.sent;
+    
+    const failedSection = document.getElementById('failed-section-count');
+    if (failedSection) failedSection.textContent = data.failed;
+    
+    const pendingSection = document.getElementById('pending-section-count');
+    if (pendingSection) pendingSection.textContent = data.pending;
+}
+</script>
+{% endblock %}

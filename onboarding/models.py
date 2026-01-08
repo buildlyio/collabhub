@@ -2021,6 +2021,13 @@ admin.site.register(ForgeTeamApplication, ForgeTeamApplicationAdmin)
 
 class CommunityNewsletter(models.Model):
     """Track community newsletters sent to all approved developers"""
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('sending', 'Sending'),
+        ('completed', 'Completed'),
+        ('paused', 'Paused'),
+    ]
+    
     subject = models.CharField(max_length=255)
     custom_message = models.TextField(help_text="Custom message to include at the top of the newsletter")
     
@@ -2033,7 +2040,10 @@ class CommunityNewsletter(models.Model):
     open_source_projects = models.PositiveIntegerField(default=0)
     
     # Tracking
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     recipient_count = models.PositiveIntegerField(default=0, help_text="Number of developers who received the email")
+    failed_count = models.PositiveIntegerField(default=0, help_text="Number of failed email sends")
+    pending_count = models.PositiveIntegerField(default=0, help_text="Number of pending email sends")
     sent_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='newsletters_sent')
     sent_at = models.DateTimeField(auto_now_add=True)
     
@@ -2044,6 +2054,15 @@ class CommunityNewsletter(models.Model):
     
     def __str__(self):
         return f"Newsletter: {self.subject} ({self.sent_at.strftime('%Y-%m-%d')})"
+    
+    def update_counts(self):
+        """Update recipient counts from actual recipient records"""
+        self.recipient_count = self.recipients.filter(status='sent').count()
+        self.failed_count = self.recipients.filter(status='failed').count()
+        self.pending_count = self.recipients.filter(status='pending').count()
+        if self.pending_count == 0 and self.status == 'sending':
+            self.status = 'completed'
+        self.save()
     
     @classmethod
     def get_newsletter_sent_this_month(cls):
@@ -2068,11 +2087,35 @@ class CommunityNewsletter(models.Model):
         return False
 
 
+class NewsletterRecipient(models.Model):
+    """Track individual newsletter recipients and their delivery status"""
+    STATUS_CHOICES = [
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+        ('pending', 'Pending'),
+    ]
+    
+    newsletter = models.ForeignKey(CommunityNewsletter, on_delete=models.CASCADE, related_name='recipients')
+    developer = models.ForeignKey(TeamMember, on_delete=models.CASCADE, null=True, blank=True)
+    email = models.EmailField()  # Store email in case developer is deleted
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    error_message = models.TextField(blank=True, null=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    retry_count = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        ordering = ['status', 'email']
+        unique_together = ['newsletter', 'email']
+    
+    def __str__(self):
+        return f"{self.email} - {self.status}"
+
+
 class CommunityNewsletterAdmin(admin.ModelAdmin):
-    list_display = ('subject', 'sent_by', 'sent_at', 'recipient_count', 'total_developers')
+    list_display = ('subject', 'sent_by', 'sent_at', 'recipient_count', 'failed_count', 'total_developers')
     list_filter = ('sent_at',)
     search_fields = ('subject', 'custom_message')
-    readonly_fields = ('sent_at', 'recipient_count', 'total_customers', 'total_developers', 
+    readonly_fields = ('sent_at', 'recipient_count', 'failed_count', 'total_customers', 'total_developers', 
                       'new_customers_this_month', 'new_developers_this_month',
                       'active_opportunities', 'open_source_projects')
 
