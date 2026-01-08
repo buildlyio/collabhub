@@ -11,7 +11,7 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
 django.setup()
 
-from onboarding.models import CommunityNewsletter, NewsletterRecipient, DeveloperProfile
+from onboarding.models import CommunityNewsletter, NewsletterRecipient, TeamMember
 
 # Get the most recent newsletter
 newsletter = CommunityNewsletter.objects.order_by('-sent_at').first()
@@ -42,10 +42,9 @@ if existing_count > 0:
         exit()
 
 # Get all approved developers who should receive newsletters
-all_developers = DeveloperProfile.objects.filter(
-    user__is_active=True,
-    approval_status='approved'
-).exclude(user__email='')
+all_developers = TeamMember.objects.filter(
+    approved=True
+).exclude(email='').exclude(email__isnull=True)
 
 print(f"\n👥 Total approved developers: {all_developers.count()}")
 
@@ -58,7 +57,7 @@ print(f"   Already sent to: {len(already_sent_emails)} developers")
 # Find developers who didn't get the email
 developers_to_add = []
 for dev in all_developers:
-    if dev.user.email and dev.user.email not in already_sent_emails:
+    if dev.email and dev.email not in already_sent_emails:
         developers_to_add.append(dev)
 
 print(f"   Need to send to: {len(developers_to_add)} developers")
@@ -81,14 +80,14 @@ created = 0
 for dev in developers_to_add:
     NewsletterRecipient.objects.get_or_create(
         newsletter=newsletter,
-        email=dev.user.email,
+        email=dev.email,
         defaults={
             'developer': dev,
             'status': 'pending',
         }
     )
     created += 1
-    print(f"   Created: {dev.user.email}")
+    print(f"   Created: {dev.email}")
 
 # Update newsletter status
 newsletter.status = 'sending'
