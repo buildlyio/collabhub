@@ -202,6 +202,15 @@
                             {% else %}bg-red-100 text-red-800{% endif %}">
                             {{ developer.assessment_reminder_count }} / 3
                         </span>
+                        {% if developer.assessment_reminder_count > 0 %}
+                        <form method="POST" class="inline ml-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="reset_reminders">
+                            <button type="submit" class="text-xs text-blue-600 hover:text-blue-800 underline" onclick="return confirm('Reset reminder count to 0? This will allow you to send reminders again.');">
+                                Reset
+                            </button>
+                        </form>
+                        {% endif %}
                     </div>
                     {% if developer.assessment_last_reminded %}
                     <div class="flex items-center gap-2 text-gray-500">
@@ -215,7 +224,7 @@
                 <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
                     <p class="text-red-700 text-sm">
                         <strong>Maximum reminders reached.</strong> This developer has been sent 3 reminders without completing their assessment. 
-                        You may choose to remove them from the system.
+                        You may choose to remove them from the system or reset the reminder count to try again.
                     </p>
                 </div>
                 {% endif %}
@@ -232,6 +241,18 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                         </svg>
                         Send Reminder #{{ developer.assessment_reminder_count|add:1 }}
+                    </button>
+                </form>
+                {% else %}
+                <!-- When max reminders reached, show option to reset and send -->
+                <form method="POST" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reset_and_send_reminder">
+                    <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-yellow-600 hover:bg-yellow-700 transition" onclick="return confirm('This will reset the reminder count and send a new reminder email.');">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Reset & Send New Reminder
                     </button>
                 </form>
                 {% endif %}

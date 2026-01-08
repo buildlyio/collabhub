@@ -73,6 +73,9 @@ def send_email(to_email: str, subject: str, template_name: str, context: dict, f
         from_email: Sender email (defaults to DEFAULT_FROM_EMAIL)
         bcc: List of BCC email addresses
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     if not from_email:
         from_email = settings.DEFAULT_FROM_EMAIL or 'noreply@buildly.io'
     
@@ -92,9 +95,13 @@ def send_email(to_email: str, subject: str, template_name: str, context: dict, f
         email.attach_alternative(html_content, "text/html")
         
         # Send via MailerSend
-        return email.send()
+        result = email.send()
+        logger.info(f"Email sent successfully to {to_email}: subject='{subject}', result={result}")
+        print(f"[EMAIL] Sent to {to_email}: {subject} (result: {result})")
+        return result
     except Exception as e:
-        print(f"Error sending email to {to_email}: {str(e)}")
+        logger.error(f"Error sending email to {to_email}: {str(e)}")
+        print(f"[EMAIL ERROR] Failed to send to {to_email}: {str(e)}")
         return False
 
 

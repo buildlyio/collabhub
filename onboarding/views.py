@@ -2295,6 +2295,11 @@ def admin_developer_profile(request, developer_id):
         developer.community_approved_by = request.user
         developer.approved = True
         developer.save(update_fields=['community_approval_date', 'community_approved_by', 'approved'])
+        
+        # IMPORTANT: Ensure user account is active so they can log in
+        if developer.user:
+            developer.user.is_active = True
+            developer.user.save(update_fields=['is_active'])
 
         # Auto-assign to Buildly customer if not already assigned
         buildly_customer = Customer.objects.filter(company_name__icontains='Buildly').first()
@@ -2308,8 +2313,11 @@ def admin_developer_profile(request, developer_id):
                     reviewed_at=now(),
                     notes='Auto-assigned on community approval.'
                 )
+        
         # Send welcome email notification with profile type
-        send_community_approval_email(developer, profile_type)
+        email_sent = send_community_approval_email(developer, profile_type)
+        if not email_sent:
+            messages.warning(request, f'Developer approved but welcome email failed to send to {developer.email}')
         
         # Create in-app notification
         Notification.objects.create(
@@ -2355,12 +2363,41 @@ def admin_developer_profile(request, developer_id):
         developer.save(update_fields=['assessment_reminder_count', 'assessment_last_reminded'])
         
         # Send the reminder email
-        send_assessment_reminder_email(developer, developer.assessment_reminder_count)
+        email_sent = send_assessment_reminder_email(developer, developer.assessment_reminder_count)
         
         if developer.assessment_reminder_count >= 3:
             messages.warning(request, f"Final reminder (#{developer.assessment_reminder_count}) sent to {developer.first_name} {developer.last_name}. Consider removing if no response.")
         else:
-            messages.success(request, f"Reminder #{developer.assessment_reminder_count} sent to {developer.first_name} {developer.last_name}.")
+            if email_sent:
+                messages.success(request, f"Reminder #{developer.assessment_reminder_count} sent to {developer.first_name} {developer.last_name}.")
+            else:
+                messages.error(request, f"Failed to send reminder email to {developer.email}. Reminder count still updated.")
+        return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
+    
+    # Handle reset reminders (just reset count, don't send email)
+    if request.method == 'POST' and request.POST.get('action') == 'reset_reminders':
+        developer.assessment_reminder_count = 0
+        developer.assessment_last_reminded = None
+        developer.save(update_fields=['assessment_reminder_count', 'assessment_last_reminded'])
+        messages.success(request, f"Reminder count reset for {developer.first_name} {developer.last_name}. You can now send new reminders.")
+        return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
+    
+    # Handle reset and send (reset count to 0, then send as reminder #1)
+    if request.method == 'POST' and request.POST.get('action') == 'reset_and_send_reminder':
+        from onboarding.utils import send_assessment_reminder_email
+        
+        # Reset and set to 1
+        developer.assessment_reminder_count = 1
+        developer.assessment_last_reminded = now()
+        developer.save(update_fields=['assessment_reminder_count', 'assessment_last_reminded'])
+        
+        # Send the reminder email
+        email_sent = send_assessment_reminder_email(developer, 1)
+        
+        if email_sent:
+            messages.success(request, f"Reminder count reset and new reminder #1 sent to {developer.first_name} {developer.last_name}.")
+        else:
+            messages.error(request, f"Reminder count reset but failed to send email to {developer.email}.")
         return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
     
     # Handle member deletion
@@ -2886,8 +2923,15 @@ def admin_approve_community(request, developer_id):
     developer.approved = True  # keep legacy flag in sync
     developer.save(update_fields=['community_approval_date', 'community_approved_by', 'approved'])
     
+    # IMPORTANT: Ensure user account is active so they can log in
+    if developer.user:
+        developer.user.is_active = True
+        developer.user.save(update_fields=['is_active'])
+    
     # Send welcome email notification with profile type
-    send_community_approval_email(developer, profile_type)
+    email_sent = send_community_approval_email(developer, profile_type)
+    if not email_sent:
+        messages.warning(request, f'Developer approved but welcome email failed to send to {developer.email}')
     
     # Create in-app notification
     Notification.objects.create(
