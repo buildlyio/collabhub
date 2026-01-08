@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 650px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f5;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .custom-message {
+            background: #f0f9ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 0 0 30px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .custom-message p {
+            margin: 0;
+            white-space: pre-line;
+        }
+        .stats-section {
+            margin: 30px 0;
+        }
+        .stats-section h2 {
+            color: #667eea;
+            font-size: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #bfdbfe;
+        }
+        .stat-card.highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        .stat-card.highlight .stat-number {
+            color: white;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-card.highlight .stat-label {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .growth-badge {
+            background: #10b981;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-top: 8px;
+            display: inline-block;
+        }
+        .growth-badge.new {
+            background: #f59e0b;
+        }
+        .cta-section {
+            text-align: center;
+            margin: 40px 0 20px;
+            padding: 30px;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 12px;
+        }
+        .cta-section h3 {
+            margin: 0 0 15px 0;
+            color: #92400e;
+        }
+        .button {
+            display: inline-block;
+            padding: 14px 28px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 10px 5px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #5563d1;
+        }
+        .button.secondary {
+            background: #10b981;
+        }
+        .button.tertiary {
+            background: #f59e0b;
+        }
+        .opportunities-section {
+            margin: 30px 0;
+            padding: 25px;
+            background: #f8fafc;
+            border-radius: 10px;
+        }
+        .opportunities-section h3 {
+            color: #667eea;
+            margin: 0 0 15px 0;
+        }
+        .divider {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 30px 0;
+        }
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            padding: 30px;
+            background: #f8fafc;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .social-links {
+            margin: 15px 0;
+        }
+        .social-links a {
+            margin: 0 10px;
+            color: #667eea;
+            text-decoration: none;
+        }
+        @media only screen and (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .header h1 {
+                font-size: 24px;
+            }
+            .button {
+                display: block;
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📬 Buildly Community Newsletter</h1>
+            <p>{{ month_name }} {{ year }} Update</p>
+        </div>
+        
+        <div class="content">
+            {% if custom_message %}
+            <div class="custom-message">
+                <p>{{ custom_message }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="stats-section">
+                <h2>📊 Community Stats</h2>
+                <div class="stats-grid">
+                    <div class="stat-card highlight">
+                        <div class="stat-number">{{ total_developers }}</div>
+                        <div class="stat-label">Community Developers</div>
+                        {% if new_developers_this_month > 0 %}
+                        <span class="growth-badge new">+{{ new_developers_this_month }} this month</span>
+                        {% endif %}
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ total_customers }}</div>
+                        <div class="stat-label">Active Customers</div>
+                        {% if new_customers_this_month > 0 %}
+                        <span class="growth-badge">+{{ new_customers_this_month }} new</span>
+                        {% endif %}
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ active_opportunities }}</div>
+                        <div class="stat-label">Job Opportunities</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ open_source_projects }}</div>
+                        <div class="stat-label">Open Source Projects</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="divider"></div>
+            
+            {% if active_opportunities > 0 %}
+            <div class="opportunities-section">
+                <h3>🚀 Don't Miss Out on Opportunities!</h3>
+                <p>There are currently <strong>{{ active_opportunities }} job opportunities</strong> available. Make sure your profile is up-to-date and check out the latest openings.</p>
+            </div>
+            {% endif %}
+            
+            <div class="cta-section">
+                <h3>Stay Active in the Community!</h3>
+                <p style="margin: 0 0 20px;">Keep your skills sharp and explore new opportunities.</p>
+                <a href="{{ dashboard_url }}" class="button">Go to Dashboard</a>
+                <a href="{{ certifications_url }}" class="button secondary">Explore Certifications</a>
+                <a href="{{ resources_url }}" class="button tertiary">View Resources</a>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <p style="color: #666; text-align: center;">
+                Thank you for being part of the Buildly Open Source Community! Your contributions help us grow and succeed together.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <div class="social-links">
+                <a href="https://github.com/buildlyio">GitHub</a> |
+                <a href="https://linkedin.com/company/buildly">LinkedIn</a> |
+                <a href="https://buildly.io">Website</a>
+            </div>
+            <p>&copy; {{ year }} Buildly. All rights reserved.</p>
+            <p>You're receiving this because you're a member of the Buildly Community.</p>
+            <p style="margin-top: 10px;">
+                <a href="{{ unsubscribe_url }}">Unsubscribe</a> from community updates
+            </p>
+        </div>
+    </div>
+</body>
+</html>

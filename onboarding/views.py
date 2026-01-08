@@ -2579,14 +2579,22 @@ def sync_github_skills(request, developer_id):
 
 @user_passes_test(lambda u: u.is_superuser)
 def admin_developer_remove(request, developer_id):
-    """Remove a developer from the community (soft delete by revoking access)"""
+    """Remove a developer from the community (fully delete from system)"""
     from onboarding.utils import send_community_revocation_email
     
     developer = get_object_or_404(TeamMember, id=developer_id)
     
     if request.method == 'POST':
         developer_name = f"{developer.first_name} {developer.last_name}"
-        developer_email = developer.email  # Store before any changes
+        developer_email = developer.email  # Store before deletion
+        user_account = developer.user  # Store reference before deletion
+        
+        # Send revocation email notification BEFORE deleting
+        try:
+            send_community_revocation_email(developer)
+        except Exception as e:
+            # Log error but don't fail the removal
+            print(f"Failed to send revocation email to {developer_email}: {e}")
         
         # Remove from all developer teams
         developer.developer_teams.clear()
@@ -2594,25 +2602,19 @@ def admin_developer_remove(request, developer_id):
         # Remove customer assignments
         CustomerDeveloperAssignment.objects.filter(developer=developer).delete()
         
-        # Revoke community approval
-        developer.approved = False
-        developer.community_approval_date = None
-        developer.community_approved_by = None
-        developer.save()
+        # Delete all related assessment answers
+        from onboarding.models import DeveloperAssessmentAnswer
+        DeveloperAssessmentAnswer.objects.filter(developer=developer).delete()
         
-        # Deactivate the user account
-        if developer.user:
-            developer.user.is_active = False
-            developer.user.save()
+        # Delete the TeamMember record entirely
+        developer.delete()
         
-        # Send revocation email notification
-        try:
-            send_community_revocation_email(developer)
-        except Exception as e:
-            # Log error but don't fail the removal
-            print(f"Failed to send revocation email to {developer_email}: {e}")
+        # Deactivate the user account (but don't delete it to preserve audit trail)
+        if user_account:
+            user_account.is_active = False
+            user_account.save()
         
-        messages.success(request, f'Developer "{developer_name}" has been removed from the community.')
+        messages.success(request, f'Developer "{developer_name}" has been removed from the community and deleted from the system.')
         return redirect('onboarding:admin_developers_list')
     
     # If not POST, redirect back to developers list
@@ -4833,4 +4835,147 @@ def admin_forge_request_review(request, request_id):
     
     return render(request, 'admin_forge_request_review.html', {
         'project_request': project_request,
+    })
+
+
+# ==================== COMMUNITY NEWSLETTER ====================
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_community_newsletter(request):
+    """Admin view to compose and send community newsletter"""
+    from onboarding.models import CommunityNewsletter
+    from onboarding.utils import send_email
+    from forge.models import ForgeApp
+    from django.utils import timezone
+    from onboarding.utils import get_site_url
+    import calendar
+    
+    # Get stats for the newsletter
+    today = timezone.now().date()
+    first_day_of_month = today.replace(day=1)
+    
+    # Calculate stats
+    total_customers = Customer.objects.filter(is_active=True).count()
+    total_developers = TeamMember.objects.filter(approved=True).count()
+    new_customers_this_month = Customer.objects.filter(
+        is_active=True, 
+        created_at__date__gte=first_day_of_month
+    ).count()
+    new_developers_this_month = TeamMember.objects.filter(
+        community_approval_date__date__gte=first_day_of_month
+    ).count()
+    
+    # Active opportunities - using CustomerDeveloperAssignment with pending status
+    active_opportunities = CustomerDeveloperAssignment.objects.filter(
+        status='pending'
+    ).count()
+    
+    # Open source projects from Forge
+    open_source_projects = ForgeApp.objects.filter(is_active=True).count()
+    
+    # Get past newsletters
+    past_newsletters = CommunityNewsletter.objects.all()[:10]
+    
+    # Check if newsletter sent this month
+    newsletter_sent_this_month = CommunityNewsletter.get_newsletter_sent_this_month()
+    
+    if request.method == 'POST':
+        subject = request.POST.get('subject', 'Buildly Community Newsletter')
+        custom_message = request.POST.get('custom_message', '')
+        
+        # Get all approved developers with emails
+        approved_developers = TeamMember.objects.filter(
+            approved=True
+        ).exclude(email='').exclude(email__isnull=True)
+        
+        bcc_emails = list(approved_developers.values_list('email', flat=True))
+        
+        if not bcc_emails:
+            messages.error(request, 'No approved developers with email addresses found.')
+            return redirect('onboarding:admin_community_newsletter')
+        
+        # Get month name for template
+        month_name = calendar.month_name[today.month]
+        year = today.year
+        
+        # Prepare email context
+        site_url = get_site_url()
+        context = {
+            'custom_message': custom_message,
+            'month_name': month_name,
+            'year': year,
+            'total_developers': total_developers,
+            'total_customers': total_customers,
+            'new_developers_this_month': new_developers_this_month,
+            'new_customers_this_month': new_customers_this_month,
+            'active_opportunities': active_opportunities,
+            'open_source_projects': open_source_projects,
+            'dashboard_url': f"{site_url}/onboarding/dashboard/",
+            'certifications_url': f"{site_url}/onboarding/certifications/",
+            'resources_url': f"{site_url}/onboarding/resources/",
+            'unsubscribe_url': f"{site_url}/onboarding/unsubscribe/",
+        }
+        
+        try:
+            # Send to team@buildly.io with BCC to all developers
+            result = send_email(
+                to_email='team@buildly.io',
+                subject=subject,
+                template_name='emails/community_newsletter.html',
+                context=context,
+                bcc=bcc_emails
+            )
+            
+            if result:
+                # Save newsletter record
+                newsletter = CommunityNewsletter.objects.create(
+                    subject=subject,
+                    custom_message=custom_message,
+                    total_customers=total_customers,
+                    total_developers=total_developers,
+                    new_customers_this_month=new_customers_this_month,
+                    new_developers_this_month=new_developers_this_month,
+                    active_opportunities=active_opportunities,
+                    open_source_projects=open_source_projects,
+                    recipient_count=len(bcc_emails),
+                    sent_by=request.user,
+                )
+                
+                messages.success(
+                    request, 
+                    f'Newsletter sent successfully to {len(bcc_emails)} developers!'
+                )
+            else:
+                messages.error(request, 'Failed to send newsletter. Please try again.')
+                
+        except Exception as e:
+            messages.error(request, f'Error sending newsletter: {str(e)}')
+        
+        return redirect('onboarding:admin_community_newsletter')
+    
+    context = {
+        'total_customers': total_customers,
+        'total_developers': total_developers,
+        'new_customers_this_month': new_customers_this_month,
+        'new_developers_this_month': new_developers_this_month,
+        'active_opportunities': active_opportunities,
+        'open_source_projects': open_source_projects,
+        'past_newsletters': past_newsletters,
+        'newsletter_sent_this_month': newsletter_sent_this_month,
+    }
+    
+    return render(request, 'admin_community_newsletter.html', context)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_newsletter_history(request):
+    """View all sent newsletters"""
+    from onboarding.models import CommunityNewsletter
+    
+    newsletters = CommunityNewsletter.objects.all()
+    
+    return render(request, 'admin_newsletter_history.html', {
+        'newsletters': newsletters,
     })

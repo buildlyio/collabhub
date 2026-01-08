@@ -29,3 +29,28 @@
   </div>
 </div>
 {% endif %}
+
+<!-- Newsletter Reminder Banner for Superadmins -->
+{% if show_newsletter_reminder and user.is_superuser %}
+<div class="newsletter-reminder-banner" style="position: sticky; top: 0; z-index: 999; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); color: white; padding: 10px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+  <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+    <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+      <div style="flex-shrink: 0; font-size: 20px;">📬</div>
+      <div style="flex: 1;">
+        <strong style="font-size: 14px;">Newsletter Reminder:</strong>
+        <span style="font-size: 13px; opacity: 0.95;">
+          No community newsletter has been sent this month. Keep your developers engaged!
+        </span>
+      </div>
+    </div>
+    <div style="flex-shrink: 0;">
+      <a href="{% url 'onboarding:admin_community_newsletter' %}" 
+         style="display: inline-block; background: white; color: #6366f1; padding: 8px 20px; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 13px;"
+         onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)';"
+         onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+        Send Newsletter →
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}

@@ -109,6 +109,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'onboarding.context_processors.assessment_status',  # Add assessment status to all templates
                 'onboarding.context_processors.user_roles',  # Add role flags for navigation
+                'onboarding.context_processors.newsletter_reminder',  # Newsletter reminder for superadmins
             ],
         },
     },

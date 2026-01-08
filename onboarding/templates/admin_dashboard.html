@@ -83,6 +83,27 @@
         </a>
     </div>
 
+    <!-- Newsletter Action Card (Superuser only) -->
+    {% if user.is_superuser %}
+    <div class="mb-8">
+        <a href="{% url 'onboarding:admin_community_newsletter' %}" 
+           class="block bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg p-6 hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <span class="text-4xl">📬</span>
+                    <div>
+                        <h3 class="text-lg font-semibold">Community Newsletter</h3>
+                        <p class="text-sm text-indigo-100">Send monthly updates to all community developers</p>
+                    </div>
+                </div>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </div>
+        </a>
+    </div>
+    {% endif %}
+
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <!-- User Stats -->

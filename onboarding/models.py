@@ -2017,3 +2017,63 @@ class ForgeTeamApplicationAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'responded_at')
 
 admin.site.register(ForgeTeamApplication, ForgeTeamApplicationAdmin)
+
+
+class CommunityNewsletter(models.Model):
+    """Track community newsletters sent to all approved developers"""
+    subject = models.CharField(max_length=255)
+    custom_message = models.TextField(help_text="Custom message to include at the top of the newsletter")
+    
+    # Stats snapshot at time of sending
+    total_customers = models.PositiveIntegerField(default=0)
+    total_developers = models.PositiveIntegerField(default=0)
+    new_customers_this_month = models.PositiveIntegerField(default=0)
+    new_developers_this_month = models.PositiveIntegerField(default=0)
+    active_opportunities = models.PositiveIntegerField(default=0)
+    open_source_projects = models.PositiveIntegerField(default=0)
+    
+    # Tracking
+    recipient_count = models.PositiveIntegerField(default=0, help_text="Number of developers who received the email")
+    sent_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='newsletters_sent')
+    sent_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-sent_at']
+        verbose_name = 'Community Newsletter'
+        verbose_name_plural = 'Community Newsletters'
+    
+    def __str__(self):
+        return f"Newsletter: {self.subject} ({self.sent_at.strftime('%Y-%m-%d')})"
+    
+    @classmethod
+    def get_newsletter_sent_this_month(cls):
+        """Check if a newsletter has been sent this month"""
+        from django.utils import timezone
+        today = timezone.now().date()
+        first_day_of_month = today.replace(day=1)
+        return cls.objects.filter(sent_at__date__gte=first_day_of_month).exists()
+    
+    @classmethod
+    def should_show_reminder(cls):
+        """Check if we should show a reminder to send the newsletter"""
+        from django.utils import timezone
+        import calendar
+        today = timezone.now().date()
+        _, last_day = calendar.monthrange(today.year, today.month)
+        days_until_end = last_day - today.day
+        
+        # Show reminder if newsletter not sent this month AND within last 7 days of month
+        if not cls.get_newsletter_sent_this_month() and days_until_end <= 7:
+            return True
+        return False
+
+
+class CommunityNewsletterAdmin(admin.ModelAdmin):
+    list_display = ('subject', 'sent_by', 'sent_at', 'recipient_count', 'total_developers')
+    list_filter = ('sent_at',)
+    search_fields = ('subject', 'custom_message')
+    readonly_fields = ('sent_at', 'recipient_count', 'total_customers', 'total_developers', 
+                      'new_customers_this_month', 'new_developers_this_month',
+                      'active_opportunities', 'open_source_projects')
+
+admin.site.register(CommunityNewsletter, CommunityNewsletterAdmin)

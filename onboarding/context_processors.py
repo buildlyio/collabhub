@@ -77,3 +77,27 @@ def assessment_status(request):
             pass
     
     return context
+
+
+def newsletter_reminder(request):
+    """
+    Add newsletter reminder for superadmins.
+    
+    Shows a reminder if:
+    - User is a superuser
+    - No newsletter has been sent this month
+    - It's within the last 7 days of the month
+    """
+    context = {
+        'show_newsletter_reminder': False,
+    }
+    
+    # Only check for superusers
+    if request.user.is_authenticated and request.user.is_superuser:
+        try:
+            from onboarding.models import CommunityNewsletter
+            context['show_newsletter_reminder'] = CommunityNewsletter.should_show_reminder()
+        except Exception:
+            pass
+    
+    return context
