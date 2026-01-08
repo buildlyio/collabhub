@@ -590,22 +590,57 @@
             {% endif %}
 
             <!-- QR Codes Section -->
-            {% if qr_codes %}
             <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
                 <div class="p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">QR Codes</h3>
-                    <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">🔗 Referral Links</h3>
+                    <p class="text-sm text-gray-600 mb-4">Share your referral link to invite others to join CollabHub. You'll get credit for each referral!</p>
+                    
+                    <!-- Generate New Link Button -->
+                    <a href="{% url 'submission:generate_link' %}" class="block w-full px-4 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-center mb-4">
+                        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Generate Referral Link
+                    </a>
+                    
+                    {% if qr_codes %}
+                    <div class="space-y-4 mt-4">
+                        <p class="text-xs text-gray-500 font-medium uppercase tracking-wider">Your Referral Links</p>
                         {% for qr_code in qr_codes %}
-                        <div class="text-center p-4 bg-gray-50 rounded-lg">
-                            <img src="{% static 'media/qr_codes/' %}{{ qr_code.qr_code }}" alt="QR Code" class="w-32 h-32 object-contain mx-auto mb-3" onerror="this.style.display='none';">
-                            <p class="text-xs text-gray-600 break-all">{{ qr_code.unique_url }}</p>
-                            <a href="https://collab.buildly.io/submission/submit/{{ qr_code.unique_url }}" class="text-blue-600 hover:text-blue-500 text-sm">View Submission</a>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <!-- QR Code Image -->
+                            {% if qr_code.qr_code %}
+                            <div class="text-center mb-3">
+                                <img src="{{ qr_code.qr_code }}" alt="QR Code" class="w-32 h-32 object-contain mx-auto rounded" onerror="this.style.display='none';">
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Referral Link -->
+                            <div class="flex items-center gap-2 mb-2">
+                                <input type="text" readonly value="https://collab.buildly.io/submission/submit/{{ qr_code.unique_url }}" 
+                                       class="flex-1 text-xs px-2 py-1 bg-white border border-gray-300 rounded text-gray-600" id="referral-link-{{ qr_code.id }}">
+                                <button onclick="copyReferralLink('{{ qr_code.id }}')" class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200">
+                                    Copy
+                                </button>
+                            </div>
+                            
+                            <!-- Actions -->
+                            <div class="flex justify-between items-center text-xs">
+                                <a href="https://collab.buildly.io/submission/submit/{{ qr_code.unique_url }}" target="_blank" class="text-blue-600 hover:text-blue-500">
+                                    Preview →
+                                </a>
+                                <a href="{% url 'submission:delete_submission_link' qr_code.id %}" class="text-red-600 hover:text-red-500" onclick="return confirm('Delete this referral link?');">
+                                    Delete
+                                </a>
+                            </div>
                         </div>
                         {% endfor %}
                     </div>
+                    {% else %}
+                    <p class="text-sm text-gray-500 text-center py-4">No referral links yet. Generate one to start inviting others!</p>
+                    {% endif %}
                 </div>
             </div>
-            {% endif %}
 
             <!-- Certification Download -->
             {% if certification_complete %}
@@ -701,6 +736,21 @@ function showToast(message, type) {
     setTimeout(() => {
         toast.remove();
     }, 3000);
+}
+
+// Copy referral link to clipboard
+function copyReferralLink(linkId) {
+    const input = document.getElementById('referral-link-' + linkId);
+    if (input) {
+        input.select();
+        navigator.clipboard.writeText(input.value).then(() => {
+            showSuccessToast('Link copied to clipboard!');
+        }).catch(() => {
+            // Fallback for older browsers
+            document.execCommand('copy');
+            showSuccessToast('Link copied!');
+        });
+    }
 }
 </script>
 
