@@ -350,3 +350,235 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+
+# ===== MAILERSEND API ANALYTICS =====
+
+def get_mailersend_api_key():
+    """Get MailerSend API key from environment"""
+    return os.environ.get('MAILERSEND_API_KEY')
+
+
+def fetch_mailersend_analytics(date_from=None, date_to=None):
+    """
+    Fetch email analytics from MailerSend API
+    
+    Returns aggregated stats for: delivered, opened, clicked, bounced, spam_complaints
+    """
+    import requests
+    from datetime import datetime, timedelta
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    api_key = get_mailersend_api_key()
+    
+    if not api_key:
+        logger.warning("MAILERSEND_API_KEY not configured")
+        return None
+    
+    # Default to last 30 days if no dates provided
+    if not date_to:
+        date_to = datetime.now()
+    if not date_from:
+        date_from = date_to - timedelta(days=30)
+    
+    # Format dates for API (UNIX timestamp in milliseconds)
+    date_from_ts = int(date_from.timestamp() * 1000)
+    date_to_ts = int(date_to.timestamp() * 1000)
+    
+    headers = {
+        'Authorization': f'Bearer {api_key}',
+        'Content-Type': 'application/json',
+    }
+    
+    try:
+        # Fetch activity analytics
+        url = 'https://api.mailersend.com/v1/analytics/date'
+        params = {
+            'date_from': date_from_ts,
+            'date_to': date_to_ts,
+            'event': ['delivered', 'opened', 'clicked', 'soft_bounced', 'hard_bounced', 'spam_complaints', 'unsubscribed'],
+        }
+        
+        response = requests.get(url, headers=headers, params=params)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logger.error(f"MailerSend API error: {response.status_code} - {response.text}")
+            return None
+            
+    except Exception as e:
+        logger.error(f"Error fetching MailerSend analytics: {str(e)}")
+        return None
+
+
+def fetch_mailersend_activity(page=1, limit=25, event_type=None, date_from=None, date_to=None):
+    """
+    Fetch detailed email activity from MailerSend API
+    
+    Args:
+        page: Page number for pagination
+        limit: Number of results per page
+        event_type: Filter by event type (e.g., 'opened', 'clicked', 'bounced')
+        date_from: Start date for filtering
+        date_to: End date for filtering
+    
+    Returns activity list with recipient details
+    """
+    import requests
+    from datetime import datetime, timedelta
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    api_key = get_mailersend_api_key()
+    
+    if not api_key:
+        logger.warning("MAILERSEND_API_KEY not configured")
+        return None
+    
+    # Default to last 30 days if no dates provided
+    if not date_to:
+        date_to = datetime.now()
+    if not date_from:
+        date_from = date_to - timedelta(days=30)
+    
+    headers = {
+        'Authorization': f'Bearer {api_key}',
+        'Content-Type': 'application/json',
+    }
+    
+    try:
+        url = 'https://api.mailersend.com/v1/activity'
+        params = {
+            'page': page,
+            'limit': limit,
+            'date_from': int(date_from.timestamp()),
+            'date_to': int(date_to.timestamp()),
+        }
+        
+        if event_type:
+            params['event'] = event_type
+        
+        response = requests.get(url, headers=headers, params=params)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logger.error(f"MailerSend activity API error: {response.status_code} - {response.text}")
+            return None
+            
+    except Exception as e:
+        logger.error(f"Error fetching MailerSend activity: {str(e)}")
+        return None
+
+
+def fetch_mailersend_messages(page=1, limit=25):
+    """
+    Fetch sent messages from MailerSend API
+    
+    Returns list of messages with delivery status
+    """
+    import requests
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    api_key = get_mailersend_api_key()
+    
+    if not api_key:
+        logger.warning("MAILERSEND_API_KEY not configured")
+        return None
+    
+    headers = {
+        'Authorization': f'Bearer {api_key}',
+        'Content-Type': 'application/json',
+    }
+    
+    try:
+        url = 'https://api.mailersend.com/v1/messages'
+        params = {
+            'page': page,
+            'limit': limit,
+        }
+        
+        response = requests.get(url, headers=headers, params=params)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logger.error(f"MailerSend messages API error: {response.status_code} - {response.text}")
+            return None
+            
+    except Exception as e:
+        logger.error(f"Error fetching MailerSend messages: {str(e)}")
+        return None
+
+
+def get_email_analytics_summary():
+    """
+    Get a summary of email analytics for the dashboard
+    
+    Returns dict with:
+    - total_sent, total_delivered, total_opened, total_clicked
+    - bounce_rate, open_rate, click_rate
+    - recent_bounces, recent_spam_complaints
+    """
+    import logging
+    from datetime import datetime, timedelta
+    
+    logger = logging.getLogger(__name__)
+    
+    # Fetch analytics for last 30 days
+    analytics = fetch_mailersend_analytics()
+    
+    if not analytics:
+        return {
+            'api_configured': bool(get_mailersend_api_key()),
+            'error': 'Unable to fetch analytics from MailerSend',
+        }
+    
+    # Parse the analytics data
+    data = analytics.get('data', {})
+    stats = data.get('stats', [])
+    
+    # Aggregate totals
+    totals = {
+        'delivered': 0,
+        'opened': 0,
+        'clicked': 0,
+        'soft_bounced': 0,
+        'hard_bounced': 0,
+        'spam_complaints': 0,
+        'unsubscribed': 0,
+    }
+    
+    for stat in stats:
+        event = stat.get('event')
+        count = stat.get('count', 0)
+        if event in totals:
+            totals[event] = count
+    
+    total_sent = totals['delivered'] + totals['soft_bounced'] + totals['hard_bounced']
+    total_bounces = totals['soft_bounced'] + totals['hard_bounced']
+    
+    # Calculate rates (avoid division by zero)
+    open_rate = (totals['opened'] / totals['delivered'] * 100) if totals['delivered'] > 0 else 0
+    click_rate = (totals['clicked'] / totals['opened'] * 100) if totals['opened'] > 0 else 0
+    bounce_rate = (total_bounces / total_sent * 100) if total_sent > 0 else 0
+    
+    return {
+        'api_configured': True,
+        'total_sent': total_sent,
+        'total_delivered': totals['delivered'],
+        'total_opened': totals['opened'],
+        'total_clicked': totals['clicked'],
+        'total_bounces': total_bounces,
+        'soft_bounces': totals['soft_bounced'],
+        'hard_bounces': totals['hard_bounced'],
+        'spam_complaints': totals['spam_complaints'],
+        'unsubscribes': totals['unsubscribed'],
+        'open_rate': round(open_rate, 1),
+        'click_rate': round(click_rate, 1),
+        'bounce_rate': round(bounce_rate, 1),
+        'period_days': 30,
+    }

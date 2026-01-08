@@ -12,6 +12,10 @@
             <p class="text-gray-600">Send updates to all approved community members</p>
         </div>
         <div class="flex gap-3">
+            <a href="{% url 'onboarding:admin_email_analytics' %}" 
+               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                📊 Email Analytics
+            </a>
             <a href="{% url 'onboarding:admin_newsletter_history' %}" 
                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                 📜 View History

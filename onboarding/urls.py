@@ -170,6 +170,7 @@ urlpatterns = [
     path('admin/newsletter/', views.admin_community_newsletter, name='admin_community_newsletter'),
     path('admin/newsletter/history/', views.admin_newsletter_history, name='admin_newsletter_history'),
     path('admin/newsletter/<int:newsletter_id>/delete/', views.admin_newsletter_delete, name='admin_newsletter_delete'),
+    path('admin/email-analytics/', views.admin_email_analytics, name='admin_email_analytics'),
     
     # Public: Community Newsletters (read-only for all authenticated users)
     path('newsletters/', views.community_newsletters, name='community_newsletters'),

@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block page_title %}Email Analytics{% endblock %}
+
+{% block page_content %}
+<div class="max-w-7xl mx-auto px-4">
+    <!-- Header -->
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">📊 Email Analytics</h1>
+            <p class="text-gray-600">Track email delivery, opens, clicks, bounces, and more from MailerSend</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'onboarding:admin_newsletter_history' %}" 
+               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                📜 Newsletter History
+            </a>
+            <a href="{% url 'onboarding:admin_dashboard' %}" 
+               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                ← Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    {% if not api_configured %}
+    <!-- API Not Configured Warning -->
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <svg class="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-lg font-medium text-yellow-800">MailerSend API Key Not Configured</h3>
+                <p class="mt-2 text-sm text-yellow-700">
+                    To view email analytics, you need to add the <code class="bg-yellow-100 px-1 rounded">MAILERSEND_API_KEY</code> environment variable.
+                </p>
+                <p class="mt-2 text-sm text-yellow-700">
+                    Get your API key from <a href="https://www.mailersend.com/help/how-to-create-an-api-token" target="_blank" class="text-yellow-800 underline font-medium">MailerSend Dashboard → API Tokens</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    {% else %}
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total Delivered -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-green-100 rounded-lg p-3">
+                    <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Delivered</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ summary.total_delivered|default:"0" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Opened -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3">
+                    <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Opened</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ summary.total_opened|default:"0" }}</p>
+                    <p class="text-xs text-gray-400">{{ summary.open_rate|default:"0" }}% open rate</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clicked -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-indigo-100 rounded-lg p-3">
+                    <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Clicked</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ summary.total_clicked|default:"0" }}</p>
+                    <p class="text-xs text-gray-400">{{ summary.click_rate|default:"0" }}% click rate</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bounces -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-red-100 rounded-lg p-3">
+                    <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Bounces</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ summary.total_bounces|default:"0" }}</p>
+                    <p class="text-xs text-gray-400">{{ summary.bounce_rate|default:"0" }}% bounce rate</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Stats Row -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-md p-4 text-center">
+            <p class="text-sm font-medium text-gray-500">Soft Bounces</p>
+            <p class="text-xl font-bold text-orange-600">{{ summary.soft_bounces|default:"0" }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-4 text-center">
+            <p class="text-sm font-medium text-gray-500">Hard Bounces</p>
+            <p class="text-xl font-bold text-red-600">{{ summary.hard_bounces|default:"0" }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-4 text-center">
+            <p class="text-sm font-medium text-gray-500">Spam Complaints</p>
+            <p class="text-xl font-bold text-red-600">{{ summary.spam_complaints|default:"0" }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-4 text-center">
+            <p class="text-sm font-medium text-gray-500">Unsubscribes</p>
+            <p class="text-xl font-bold text-gray-600">{{ summary.unsubscribes|default:"0" }}</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <form method="get" class="flex flex-wrap gap-4 items-end">
+            <div>
+                <label for="event" class="block text-sm font-medium text-gray-700 mb-1">Event Type</label>
+                <select name="event" id="event" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    {% for value, label in event_types %}
+                    <option value="{{ value }}" {% if event_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="days" class="block text-sm font-medium text-gray-700 mb-1">Time Period</label>
+                <select name="days" id="days" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    {% for value, label in day_options %}
+                    <option value="{{ value }}" {% if days == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                🔍 Filter
+            </button>
+        </form>
+    </div>
+
+    <!-- Activity Table -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">📬 Recent Email Activity</h2>
+            <p class="text-sm text-gray-500">Showing {% if event_filter %}{{ event_filter }} events{% else %}all events{% endif %} from the last {{ days }} days</p>
+        </div>
+        
+        {% if activities %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recipient</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date/Time</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for activity in activities %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">
+                                {{ activity.recipient.email|default:"Unknown" }}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm text-gray-900 truncate max-w-xs">
+                                {{ activity.email.subject|default:"No subject" }}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% with event=activity.type %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                {% if event == 'delivered' %}bg-green-100 text-green-800
+                                {% elif event == 'opened' %}bg-blue-100 text-blue-800
+                                {% elif event == 'clicked' %}bg-indigo-100 text-indigo-800
+                                {% elif event == 'soft_bounced' %}bg-orange-100 text-orange-800
+                                {% elif event == 'hard_bounced' %}bg-red-100 text-red-800
+                                {% elif event == 'spam_complaints' %}bg-red-100 text-red-800
+                                {% elif event == 'unsubscribed' %}bg-gray-100 text-gray-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {% if event == 'delivered' %}✅ Delivered
+                                {% elif event == 'opened' %}👁️ Opened
+                                {% elif event == 'clicked' %}🖱️ Clicked
+                                {% elif event == 'soft_bounced' %}⚠️ Soft Bounce
+                                {% elif event == 'hard_bounced' %}❌ Hard Bounce
+                                {% elif event == 'spam_complaints' %}🚫 Spam
+                                {% elif event == 'unsubscribed' %}📤 Unsubscribed
+                                {% else %}{{ event }}{% endif %}
+                            </span>
+                            {% endwith %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ activity.created_at|default:"N/A" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="px-6 py-4 border-t border-gray-200 flex justify-between items-center">
+            <div class="text-sm text-gray-500">
+                Page {{ pagination.current_page }}
+            </div>
+            <div class="flex gap-2">
+                {% if pagination.has_prev %}
+                <a href="?page={{ pagination.current_page|add:"-1" }}&event={{ event_filter }}&days={{ days }}" 
+                   class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    ← Previous
+                </a>
+                {% endif %}
+                {% if pagination.has_next %}
+                <a href="?page={{ pagination.current_page|add:"1" }}&event={{ event_filter }}&days={{ days }}" 
+                   class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Next →
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No email activity found</h3>
+            <p class="mt-1 text-sm text-gray-500">
+                {% if event_filter %}No {{ event_filter }} events in the last {{ days }} days.{% else %}No email activity in the last {{ days }} days.{% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

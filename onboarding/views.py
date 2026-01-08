@@ -4998,6 +4998,86 @@ def admin_newsletter_delete(request, newsletter_id):
 
 
 @login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_email_analytics(request):
+    """View email analytics from MailerSend API (superadmin only)"""
+    from onboarding.utils import (
+        get_email_analytics_summary, 
+        fetch_mailersend_activity,
+        get_mailersend_api_key
+    )
+    from datetime import datetime, timedelta
+    
+    # Get filter parameters
+    event_filter = request.GET.get('event', '')
+    page = int(request.GET.get('page', 1))
+    days = int(request.GET.get('days', 30))
+    
+    # Calculate date range
+    date_to = datetime.now()
+    date_from = date_to - timedelta(days=days)
+    
+    # Get summary analytics
+    summary = get_email_analytics_summary()
+    
+    # Get detailed activity based on filter
+    activity_data = None
+    if event_filter:
+        activity_data = fetch_mailersend_activity(
+            page=page, 
+            limit=50, 
+            event_type=event_filter,
+            date_from=date_from,
+            date_to=date_to
+        )
+    else:
+        activity_data = fetch_mailersend_activity(
+            page=page, 
+            limit=50,
+            date_from=date_from,
+            date_to=date_to
+        )
+    
+    # Parse activity data
+    activities = []
+    pagination = {}
+    if activity_data:
+        activities = activity_data.get('data', [])
+        pagination = {
+            'current_page': page,
+            'has_next': len(activities) >= 50,
+            'has_prev': page > 1,
+        }
+    
+    context = {
+        'summary': summary,
+        'activities': activities,
+        'pagination': pagination,
+        'event_filter': event_filter,
+        'days': days,
+        'api_configured': bool(get_mailersend_api_key()),
+        'event_types': [
+            ('', 'All Events'),
+            ('delivered', 'Delivered'),
+            ('opened', 'Opened'),
+            ('clicked', 'Clicked'),
+            ('soft_bounced', 'Soft Bounced'),
+            ('hard_bounced', 'Hard Bounced'),
+            ('spam_complaints', 'Spam Complaints'),
+            ('unsubscribed', 'Unsubscribed'),
+        ],
+        'day_options': [
+            (7, 'Last 7 days'),
+            (30, 'Last 30 days'),
+            (60, 'Last 60 days'),
+            (90, 'Last 90 days'),
+        ],
+    }
+    
+    return render(request, 'admin_email_analytics.html', context)
+
+
+@login_required
 def community_newsletters(request):
     """Public view of past newsletters (read-only for all authenticated users)"""
     from onboarding.models import CommunityNewsletter
