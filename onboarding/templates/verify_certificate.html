@@ -1,4 +1,5 @@
 {% load static %}
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -150,8 +151,8 @@
                         <div class="mt-6 pt-6 border-t border-gray-200">
                             <label class="text-sm font-semibold text-gray-600 mb-3 block">Skills Demonstrated</label>
                             <div class="flex flex-wrap gap-2">
-                                {% for skill in certificate.certification_level.skills.split ',' %}
-                                <span class="px-3 py-1 bg-indigo-100 text-indigo-800 text-sm rounded-full">{{ skill|strip }}</span>
+                                {% for skill in certificate.certification_level.skills|split:"," %}
+                                <span class="px-3 py-1 bg-indigo-100 text-indigo-800 text-sm rounded-full">{{ skill }}</span>
                                 {% endfor %}
                             </div>
                         </div>
