@@ -4889,9 +4889,9 @@ def admin_community_newsletter(request):
             approved=True
         ).exclude(email='').exclude(email__isnull=True)
         
-        bcc_emails = list(approved_developers.values_list('email', flat=True))
+        recipient_emails = list(approved_developers.values_list('email', flat=True))
         
-        if not bcc_emails:
+        if not recipient_emails:
             messages.error(request, 'No approved developers with email addresses found.')
             return redirect('onboarding:admin_community_newsletter')
         
@@ -4918,16 +4918,36 @@ def admin_community_newsletter(request):
         }
         
         try:
-            # Send to team@buildly.io with BCC to all developers
-            result = send_email(
+            # Send individual emails to each developer (MailerSend has BCC limits)
+            successful_sends = 0
+            failed_sends = 0
+            
+            for email in recipient_emails:
+                try:
+                    result = send_email(
+                        to_email=email,
+                        subject=subject,
+                        template_name='emails/community_newsletter.html',
+                        context=context,
+                    )
+                    if result:
+                        successful_sends += 1
+                    else:
+                        failed_sends += 1
+                except Exception as email_error:
+                    failed_sends += 1
+                    import logging
+                    logging.getLogger(__name__).error(f"Failed to send newsletter to {email}: {str(email_error)}")
+            
+            # Also send a copy to team@buildly.io for records
+            send_email(
                 to_email='team@buildly.io',
-                subject=subject,
+                subject=f"[COPY] {subject}",
                 template_name='emails/community_newsletter.html',
                 context=context,
-                bcc=bcc_emails
             )
             
-            if result:
+            if successful_sends > 0:
                 # Save newsletter record
                 newsletter = CommunityNewsletter.objects.create(
                     subject=subject,
@@ -4938,16 +4958,22 @@ def admin_community_newsletter(request):
                     new_developers_this_month=new_developers_this_month,
                     active_opportunities=active_opportunities,
                     open_source_projects=open_source_projects,
-                    recipient_count=len(bcc_emails),
+                    recipient_count=successful_sends,
                     sent_by=request.user,
                 )
                 
-                messages.success(
-                    request, 
-                    f'Newsletter sent successfully to {len(bcc_emails)} developers!'
-                )
+                if failed_sends > 0:
+                    messages.warning(
+                        request, 
+                        f'Newsletter sent to {successful_sends} developers. {failed_sends} emails failed to send.'
+                    )
+                else:
+                    messages.success(
+                        request, 
+                        f'Newsletter sent successfully to {successful_sends} developers!'
+                    )
             else:
-                messages.error(request, 'Failed to send newsletter. Please try again.')
+                messages.error(request, 'Failed to send newsletter to any recipients. Please try again.')
                 
         except Exception as e:
             messages.error(request, f'Error sending newsletter: {str(e)}')
