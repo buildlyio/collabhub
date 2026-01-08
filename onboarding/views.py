@@ -3860,6 +3860,11 @@ def admin_team_detail(request, team_id):
     """View team details and manage members."""
     team = get_object_or_404(DeveloperTeam.objects.select_related('customer', 'team_lead'), id=team_id)
     
+    # Get IDs of developers already assigned to this customer
+    customer_assigned_ids = CustomerDeveloperAssignment.objects.filter(
+        customer=team.customer
+    ).values_list('developer_id', flat=True)
+    
     # Get potential members (approved for this customer)
     potential_members = TeamMember.objects.filter(
         id__in=CustomerDeveloperAssignment.objects.filter(
@@ -3870,12 +3875,23 @@ def admin_team_detail(request, team_id):
         id__in=team.members.values_list('id', flat=True)
     ).order_by('first_name', 'last_name')
     
+    # Get suggested community members (approved to community but not yet assigned to this customer)
+    # These are developers who could be added to the customer's talent pool
+    suggested_community_members = TeamMember.objects.filter(
+        approved=True  # Approved to Buildly community
+    ).exclude(
+        id__in=customer_assigned_ids  # Not already assigned to this customer
+    ).exclude(
+        id__in=team.members.values_list('id', flat=True)  # Not already on the team
+    ).select_related('user').order_by('first_name', 'last_name')[:20]  # Limit to 20 suggestions
+    
     # Get trainings for this team
     trainings = TeamTraining.objects.filter(developer_team=team)
     
     return render(request, 'admin_team_detail.html', {
         'team': team,
         'potential_members': potential_members,
+        'suggested_community_members': suggested_community_members,
         'trainings': trainings,
     })
 

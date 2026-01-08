@@ -29,27 +29,27 @@
     </div>
 
     <!-- Teams Table -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="bg-white rounded-lg shadow overflow-x-auto">
         {% if teams %}
-            <table class="min-w-full divide-y divide-gray-200">
+            <table class="min-w-full divide-y divide-gray-200 table-fixed">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="w-1/4 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Team Name
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="w-1/6 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Customer
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="w-16 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Members
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="w-1/6 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Team Lead
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="w-20 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Status
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th class="w-24 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Actions
                         </th>
                     </tr>
@@ -57,26 +57,26 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for team in teams %}
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="font-medium text-gray-900">{{ team.name }}</div>
+                            <td class="px-4 py-4">
+                                <div class="font-medium text-gray-900 break-words">{{ team.name }}</div>
                                 {% if team.description %}
-                                    <div class="text-sm text-gray-500">{{ team.description|truncatewords:10 }}</div>
+                                    <div class="text-sm text-gray-500 break-words line-clamp-2">{{ team.description|truncatewords:15 }}</div>
                                 {% endif %}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <td class="px-4 py-4 text-sm text-gray-900 break-words">
                                 {{ team.customer.company_name }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {{ team.member_count }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <td class="px-4 py-4 text-sm text-gray-900 break-words">
                                 {% if team.team_lead %}
                                     {{ team.team_lead.user.first_name }} {{ team.team_lead.user.last_name }}
                                 {% else %}
                                     <span class="text-gray-400">None</span>
                                 {% endif %}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-4 py-4 whitespace-nowrap">
                                 {% if team.is_active %}
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                         Active
@@ -87,7 +87,7 @@
                                     </span>
                                 {% endif %}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
                                 <a href="{% url 'onboarding:admin_team_detail' team.id %}" 
                                    class="text-blue-600 hover:text-blue-900 mr-3">View</a>
                                 <a href="{% url 'onboarding:admin_team_edit' team.id %}" 
@@ -108,4 +108,26 @@
         {% endif %}
     </div>
 </div>
+
+<style>
+    /* Ensure text wrapping for long team names and descriptions */
+    .break-words {
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    /* Line clamp for description */
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    /* Ensure table doesn't overflow container */
+    .table-fixed {
+        table-layout: fixed;
+    }
+</style>
 {% endblock %}
