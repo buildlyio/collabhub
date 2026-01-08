@@ -863,19 +863,47 @@ def admin_assessment_review(request, team_member_id):
     
     # Handle evaluation form submission
     if request.method == 'POST':
-        answer_id = request.POST.get('answer_id')
-        evaluator_score = request.POST.get('evaluator_score')
-        evaluator_notes = request.POST.get('evaluator_notes')
-        
-        if answer_id:
-            answer = get_object_or_404(QuizAnswer, id=answer_id)
-            answer.evaluator_score = evaluator_score if evaluator_score else None
-            answer.evaluator_notes = evaluator_notes
-            answer.evaluated_by = request.user
-            answer.evaluated_at = now()
-            answer.save()
-            messages.success(request, 'Evaluation saved successfully.')
+        # Check if this is a bulk evaluation submission
+        if request.POST.get('bulk_evaluation'):
+            # Get all answer IDs from the form
+            answer_ids = request.POST.getlist('answer_ids')
+            saved_count = 0
+            
+            for answer_id in answer_ids:
+                score_key = f'score_{answer_id}'
+                notes_key = f'notes_{answer_id}'
+                
+                evaluator_score = request.POST.get(score_key)
+                evaluator_notes = request.POST.get(notes_key, '')
+                
+                try:
+                    answer = QuizAnswer.objects.get(id=answer_id)
+                    answer.evaluator_score = evaluator_score if evaluator_score else None
+                    answer.evaluator_notes = evaluator_notes
+                    answer.evaluated_by = request.user
+                    answer.evaluated_at = now()
+                    answer.save()
+                    saved_count += 1
+                except QuizAnswer.DoesNotExist:
+                    continue
+            
+            messages.success(request, f'Successfully saved {saved_count} evaluation(s).')
             return redirect('onboarding:admin_assessment_review', team_member_id=team_member_id)
+        else:
+            # Legacy single-answer submission (backwards compatibility)
+            answer_id = request.POST.get('answer_id')
+            evaluator_score = request.POST.get('evaluator_score')
+            evaluator_notes = request.POST.get('evaluator_notes')
+            
+            if answer_id:
+                answer = get_object_or_404(QuizAnswer, id=answer_id)
+                answer.evaluator_score = evaluator_score if evaluator_score else None
+                answer.evaluator_notes = evaluator_notes
+                answer.evaluated_by = request.user
+                answer.evaluated_at = now()
+                answer.save()
+                messages.success(request, 'Evaluation saved successfully.')
+                return redirect('onboarding:admin_assessment_review', team_member_id=team_member_id)
     
     # Get all answers for this team member
     answers = QuizAnswer.objects.filter(
@@ -2280,15 +2308,15 @@ def admin_developer_profile(request, developer_id):
                     reviewed_at=now(),
                     notes='Auto-assigned on community approval.'
                 )
-        # Send email notification
-        send_community_approval_email(developer)
+        # Send welcome email notification with profile type
+        send_community_approval_email(developer, profile_type)
         
         # Create in-app notification
         Notification.objects.create(
             recipient=developer.user,
             notification_type='community_approved',
             title='Welcome to Buildly Open Source Community!',
-            message=f'Your profile has been approved! You now have access to community trainings, certifications, and can be evaluated for job openings.',
+            message=f'Your profile has been approved as a {profile_type.label}! You now have access to community trainings, certifications, and can be evaluated for job openings.',
             is_read=False
         )
         
@@ -2510,6 +2538,48 @@ def sync_github_skills(request, developer_id):
         messages.error(request, f"Error syncing GitHub skills: {str(e)}")
     
     return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def admin_developer_remove(request, developer_id):
+    """Remove a developer from the community (soft delete by revoking access)"""
+    from onboarding.utils import send_community_revocation_email
+    
+    developer = get_object_or_404(TeamMember, id=developer_id)
+    
+    if request.method == 'POST':
+        developer_name = f"{developer.first_name} {developer.last_name}"
+        developer_email = developer.email  # Store before any changes
+        
+        # Remove from all developer teams
+        developer.developer_teams.clear()
+        
+        # Remove customer assignments
+        CustomerDeveloperAssignment.objects.filter(developer=developer).delete()
+        
+        # Revoke community approval
+        developer.approved = False
+        developer.community_approval_date = None
+        developer.community_approved_by = None
+        developer.save()
+        
+        # Deactivate the user account
+        if developer.user:
+            developer.user.is_active = False
+            developer.user.save()
+        
+        # Send revocation email notification
+        try:
+            send_community_revocation_email(developer)
+        except Exception as e:
+            # Log error but don't fail the removal
+            print(f"Failed to send revocation email to {developer_email}: {e}")
+        
+        messages.success(request, f'Developer "{developer_name}" has been removed from the community.')
+        return redirect('onboarding:admin_developers_list')
+    
+    # If not POST, redirect back to developers list
+    return redirect('onboarding:admin_developers_list')
 
 
 @user_passes_test(lambda u: u.is_superuser)
@@ -2816,15 +2886,15 @@ def admin_approve_community(request, developer_id):
     developer.approved = True  # keep legacy flag in sync
     developer.save(update_fields=['community_approval_date', 'community_approved_by', 'approved'])
     
-    # Send email notification
-    send_community_approval_email(developer)
+    # Send welcome email notification with profile type
+    send_community_approval_email(developer, profile_type)
     
     # Create in-app notification
     Notification.objects.create(
         recipient=developer.user,
         notification_type='community_approved',
         title='Welcome to Buildly Open Source Community!',
-        message=f'Your profile has been approved! You now have access to community trainings, certifications, and can be evaluated for job openings.',
+        message=f'Your profile has been approved as a {profile_type.label}! You now have access to community trainings, certifications, and can be evaluated for job openings.',
         is_read=False
     )
     

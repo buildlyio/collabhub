@@ -254,7 +254,7 @@
         <div class="mt-4 pt-4 border-t border-gray-200">
             <p class="text-sm text-gray-600">
                 <strong>Note:</strong> To add these developers to the team, they must first be 
-                <a href="{% url 'onboarding:admin_customer_developer_management' team.customer.id %}" class="text-blue-600 hover:underline">
+                <a href="{% url 'onboarding:admin_customer_detail' team.customer.id %}" class="text-blue-600 hover:underline">
                     assigned and approved for {{ team.customer.company_name }}
                 </a>.
             </p>

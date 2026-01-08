@@ -98,12 +98,21 @@ def send_email(to_email: str, subject: str, template_name: str, context: dict, f
         return False
 
 
-def send_community_approval_email(team_member):
+def send_community_approval_email(team_member, profile_type=None):
     """Email sent when developer approved to Buildly community"""
     site_url = get_site_url()
+    
+    # Get the profile type label if available
+    profile_type_label = None
+    if profile_type:
+        profile_type_label = profile_type.label if hasattr(profile_type, 'label') else str(profile_type)
+    elif team_member.profile_types.exists():
+        profile_type_label = team_member.profile_types.first().label
+    
     context = {
         'first_name': team_member.first_name,
         'developer_name': f"{team_member.first_name} {team_member.last_name}",
+        'profile_type': profile_type_label,
         'buildly_url': site_url,
         'login_url': f"{site_url}/login",
         'resources_url': f"{site_url}/onboarding/resources",
@@ -114,6 +123,23 @@ def send_community_approval_email(team_member):
         to_email=team_member.email,
         subject="Welcome to Buildly Open Source Community!",
         template_name='emails/community_approval.html',
+        context=context
+    )
+
+
+def send_community_revocation_email(team_member):
+    """Email sent when developer's community access is revoked"""
+    site_url = get_site_url()
+    context = {
+        'first_name': team_member.first_name,
+        'developer_name': f"{team_member.first_name} {team_member.last_name}",
+        'buildly_url': site_url,
+    }
+    
+    return send_email(
+        to_email=team_member.email,
+        subject="Buildly Community Access Update",
+        template_name='emails/community_revocation.html',
         context=context
     )
 

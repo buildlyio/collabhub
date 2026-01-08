@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: #f9fafb;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+        }
+        .notice-box {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Community Access Update</h1>
+    </div>
+    <div class="content">
+        <p>Hi {{ first_name }},</p>
+        
+        <p>We wanted to let you know that your access to the Buildly Open Source Community has been revoked due to inactivity.</p>
+        
+        <div class="notice-box">
+            <h3 style="margin-top: 0; color: #92400e;">📋 What This Means</h3>
+            <ul style="margin-bottom: 0;">
+                <li>Your community membership has been deactivated</li>
+                <li>You will no longer receive job opportunity notifications</li>
+                <li>Access to community resources has been suspended</li>
+            </ul>
+        </div>
+        
+        <p><strong>Want to rejoin the community?</strong></p>
+        <p>We'd love to have you back! If you're interested in rejoining the Buildly Open Source Community, please reach out to our team and we'll be happy to help you get started again.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="mailto:community@buildly.io?subject=Request%20to%20Rejoin%20Community" class="button">Contact Us to Rejoin</a>
+        </div>
+        
+        <p>If you believe this was done in error, please contact our team at <a href="mailto:community@buildly.io">community@buildly.io</a>.</p>
+        
+        <p>Best regards,<br>
+        The Buildly Team</p>
+    </div>
+    <div class="footer">
+        <p>&copy; 2026 Buildly. All rights reserved.</p>
+    </div>
+</body>
+</html>

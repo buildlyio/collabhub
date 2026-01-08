@@ -33,6 +33,30 @@
             border-radius: 6px;
             margin: 20px 0;
         }
+        .getting-started {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .step {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
         .footer {
             text-align: center;
             color: #666;
@@ -46,16 +70,51 @@
         <h1>🎉 Welcome to Buildly Community!</h1>
     </div>
     <div class="content">
-        <p>Hi {{ developer.first_name }},</p>
+        <p>Hi {{ first_name }},</p>
         
-        <p>Great news! Your profile has been approved to join the Buildly Open Source Community.</p>
+        <p>Great news! Your profile has been approved to join the <strong>Buildly Open Source Community</strong>{% if profile_type %} as a <strong>{{ profile_type }}</strong>{% endif %}.</p>
+        
+        <div class="getting-started">
+            <h3 style="margin-top: 0; color: #667eea;">🚀 Getting Started</h3>
+            
+            <div class="step">
+                <span class="step-number">1</span>
+                <div>
+                    <strong>Login to your dashboard</strong><br>
+                    <span style="color: #666;">Use your registered email to access the platform</span>
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">2</span>
+                <div>
+                    <strong>Complete your profile</strong><br>
+                    <span style="color: #666;">Add your skills, experience, and portfolio to stand out</span>
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">3</span>
+                <div>
+                    <strong>Review community resources</strong><br>
+                    <span style="color: #666;">Access training materials and documentation for your role</span>
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">4</span>
+                <div>
+                    <strong>Explore certifications</strong><br>
+                    <span style="color: #666;">Earn certifications to validate your expertise</span>
+                </div>
+            </div>
+        </div>
         
         <p><strong>What you can do now:</strong></p>
         <ul>
             <li><strong>Access Community Trainings:</strong> Explore our comprehensive training resources to enhance your skills</li>
             <li><strong>Pursue Certifications:</strong> Complete certification programs to validate your expertise and advance your career</li>
             <li><strong>Get Evaluated for Jobs:</strong> You can now be evaluated for job openings now and in the future</li>
-            <li><strong>Complete Your Profile:</strong> Showcase your skills and experience to potential employers</li>
             <li><strong>Collaborate on Projects:</strong> Join customer teams and work on exciting open source projects</li>
         </ul>
         
@@ -71,7 +130,7 @@
         The Buildly Team</p>
     </div>
     <div class="footer">
-        <p>&copy; 2024 Buildly. All rights reserved.</p>
+        <p>&copy; 2026 Buildly. All rights reserved.</p>
     </div>
 </body>
 </html>
