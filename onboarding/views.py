@@ -2602,9 +2602,9 @@ def admin_developer_remove(request, developer_id):
         # Remove customer assignments
         CustomerDeveloperAssignment.objects.filter(developer=developer).delete()
         
-        # Delete all related assessment answers
-        from onboarding.models import DeveloperAssessmentAnswer
-        DeveloperAssessmentAnswer.objects.filter(developer=developer).delete()
+        # Delete all related quiz answers
+        from onboarding.models import QuizAnswer
+        QuizAnswer.objects.filter(team_member=developer).delete()
         
         # Delete the TeamMember record entirely
         developer.delete()
