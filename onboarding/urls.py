@@ -176,6 +176,16 @@ urlpatterns = [
     path('admin/newsletter/<int:newsletter_id>/status/', views.admin_newsletter_status, name='admin_newsletter_status'),
     path('admin/email-analytics/', views.admin_email_analytics, name='admin_email_analytics'),
     
+    # Admin: API Key Management
+    path('admin/api-keys/', views.admin_api_keys, name='admin_api_keys'),
+    path('admin/api-keys/generate/', views.admin_api_keys_generate, name='admin_api_keys_generate'),
+    path('admin/api-keys/store/', views.admin_api_keys_store, name='admin_api_keys_store'),
+    path('admin/api-keys/<int:key_id>/revoke/', views.admin_api_keys_revoke, name='admin_api_keys_revoke'),
+    
+    # Partner API Endpoints (Labs integration)
+    path('api/partner/referrals/', views.api_partner_referrals, name='api_partner_referrals'),
+    path('api/partner/users/', views.api_partner_users, name='api_partner_users'),
+    
     # Public: Community Newsletters (read-only for all authenticated users)
     path('newsletters/', views.community_newsletters, name='community_newsletters'),
     

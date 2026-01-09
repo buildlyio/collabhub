@@ -2120,3 +2120,117 @@ class CommunityNewsletterAdmin(admin.ModelAdmin):
                       'active_opportunities', 'open_source_projects')
 
 admin.site.register(CommunityNewsletter, CommunityNewsletterAdmin)
+
+
+# ==================== API Key Model ====================
+
+class APIKey(models.Model):
+    """Model for storing API keys for partner integrations"""
+    import secrets
+    import hashlib
+    
+    KEY_TYPES = [
+        ('inbound', 'Inbound (Partner → CollabHub)'),
+        ('outbound', 'Outbound (CollabHub → Partner)'),
+    ]
+    
+    PARTNERS = [
+        ('labs', 'Buildly Labs'),
+        ('other', 'Other'),
+    ]
+    
+    name = models.CharField(max_length=100)
+    partner = models.CharField(max_length=50, choices=PARTNERS, default='labs')
+    key_type = models.CharField(max_length=20, choices=KEY_TYPES)
+    key_prefix = models.CharField(max_length=20, help_text="First 12 chars of key for identification")
+    key_hash = models.CharField(max_length=64, help_text="SHA-256 hash of the full key")
+    
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    last_used = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    
+    notes = models.TextField(blank=True)
+    
+    class Meta:
+        verbose_name = "API Key"
+        verbose_name_plural = "API Keys"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.name} ({self.get_key_type_display()}) - {self.key_prefix}..."
+    
+    @classmethod
+    def generate_key(cls, prefix="collabhub"):
+        """Generate a new API key with prefix"""
+        import secrets
+        random_part = secrets.token_urlsafe(32)
+        return f"{prefix}_{random_part}"
+    
+    @classmethod
+    def hash_key(cls, key):
+        """Create SHA-256 hash of key for storage"""
+        import hashlib
+        return hashlib.sha256(key.encode()).hexdigest()
+    
+    @classmethod
+    def create_inbound_key(cls, name, partner='labs', created_by=None, notes=''):
+        """Create a new inbound API key (for partners to call CollabHub)"""
+        full_key = cls.generate_key(prefix="collabhub")
+        
+        api_key = cls.objects.create(
+            name=name,
+            partner=partner,
+            key_type='inbound',
+            key_prefix=full_key[:12],
+            key_hash=cls.hash_key(full_key),
+            created_by=created_by,
+            notes=notes,
+        )
+        
+        # Return both the model and the full key (only shown once)
+        return api_key, full_key
+    
+    @classmethod
+    def verify_key(cls, key):
+        """Verify an incoming API key and return the APIKey object if valid"""
+        from django.utils.timezone import now
+        if not key:
+            return None
+        
+        key_hash = cls.hash_key(key)
+        try:
+            api_key = cls.objects.get(
+                key_hash=key_hash,
+                key_type='inbound',
+                is_active=True
+            )
+            # Update last used timestamp
+            api_key.last_used = now()
+            api_key.save(update_fields=['last_used'])
+            return api_key
+        except cls.DoesNotExist:
+            return None
+    
+    @classmethod
+    def store_outbound_key(cls, name, key, partner='labs', created_by=None, notes=''):
+        """Store an outbound API key (provided by partner for CollabHub to use)"""
+        return cls.objects.create(
+            name=name,
+            partner=partner,
+            key_type='outbound',
+            key_prefix=key[:12] if len(key) > 12 else key[:4],
+            key_hash=cls.hash_key(key),
+            created_by=created_by,
+            notes=notes,
+        )
+
+
+class APIKeyAdmin(admin.ModelAdmin):
+    list_display = ('name', 'partner', 'key_type', 'key_prefix', 'is_active', 'created_at', 'last_used')
+    list_filter = ('partner', 'key_type', 'is_active')
+    search_fields = ('name', 'key_prefix')
+    readonly_fields = ('key_prefix', 'key_hash', 'created_at', 'last_used')
+
+admin.site.register(APIKey, APIKeyAdmin)

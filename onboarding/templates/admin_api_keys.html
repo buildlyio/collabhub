@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block page_title %}API Key Management{% endblock %}
+
+{% block page_content %}
+<div class="max-w-6xl mx-auto px-4">
+    <!-- Header -->
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">🔐 API Key Management</h1>
+            <p class="text-gray-600">Manage API keys for partner integrations (Labs, etc.)</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'onboarding:admin_dashboard' %}" 
+               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                ← Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="mb-6">
+        {% for message in messages %}
+        <div class="p-4 rounded-lg {% if 'error' in message.tags %}bg-red-100 text-red-800{% elif 'warning' in message.tags %}bg-yellow-100 text-yellow-800{% elif 'success' in message.tags %}bg-green-100 text-green-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- New Key Generated Banner -->
+    {% if new_key %}
+    <div class="mb-6 p-6 bg-green-50 border border-green-200 rounded-lg">
+        <div class="flex items-start">
+            <span class="text-2xl mr-3">🎉</span>
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-green-800 mb-2">New API Key Generated!</h3>
+                <p class="text-sm text-green-700 mb-3">Copy this key now - it won't be shown again!</p>
+                <div class="flex items-center gap-2 mb-3">
+                    <input type="text" readonly value="{{ new_key }}" id="new-key-input"
+                           class="flex-1 px-4 py-2 bg-white border border-green-300 rounded-md font-mono text-sm">
+                    <button onclick="copyNewKey()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                        📋 Copy
+                    </button>
+                </div>
+                <p class="text-xs text-green-600">Add this to your partner's .env file as <code class="bg-green-100 px-1 rounded">COLLABHUB_API_KEY={{ new_key }}</code></p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Inbound Keys Section -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">📥 Inbound Keys</h2>
+                    <p class="text-sm text-gray-500">Partners use these to call CollabHub</p>
+                </div>
+                <form method="POST" action="{% url 'onboarding:admin_api_keys_generate' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="key_type" value="inbound">
+                    <input type="hidden" name="partner" value="labs">
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm">
+                        + Generate Key
+                    </button>
+                </form>
+            </div>
+            
+            {% if inbound_keys %}
+            <div class="space-y-3">
+                {% for key in inbound_keys %}
+                <div class="p-4 bg-gray-50 rounded-lg border {% if key.is_active %}border-gray-200{% else %}border-red-200 bg-red-50{% endif %}">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium text-gray-900">{{ key.name }}</span>
+                                {% if key.is_active %}
+                                <span class="px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded-full">Active</span>
+                                {% else %}
+                                <span class="px-2 py-0.5 text-xs bg-red-100 text-red-800 rounded-full">Revoked</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-sm text-gray-500 font-mono mt-1">{{ key.key_prefix }}...</p>
+                            <p class="text-xs text-gray-400 mt-1">
+                                Partner: {{ key.get_partner_display }} · 
+                                Created: {{ key.created_at|date:"M d, Y" }}
+                                {% if key.last_used %}· Last used: {{ key.last_used|date:"M d, Y H:i" }}{% endif %}
+                            </p>
+                        </div>
+                        {% if key.is_active %}
+                        <form method="POST" action="{% url 'onboarding:admin_api_keys_revoke' key.id %}" class="ml-2">
+                            {% csrf_token %}
+                            <button type="submit" onclick="return confirm('Revoke this API key? Partners using it will lose access.')"
+                                    class="text-red-600 hover:text-red-800 text-sm">
+                                Revoke
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <p>No inbound keys generated yet.</p>
+                <p class="text-sm mt-1">Generate a key for Labs to use when calling CollabHub.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Outbound Keys Section -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">📤 Outbound Keys</h2>
+                    <p class="text-sm text-gray-500">CollabHub uses these to call partners</p>
+                </div>
+            </div>
+            
+            <!-- Add Outbound Key Form -->
+            <form method="POST" action="{% url 'onboarding:admin_api_keys_store' %}" class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                {% csrf_token %}
+                <h3 class="text-sm font-medium text-blue-800 mb-3">Store Partner's API Key</h3>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs text-blue-700 mb-1">Partner</label>
+                        <select name="partner" class="w-full px-3 py-2 border border-blue-300 rounded-md text-sm">
+                            <option value="labs">Buildly Labs</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-blue-700 mb-1">Key Name</label>
+                        <input type="text" name="name" placeholder="e.g., Labs Production Key" required
+                               class="w-full px-3 py-2 border border-blue-300 rounded-md text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-blue-700 mb-1">API Key (from partner)</label>
+                        <input type="text" name="api_key" placeholder="labs_xxxxx..." required
+                               class="w-full px-3 py-2 border border-blue-300 rounded-md text-sm font-mono">
+                    </div>
+                    <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
+                        Store Key
+                    </button>
+                </div>
+            </form>
+            
+            {% if outbound_keys %}
+            <div class="space-y-3">
+                {% for key in outbound_keys %}
+                <div class="p-4 bg-gray-50 rounded-lg border {% if key.is_active %}border-gray-200{% else %}border-red-200 bg-red-50{% endif %}">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium text-gray-900">{{ key.name }}</span>
+                                {% if key.is_active %}
+                                <span class="px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded-full">Active</span>
+                                {% else %}
+                                <span class="px-2 py-0.5 text-xs bg-red-100 text-red-800 rounded-full">Removed</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-sm text-gray-500 font-mono mt-1">{{ key.key_prefix }}...</p>
+                            <p class="text-xs text-gray-400 mt-1">
+                                Partner: {{ key.get_partner_display }} · 
+                                Added: {{ key.created_at|date:"M d, Y" }}
+                            </p>
+                        </div>
+                        {% if key.is_active %}
+                        <form method="POST" action="{% url 'onboarding:admin_api_keys_revoke' key.id %}" class="ml-2">
+                            {% csrf_token %}
+                            <button type="submit" onclick="return confirm('Remove this API key?')"
+                                    class="text-red-600 hover:text-red-800 text-sm">
+                                Remove
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-gray-500">
+                <p class="text-sm">No outbound keys stored yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Environment Variables Reference -->
+    <div class="mt-8 bg-gray-800 rounded-lg p-6 text-white">
+        <h3 class="text-lg font-semibold mb-4">📋 Environment Variables</h3>
+        <p class="text-gray-300 text-sm mb-4">Add these to your <code class="bg-gray-700 px-2 py-0.5 rounded">.env</code> file:</p>
+        <pre class="bg-gray-900 rounded-lg p-4 text-sm overflow-x-auto"><code class="text-green-400"># Labs Integration
+# Outbound: CollabHub uses this to call Labs API
+LABS_API_KEY=labs_xxxxx  # Get this from Labs team
+LABS_API_URL=https://labs.buildly.io/api
+
+# The inbound key (Labs → CollabHub) is managed in the database
+# Generate one above and share with Labs team</code></pre>
+    </div>
+
+    <!-- Integration Status -->
+    <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">🔗 Integration Status</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="p-4 rounded-lg {% if labs_connection_status %}bg-green-50 border border-green-200{% else %}bg-yellow-50 border border-yellow-200{% endif %}">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-3">{% if labs_connection_status %}✅{% else %}⚠️{% endif %}</span>
+                    <div>
+                        <h4 class="font-medium {% if labs_connection_status %}text-green-800{% else %}text-yellow-800{% endif %}">Labs API Connection</h4>
+                        <p class="text-sm {% if labs_connection_status %}text-green-600{% else %}text-yellow-600{% endif %}">
+                            {% if labs_connection_status %}Connected and working{% else %}Not configured or unreachable{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 rounded-lg {% if has_active_inbound %}bg-green-50 border border-green-200{% else %}bg-yellow-50 border border-yellow-200{% endif %}">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-3">{% if has_active_inbound %}✅{% else %}⚠️{% endif %}</span>
+                    <div>
+                        <h4 class="font-medium {% if has_active_inbound %}text-green-800{% else %}text-yellow-800{% endif %}">Inbound API Access</h4>
+                        <p class="text-sm {% if has_active_inbound %}text-green-600{% else %}text-yellow-600{% endif %}">
+                            {% if has_active_inbound %}{{ inbound_keys|length }} active key(s){% else %}No keys generated for partners{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyNewKey() {
+    const input = document.getElementById('new-key-input');
+    input.select();
+    navigator.clipboard.writeText(input.value).then(() => {
+        alert('API key copied to clipboard!');
+    });
+}
+</script>
+{% endblock %}

@@ -5258,6 +5258,233 @@ def admin_email_analytics(request):
     return render(request, 'admin_email_analytics.html', context)
 
 
+# ==================== API Key Management ====================
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_api_keys(request):
+    """Admin view for managing API keys"""
+    from onboarding.models import APIKey
+    from onboarding.labs_client import get_labs_client
+    
+    inbound_keys = APIKey.objects.filter(key_type='inbound').order_by('-created_at')
+    outbound_keys = APIKey.objects.filter(key_type='outbound').order_by('-created_at')
+    
+    # Check Labs connection status
+    labs_connection_status = False
+    try:
+        client = get_labs_client()
+        if client.api_key:
+            labs_connection_status, _ = client.health_check()
+    except:
+        pass
+    
+    # Check if there's a new key in session to display
+    new_key = request.session.pop('new_api_key', None)
+    
+    context = {
+        'inbound_keys': inbound_keys,
+        'outbound_keys': outbound_keys,
+        'labs_connection_status': labs_connection_status,
+        'has_active_inbound': inbound_keys.filter(is_active=True).exists(),
+        'new_key': new_key,
+    }
+    
+    return render(request, 'admin_api_keys.html', context)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_api_keys_generate(request):
+    """Generate a new inbound API key"""
+    from onboarding.models import APIKey
+    
+    if request.method == 'POST':
+        partner = request.POST.get('partner', 'labs')
+        
+        # Generate the key
+        api_key, full_key = APIKey.create_inbound_key(
+            name=f"{partner.title()} Inbound Key",
+            partner=partner,
+            created_by=request.user,
+            notes=f"Generated via admin UI"
+        )
+        
+        # Store the key in session to display once
+        request.session['new_api_key'] = full_key
+        
+        messages.success(request, f'API key generated successfully! Copy it now - it won\'t be shown again.')
+    
+    return redirect('onboarding:admin_api_keys')
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_api_keys_store(request):
+    """Store an outbound API key from a partner"""
+    from onboarding.models import APIKey
+    
+    if request.method == 'POST':
+        partner = request.POST.get('partner', 'labs')
+        name = request.POST.get('name', '')
+        api_key = request.POST.get('api_key', '')
+        
+        if not name or not api_key:
+            messages.error(request, 'Name and API key are required.')
+            return redirect('onboarding:admin_api_keys')
+        
+        # Store the key
+        APIKey.store_outbound_key(
+            name=name,
+            key=api_key,
+            partner=partner,
+            created_by=request.user,
+            notes=f"Stored via admin UI"
+        )
+        
+        messages.success(request, f'API key stored successfully!')
+    
+    return redirect('onboarding:admin_api_keys')
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def admin_api_keys_revoke(request, key_id):
+    """Revoke/deactivate an API key"""
+    from onboarding.models import APIKey
+    
+    if request.method == 'POST':
+        try:
+            api_key = APIKey.objects.get(id=key_id)
+            api_key.is_active = False
+            api_key.save()
+            messages.success(request, f'API key revoked successfully.')
+        except APIKey.DoesNotExist:
+            messages.error(request, 'API key not found.')
+    
+    return redirect('onboarding:admin_api_keys')
+
+
+# ==================== Partner API Endpoints ====================
+
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+
+@csrf_exempt
+def api_partner_referrals(request):
+    """
+    API endpoint for partner referral data.
+    
+    GET: Get referral stats for a user
+    POST: Register a new referral
+    """
+    from onboarding.api_keys import verify_inbound_request
+    
+    # Verify API key
+    api_key, error = verify_inbound_request(request)
+    if error:
+        return JsonResponse({'error': error}, status=401)
+    
+    if request.method == 'GET':
+        # Get referral stats
+        email = request.GET.get('email')
+        if not email:
+            return JsonResponse({'error': 'email parameter required'}, status=400)
+        
+        # TODO: Implement referral stats lookup
+        # This would query your referral tracking model
+        return JsonResponse({
+            'email': email,
+            'total_referrals': 0,
+            'successful_signups': 0,
+            'pending': 0,
+            'points_earned': 0,
+            'points_redeemable': 0,
+            'redemption_options': [],
+        })
+    
+    elif request.method == 'POST':
+        # Register a new referral
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        
+        referral_code = data.get('referral_code')
+        referrer_email = data.get('referrer_email')
+        referred_email = data.get('referred_email')
+        
+        if not all([referral_code, referrer_email, referred_email]):
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+        
+        # TODO: Implement referral registration
+        # This would create a record in your referral tracking model
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Referral registered successfully',
+            'referral_code': referral_code,
+        })
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def api_partner_users(request):
+    """
+    API endpoint for partner user sync.
+    
+    GET: Get user info
+    POST: Sync user data from partner
+    """
+    from onboarding.api_keys import verify_inbound_request
+    
+    # Verify API key
+    api_key, error = verify_inbound_request(request)
+    if error:
+        return JsonResponse({'error': error}, status=401)
+    
+    if request.method == 'GET':
+        # Get user info
+        email = request.GET.get('email')
+        if not email:
+            return JsonResponse({'error': 'email parameter required'}, status=400)
+        
+        try:
+            member = TeamMember.objects.get(email=email)
+            return JsonResponse({
+                'email': member.email,
+                'name': member.name,
+                'collabhub_id': member.id,
+                'approved': member.approved,
+                'profile_url': f"/onboarding/admin/developers/{member.id}/",
+            })
+        except TeamMember.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+    
+    elif request.method == 'POST':
+        # Sync user data from partner
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        
+        email = data.get('email')
+        if not email:
+            return JsonResponse({'error': 'email required'}, status=400)
+        
+        # TODO: Implement user sync logic
+        # Update local user data based on partner data
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'User sync received',
+        })
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
 @login_required
 def community_newsletters(request):
     """Public view of past newsletters (read-only for all authenticated users)"""
