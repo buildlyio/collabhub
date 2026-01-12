@@ -56,6 +56,7 @@ class TeamMember(models.Model):
     email = models.EmailField()
     bio = models.TextField(blank=True)
     linkedin = models.URLField(blank=True)
+    wellfound_profile = models.URLField(blank=True, help_text="Wellfound (AngelList) profile URL, e.g. https://wellfound.com/u/username")
     experience_years = models.PositiveIntegerField(blank=True, null=True)
     github_account = models.URLField(blank=True)
     google_account_link = models.URLField(blank=True)
@@ -195,7 +196,7 @@ class TeamMemberAdmin(admin.ModelAdmin):
             'fields': ('user', 'team_member_type', 'first_name', 'last_name', 'email', 'approved')
         }),
         ('Profile', {
-            'fields': ('bio', 'linkedin', 'experience_years', 'github_account', 'google_account_link', 'google_calendar_embed_code')
+            'fields': ('bio', 'linkedin', 'wellfound_profile', 'experience_years', 'github_account', 'google_account_link', 'google_calendar_embed_code')
         }),
         ('Assessment Status', {
             'fields': ('has_completed_assessment', 'assessment_completed_at', 'assessment_reminder_count', 'assessment_last_reminded'),

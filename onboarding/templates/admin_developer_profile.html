@@ -95,6 +95,14 @@
                             GitHub
                         </a>
                         {% endif %}
+                        {% if developer.wellfound_profile %}
+                        <a href="{{ developer.wellfound_profile }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12.74 2.32a1 1 0 0 0-1.48 0L2.32 12.74a1 1 0 0 0 0 1.48l8.94 8.94a1 1 0 0 0 1.48 0l8.94-8.94a1 1 0 0 0 0-1.48l-8.94-8.94zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/>
+                            </svg>
+                            Wellfound
+                        </a>
+                        {% endif %}
                     </div>
                     
                     <!-- Status Badge -->
@@ -454,6 +462,123 @@
                 </div>
             </div>
             {% endif %}
+
+            <!-- Recommend to Customer Section -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">
+                    <svg class="w-5 h-5 inline-block mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                    </svg>
+                    Recommend to Customer
+                </h2>
+                {% if available_customers %}
+                <form method="POST" class="flex gap-3 items-end">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="recommend_to_customer">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Customer</label>
+                        <select name="customer_id" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Choose a customer...</option>
+                            {% for customer in available_customers %}
+                            <option value="{{ customer.id }}">{{ customer.company_name }} ({{ customer.contact_name }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium transition flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Recommend
+                    </button>
+                </form>
+                <p class="text-sm text-gray-500 mt-2">
+                    Recommending adds this developer to the customer's talent pool with "Pending" status.
+                </p>
+                {% else %}
+                <div class="bg-gray-50 rounded-lg p-4 text-center">
+                    <p class="text-gray-600">
+                        {% if assignments %}
+                        This developer is already assigned to all active customers.
+                        {% else %}
+                        No active customers available. <a href="{% url 'onboarding:admin_customer_create' %}" class="text-indigo-600 hover:underline">Create a customer</a> first.
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Developer Teams Section -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">
+                    <svg class="w-5 h-5 inline-block mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Developer Teams
+                </h2>
+                
+                <!-- Current Teams -->
+                {% if developer_teams %}
+                <div class="mb-4">
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Current Teams</h3>
+                    <div class="space-y-2">
+                        {% for team in developer_teams %}
+                        <div class="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3">
+                            <div>
+                                <span class="font-medium text-gray-900">{{ team.name }}</span>
+                                <span class="text-sm text-gray-500 ml-2">{{ team.customer.company_name }}</span>
+                            </div>
+                            <a href="{% url 'onboarding:admin_team_detail' team.id %}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                                View Team →
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Add to Team -->
+                <div class="{% if developer_teams %}pt-4 border-t border-gray-200{% endif %}">
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Add to Team</h3>
+                    {% if available_teams %}
+                    <form method="POST" class="flex gap-3 items-end">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_to_team">
+                        <div class="flex-1">
+                            <select name="team_id" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                <option value="">Choose a team...</option>
+                                {% for team in available_teams %}
+                                <option value="{{ team.id }}">{{ team.name }} ({{ team.customer.company_name }}) - {{ team.member_count }} members</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium transition flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                            </svg>
+                            Add to Team
+                        </button>
+                    </form>
+                    <p class="text-sm text-gray-500 mt-2">
+                        Teams from customers where this developer is approved.
+                    </p>
+                    {% else %}
+                    <div class="bg-gray-50 rounded-lg p-4 text-center">
+                        <p class="text-gray-600">
+                            {% if not assignments %}
+                            First recommend this developer to a customer, then they can be added to teams.
+                            {% elif not assignments.filter.status == 'approved' %}
+                            This developer needs to be approved by a customer before joining their teams.
+                            {% else %}
+                            No available teams. The developer is already in all teams for their approved customers, or no teams exist.
+                            {% endif %}
+                        </p>
+                        <a href="{% url 'onboarding:admin_team_list' %}" class="inline-block mt-2 text-indigo-600 hover:underline text-sm">
+                            Manage Teams →
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
 
             <!-- Learning Resources -->
             {% if resources %}

@@ -2416,6 +2416,71 @@ def admin_developer_profile(request, developer_id):
         messages.success(request, f"{developer_name} has been removed from the system.")
         return redirect('onboarding:admin_approval_queue')
     
+    # Handle recommend to customer (assign developer to customer)
+    if request.method == 'POST' and request.POST.get('action') == 'recommend_to_customer':
+        customer_id = request.POST.get('customer_id')
+        if customer_id:
+            customer = Customer.objects.filter(id=customer_id).first()
+            if customer:
+                # Check if already assigned
+                existing = CustomerDeveloperAssignment.objects.filter(
+                    customer=customer,
+                    developer=developer
+                ).first()
+                if existing:
+                    messages.warning(request, f'{developer.first_name} is already assigned to {customer.company_name} (status: {existing.status}).')
+                else:
+                    # Create new assignment with pending status
+                    CustomerDeveloperAssignment.objects.create(
+                        customer=customer,
+                        developer=developer,
+                        status='pending',
+                        notes=f'Recommended by {request.user.username}'
+                    )
+                    messages.success(request, f'{developer.first_name} {developer.last_name} has been recommended to {customer.company_name}.')
+            else:
+                messages.error(request, 'Invalid customer selected.')
+        else:
+            messages.error(request, 'Please select a customer.')
+        return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
+    
+    # Handle add to team (add developer to a developer team)
+    if request.method == 'POST' and request.POST.get('action') == 'add_to_team':
+        team_id = request.POST.get('team_id')
+        if team_id:
+            team = DeveloperTeam.objects.filter(id=team_id).first()
+            if team:
+                # Check if developer is approved for this customer
+                is_approved = CustomerDeveloperAssignment.objects.filter(
+                    customer=team.customer,
+                    developer=developer,
+                    status='approved'
+                ).exists()
+                
+                if not is_approved:
+                    messages.warning(request, f'{developer.first_name} must be approved for {team.customer.company_name} before adding to a team. They have been auto-assigned with pending status.')
+                    # Auto-create assignment with pending status
+                    CustomerDeveloperAssignment.objects.get_or_create(
+                        customer=team.customer,
+                        developer=developer,
+                        defaults={
+                            'status': 'pending',
+                            'notes': f'Auto-created when adding to team {team.name}'
+                        }
+                    )
+                else:
+                    # Add to team
+                    if developer in team.members.all():
+                        messages.warning(request, f'{developer.first_name} is already a member of {team.name}.')
+                    else:
+                        team.members.add(developer)
+                        messages.success(request, f'{developer.first_name} {developer.last_name} has been added to {team.name}.')
+            else:
+                messages.error(request, 'Invalid team selected.')
+        else:
+            messages.error(request, 'Please select a team.')
+        return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
+    
     # Get quiz answers - using all() to ensure queryset is evaluated
     quiz_answers = QuizAnswer.objects.filter(
         team_member=developer
@@ -2456,6 +2521,24 @@ def admin_developer_profile(request, developer_id):
     skills_dict = {skill.technology: skill for skill in tech_skills}
     all_types = TeamMemberType.objects.all().order_by('label')
     total_assessments = quiz_answers.values('question__quiz').distinct().count()
+    
+    # Get all customers for recommendation dropdown (exclude already assigned)
+    assigned_customer_ids = assignments.values_list('customer_id', flat=True)
+    available_customers = Customer.objects.filter(is_active=True).exclude(
+        id__in=assigned_customer_ids
+    ).order_by('company_name')
+    
+    # Get teams the developer can be added to (from customers where they are approved)
+    approved_customer_ids = assignments.filter(status='approved').values_list('customer_id', flat=True)
+    available_teams = DeveloperTeam.objects.filter(
+        customer_id__in=approved_customer_ids,
+        is_active=True
+    ).exclude(
+        members=developer  # Exclude teams they're already in
+    ).select_related('customer').order_by('customer__company_name', 'name')
+    
+    # Get developer's current teams
+    developer_teams = developer.developer_teams.all().select_related('customer')
 
     context = {
         'developer': developer,
@@ -2473,6 +2556,9 @@ def admin_developer_profile(request, developer_id):
         'skills_dict': skills_dict,
         'primary_techs': primary_techs,
         'all_types': all_types,
+        'available_customers': available_customers,
+        'available_teams': available_teams,
+        'developer_teams': developer_teams,
     }
     
     return render(request, 'admin_developer_profile.html', context)

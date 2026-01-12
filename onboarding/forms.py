@@ -19,6 +19,7 @@ class TeamMemberRegistrationForm(UserCreationForm):
     email = forms.EmailField()
     bio = forms.CharField(widget=forms.Textarea, required=False)
     linkedin = forms.URLField(required=False)
+    wellfound_profile = forms.URLField(required=False, help_text="Your Wellfound (AngelList) profile URL")
     experience_years = forms.IntegerField(required=False)
     github_account = forms.URLField(required=False)
     
@@ -48,7 +49,7 @@ class TeamMemberRegistrationForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ['username', 'password1', 'password2', 'team_member_type', 'profile_types', 'first_name', 'last_name', 'email', 'bio', 'linkedin', 'experience_years', 'github_account', 'is_independent', 'agency', 'agency_name_text', 'agency_contact_email']
+        fields = ['username', 'password1', 'password2', 'team_member_type', 'profile_types', 'first_name', 'last_name', 'email', 'bio', 'linkedin', 'wellfound_profile', 'experience_years', 'github_account', 'is_independent', 'agency', 'agency_name_text', 'agency_contact_email']
 
 from .models import Resource
 
