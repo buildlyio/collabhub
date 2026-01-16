@@ -1456,8 +1456,17 @@ class CertificationLevel(models.Model):
         ('specialty', 'Specialty'),
     ]
     
+    TRACK_CHOICES = [
+        ('frontend', 'Frontend Developer'),
+        ('backend', 'Backend Developer'),
+        ('product_manager', 'Product Manager'),
+        ('ai', 'AI/ML Developer'),
+        ('general', 'General'),
+    ]
+    
     name = models.CharField(max_length=255, help_text="e.g., Frontend React Specialist, Python Backend Expert")
     level_type = models.CharField(max_length=20, choices=LEVEL_TYPES, default='intermediate')
+    track = models.CharField(max_length=50, choices=TRACK_CHOICES, default='general', help_text="Certification track")
     description = models.TextField(help_text="What this certification demonstrates")
     requirements = models.TextField(help_text="Skills and experience required", blank=True)
     
@@ -2235,3 +2244,645 @@ class APIKeyAdmin(admin.ModelAdmin):
     readonly_fields = ('key_prefix', 'key_hash', 'created_at', 'last_used')
 
 admin.site.register(APIKey, APIKeyAdmin)
+
+
+# ==================== Community Certification System ====================
+
+class CertificationTrack(models.Model):
+    """Defines certification tracks (Frontend, Backend, Product Manager)"""
+    TRACK_CHOICES = [
+        ('frontend', 'Frontend Developer'),
+        ('backend', 'Backend Developer'),
+        ('product_manager', 'Product Manager'),
+    ]
+    
+    key = models.CharField(max_length=50, unique=True, choices=TRACK_CHOICES)
+    name = models.CharField(max_length=100)
+    description = models.TextField(help_text="Description of this certification track")
+    icon = models.CharField(max_length=50, default='code', help_text="Icon name for display")
+    color = models.CharField(max_length=7, default='#3B82F6', help_text="Hex color for track branding")
+    
+    # Track-specific settings
+    focus_methodology = models.CharField(max_length=100, blank=True, help_text="e.g., 'RAD Process' for Product Manager")
+    
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    order = models.PositiveIntegerField(default=0, help_text="Display order")
+    
+    class Meta:
+        ordering = ['order', 'name']
+    
+    def __str__(self):
+        return self.name
+
+
+class CertificationTrackAdmin(admin.ModelAdmin):
+    list_display = ('name', 'key', 'color', 'is_active', 'order')
+    list_filter = ('is_active',)
+    search_fields = ('name', 'description')
+    ordering = ('order',)
+
+admin.site.register(CertificationTrack, CertificationTrackAdmin)
+
+
+class CommunityCertificationLevel(models.Model):
+    """
+    Community certification levels (Level 1, Level 2, Level 3/Senior) for each track.
+    Extends the base CertificationLevel concept with community-specific features.
+    """
+    LEVEL_CHOICES = [
+        (1, 'Level 1 - Foundation'),
+        (2, 'Level 2 - Practitioner'),
+        (3, 'Level 3 - Senior'),
+    ]
+    
+    track = models.ForeignKey(CertificationTrack, on_delete=models.CASCADE, related_name='levels')
+    level = models.PositiveIntegerField(choices=LEVEL_CHOICES)
+    name = models.CharField(max_length=255, help_text="e.g., 'Frontend Developer Level 1'")
+    description = models.TextField(help_text="What this level demonstrates")
+    
+    # Requirements
+    required_resources_count = models.PositiveIntegerField(default=6, help_text="Min resources to complete")
+    required_quizzes_count = models.PositiveIntegerField(default=3, help_text="Number of quizzes required")
+    required_projects_count = models.PositiveIntegerField(default=2, help_text="Projects requiring review")
+    min_quiz_score = models.PositiveIntegerField(default=70, help_text="Minimum passing score %")
+    
+    # Linked certification level for issuing certificates
+    certification_level = models.OneToOneField(
+        CertificationLevel, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='community_level',
+        help_text="Linked CertificationLevel for certificate generation"
+    )
+    
+    # Resources and quizzes linked to this level
+    resources = models.ManyToManyField('Resource', blank=True, related_name='community_cert_levels')
+    quizzes = models.ManyToManyField('Quiz', blank=True, related_name='community_cert_levels')
+    
+    # Badge customization
+    badge_icon = models.CharField(max_length=100, blank=True, help_text="Badge icon URL or emoji")
+    badge_color = models.CharField(max_length=7, default='#3B82F6')
+    
+    # Reviewer requirements
+    min_reviewer_level = models.PositiveIntegerField(default=2, help_text="Min level required to review projects for this cert")
+    
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['track', 'level']
+        unique_together = ['track', 'level']
+    
+    def __str__(self):
+        return f"{self.track.name} - Level {self.level}"
+    
+    def get_level_display_name(self):
+        """Return display name like 'Level 1 - Foundation'"""
+        return dict(self.LEVEL_CHOICES).get(self.level, f'Level {self.level}')
+
+
+class CommunityCertificationLevelAdmin(admin.ModelAdmin):
+    list_display = ('name', 'track', 'level', 'required_resources_count', 'required_quizzes_count', 
+                   'required_projects_count', 'is_active')
+    list_filter = ('track', 'level', 'is_active')
+    search_fields = ('name', 'description')
+    filter_horizontal = ('resources', 'quizzes')
+
+admin.site.register(CommunityCertificationLevel, CommunityCertificationLevelAdmin)
+
+
+class CommunityBadge(models.Model):
+    """
+    Defines community achievement badges (First Contribution, Active Contributor, etc.)
+    Separate from certification badges - these are for community participation.
+    """
+    BADGE_TYPES = [
+        ('contribution', 'Contribution Badge'),
+        ('achievement', 'Achievement Badge'),
+        ('leadership', 'Leadership Badge'),
+        ('special', 'Special Badge'),
+    ]
+    
+    key = models.CharField(max_length=50, unique=True, help_text="Unique identifier, e.g., 'first_contribution'")
+    name = models.CharField(max_length=100)
+    description = models.TextField(help_text="What this badge represents")
+    badge_type = models.CharField(max_length=20, choices=BADGE_TYPES, default='achievement')
+    
+    # Visual
+    icon = models.CharField(max_length=50, default='🌟', help_text="Emoji or icon class")
+    color = models.CharField(max_length=7, default='#FCD34D', help_text="Badge background color")
+    
+    # Earning criteria (for automatic awarding)
+    auto_award = models.BooleanField(default=False, help_text="Can be automatically awarded based on criteria")
+    criteria_type = models.CharField(max_length=50, blank=True, help_text="e.g., 'github_commits', 'quiz_completed'")
+    criteria_threshold = models.PositiveIntegerField(null=True, blank=True, help_text="Threshold value for auto-award")
+    
+    # Ordering/display
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['order', 'name']
+    
+    def __str__(self):
+        return f"{self.icon} {self.name}"
+
+
+class CommunityBadgeAdmin(admin.ModelAdmin):
+    list_display = ('icon', 'name', 'badge_type', 'auto_award', 'is_active', 'order')
+    list_filter = ('badge_type', 'auto_award', 'is_active')
+    search_fields = ('name', 'description', 'key')
+    ordering = ('order',)
+
+admin.site.register(CommunityBadge, CommunityBadgeAdmin)
+
+
+class DeveloperBadge(models.Model):
+    """Tracks badges earned by developers"""
+    developer = models.ForeignKey(TeamMember, on_delete=models.CASCADE, related_name='community_badges')
+    badge = models.ForeignKey(CommunityBadge, on_delete=models.CASCADE, related_name='awarded_to')
+    
+    awarded_at = models.DateTimeField(auto_now_add=True)
+    awarded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, 
+                                   help_text="Admin who awarded, null if auto-awarded")
+    notes = models.TextField(blank=True, help_text="Why badge was awarded")
+    
+    # For verification
+    verification_hash = models.CharField(max_length=64, blank=True)
+    
+    class Meta:
+        ordering = ['-awarded_at']
+        unique_together = ['developer', 'badge']
+    
+    def __str__(self):
+        return f"{self.developer.first_name} {self.developer.last_name} - {self.badge.name}"
+    
+    def save(self, *args, **kwargs):
+        if not self.verification_hash:
+            import hashlib
+            content = f"{self.developer.id}-{self.badge.id}-{self.awarded_at}"
+            self.verification_hash = hashlib.sha256(content.encode()).hexdigest()
+        super().save(*args, **kwargs)
+
+
+class DeveloperBadgeAdmin(admin.ModelAdmin):
+    list_display = ('developer', 'badge', 'awarded_at', 'awarded_by')
+    list_filter = ('badge', 'awarded_at')
+    search_fields = ('developer__first_name', 'developer__last_name', 'badge__name')
+    raw_id_fields = ('developer',)
+
+admin.site.register(DeveloperBadge, DeveloperBadgeAdmin)
+
+
+class CertificationProject(models.Model):
+    """
+    Defines project requirements for certification levels.
+    Projects are reviewed by senior members before certification can be granted.
+    """
+    PROJECT_TYPES = [
+        ('small', 'Small Project'),
+        ('medium', 'Medium Project'),
+        ('complex', 'Complex Project'),
+        ('document', 'Document/PRD'),
+    ]
+    
+    certification_level = models.ForeignKey(
+        CommunityCertificationLevel, 
+        on_delete=models.CASCADE, 
+        related_name='required_projects'
+    )
+    
+    name = models.CharField(max_length=255, help_text="e.g., 'Build a REST API with Authentication'")
+    description = models.TextField(help_text="Detailed project requirements")
+    project_type = models.CharField(max_length=20, choices=PROJECT_TYPES, default='medium')
+    
+    # Requirements
+    requirements_checklist = models.TextField(
+        help_text="JSON list of requirements, e.g., ['Has README', 'Includes tests', 'Deployed']",
+        blank=True,
+        default='[]'
+    )
+    
+    # Resources/examples
+    example_repo = models.URLField(blank=True, help_text="Link to example project")
+    rubric_document = models.FileField(upload_to='certification_projects/', blank=True, null=True)
+    
+    # Scoring
+    max_score = models.PositiveIntegerField(default=100)
+    passing_score = models.PositiveIntegerField(default=70)
+    
+    order = models.PositiveIntegerField(default=0, help_text="Order within certification level")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['certification_level', 'order']
+    
+    def __str__(self):
+        return f"{self.certification_level} - {self.name}"
+    
+    def get_requirements_list(self):
+        """Parse requirements_checklist JSON into list"""
+        import json
+        try:
+            return json.loads(self.requirements_checklist)
+        except:
+            return []
+
+
+class CertificationProjectAdmin(admin.ModelAdmin):
+    list_display = ('name', 'certification_level', 'project_type', 'passing_score', 'is_active')
+    list_filter = ('certification_level__track', 'project_type', 'is_active')
+    search_fields = ('name', 'description')
+    ordering = ('certification_level', 'order')
+
+admin.site.register(CertificationProject, CertificationProjectAdmin)
+
+
+class CertificationProjectSubmission(models.Model):
+    """Tracks developer project submissions for community certification"""
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('submitted', 'Submitted for Review'),
+        ('under_review', 'Under Review'),
+        ('revisions_needed', 'Revisions Needed'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    
+    developer = models.ForeignKey(TeamMember, on_delete=models.CASCADE, related_name='cert_project_submissions')
+    project = models.ForeignKey(CertificationProject, on_delete=models.CASCADE, related_name='cert_submissions')
+    
+    # Submission details
+    title = models.CharField(max_length=255, help_text="Project title")
+    description = models.TextField(help_text="Brief description of what was built")
+    repository_url = models.URLField(help_text="GitHub/GitLab repository URL")
+    live_url = models.URLField(blank=True, help_text="Live demo URL if applicable")
+    
+    # Additional files
+    documentation = models.FileField(upload_to='certification_submissions/', blank=True, null=True)
+    
+    # Status tracking
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    
+    # Scoring
+    final_score = models.PositiveIntegerField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ['developer', 'project']
+        verbose_name = "Certification Project Submission"
+        verbose_name_plural = "Certification Project Submissions"
+    
+    def __str__(self):
+        return f"{self.developer.first_name} - {self.project.name} ({self.status})"
+    
+    @property
+    def is_passing(self):
+        if self.final_score is None:
+            return False
+        return self.final_score >= self.project.passing_score
+
+
+class CertificationProjectSubmissionAdmin(admin.ModelAdmin):
+    list_display = ('developer', 'project', 'status', 'final_score', 'submitted_at', 'created_at')
+    list_filter = ('status', 'project__certification_level__track')
+    search_fields = ('developer__first_name', 'developer__last_name', 'title')
+    raw_id_fields = ('developer',)
+    readonly_fields = ('created_at', 'updated_at')
+
+admin.site.register(CertificationProjectSubmission, CertificationProjectSubmissionAdmin)
+
+
+class CertificationProjectReview(models.Model):
+    """Reviews of certification project submissions by senior/certified members"""
+    RUBRIC_SCORES = [
+        (0, '0 - Not Present'),
+        (1, '1 - Poor'),
+        (2, '2 - Fair'),
+        (3, '3 - Good'),
+        (4, '4 - Excellent'),
+    ]
+    
+    submission = models.ForeignKey(CertificationProjectSubmission, on_delete=models.CASCADE, related_name='reviews')
+    reviewer = models.ForeignKey(TeamMember, on_delete=models.CASCADE, related_name='cert_project_reviews_given')
+    
+    # Review scores (each out of 25, totaling 100)
+    code_quality_score = models.PositiveIntegerField(choices=[(i, str(i)) for i in range(26)], default=0,
+                                                      help_text="Code quality and best practices (0-25)")
+    functionality_score = models.PositiveIntegerField(choices=[(i, str(i)) for i in range(26)], default=0,
+                                                       help_text="Functionality and correctness (0-25)")
+    documentation_score = models.PositiveIntegerField(choices=[(i, str(i)) for i in range(26)], default=0,
+                                                       help_text="README, comments, docs (0-25)")
+    creativity_score = models.PositiveIntegerField(choices=[(i, str(i)) for i in range(26)], default=0,
+                                                    help_text="Problem-solving and innovation (0-25)")
+    
+    # Feedback
+    overall_feedback = models.TextField(help_text="Overall feedback for the developer")
+    strengths = models.TextField(blank=True, help_text="What was done well")
+    improvements = models.TextField(blank=True, help_text="Areas for improvement")
+    
+    # Status
+    is_complete = models.BooleanField(default=False)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ['submission', 'reviewer']
+        verbose_name = "Certification Project Review"
+        verbose_name_plural = "Certification Project Reviews"
+    
+    def __str__(self):
+        return f"Review by {self.reviewer.first_name} for {self.submission.title}"
+    
+    @property
+    def total_score(self):
+        return (self.code_quality_score + self.functionality_score + 
+                self.documentation_score + self.creativity_score)
+    
+    def save(self, *args, **kwargs):
+        if self.is_complete and not self.reviewed_at:
+            self.reviewed_at = timezone.now()
+        super().save(*args, **kwargs)
+
+
+class CertificationProjectReviewAdmin(admin.ModelAdmin):
+    list_display = ('submission', 'reviewer', 'total_score', 'is_complete', 'reviewed_at')
+    list_filter = ('is_complete', 'submission__project__certification_level__track')
+    search_fields = ('submission__title', 'reviewer__first_name', 'reviewer__last_name')
+    raw_id_fields = ('reviewer', 'submission')
+    readonly_fields = ('created_at',)
+
+admin.site.register(CertificationProjectReview, CertificationProjectReviewAdmin)
+
+
+class DeveloperCertificationProgress(models.Model):
+    """
+    Tracks a developer's progress toward a community certification level.
+    This is the main tracking model for the certification journey.
+    """
+    STATUS_CHOICES = [
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('pending_review', 'Pending Project Review'),
+        ('completed', 'Completed'),
+    ]
+    
+    developer = models.ForeignKey(TeamMember, on_delete=models.CASCADE, related_name='certification_progress')
+    certification_level = models.ForeignKey(CommunityCertificationLevel, on_delete=models.CASCADE, 
+                                            related_name='developer_progress')
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_started')
+    
+    # Progress tracking
+    resources_completed = models.ManyToManyField('Resource', blank=True, related_name='completed_by_progress')
+    quizzes_passed = models.ManyToManyField('Quiz', blank=True, related_name='passed_by_progress')
+    
+    # Scores
+    average_quiz_score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    
+    # Timestamps
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    
+    # Issued certificate (once completed)
+    issued_certificate = models.ForeignKey(
+        DeveloperCertification, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='certification_progress'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['certification_level__track', 'certification_level__level']
+        unique_together = ['developer', 'certification_level']
+        verbose_name_plural = "Developer Certification Progress"
+    
+    def __str__(self):
+        return f"{self.developer.first_name} - {self.certification_level} ({self.status})"
+    
+    @property
+    def resources_progress_percent(self):
+        """Calculate percentage of required resources completed"""
+        required = self.certification_level.required_resources_count
+        completed = self.resources_completed.count()
+        if required == 0:
+            return 100
+        return min(100, int((completed / required) * 100))
+    
+    @property
+    def quizzes_progress_percent(self):
+        """Calculate percentage of required quizzes passed"""
+        required = self.certification_level.required_quizzes_count
+        passed = self.quizzes_passed.count()
+        if required == 0:
+            return 100
+        return min(100, int((passed / required) * 100))
+    
+    @property
+    def projects_progress_percent(self):
+        """Calculate percentage of required projects approved"""
+        required = self.certification_level.required_projects_count
+        approved = CertificationProjectSubmission.objects.filter(
+            developer=self.developer,
+            project__certification_level=self.certification_level,
+            status='approved'
+        ).count()
+        if required == 0:
+            return 100
+        return min(100, int((approved / required) * 100))
+    
+    @property
+    def overall_progress_percent(self):
+        """Calculate overall progress (weighted average)"""
+        return int((self.resources_progress_percent + self.quizzes_progress_percent + 
+                   self.projects_progress_percent) / 3)
+    
+    def check_completion(self):
+        """Check if all requirements are met for certification"""
+        # Check resources
+        if self.resources_completed.count() < self.certification_level.required_resources_count:
+            return False, "More resources need to be completed"
+        
+        # Check quizzes
+        if self.quizzes_passed.count() < self.certification_level.required_quizzes_count:
+            return False, "More quizzes need to be passed"
+        
+        # Check quiz score average
+        if self.average_quiz_score and self.average_quiz_score < self.certification_level.min_quiz_score:
+            return False, f"Average quiz score ({self.average_quiz_score}%) is below minimum ({self.certification_level.min_quiz_score}%)"
+        
+        # Check projects
+        approved_projects = CertificationProjectSubmission.objects.filter(
+            developer=self.developer,
+            project__certification_level=self.certification_level,
+            status='approved'
+        ).count()
+        
+        if approved_projects < self.certification_level.required_projects_count:
+            return False, "More project submissions need to be approved"
+        
+        return True, "All requirements met"
+
+
+class DeveloperCertificationProgressAdmin(admin.ModelAdmin):
+    list_display = ('developer', 'certification_level', 'status', 'overall_progress_percent', 
+                   'started_at', 'completed_at')
+    list_filter = ('status', 'certification_level__track', 'certification_level__level')
+    search_fields = ('developer__first_name', 'developer__last_name')
+    raw_id_fields = ('developer', 'issued_certificate')
+    filter_horizontal = ('resources_completed', 'quizzes_passed')
+    readonly_fields = ('created_at', 'updated_at')
+
+admin.site.register(DeveloperCertificationProgress, DeveloperCertificationProgressAdmin)
+
+
+class CertifiedReviewer(models.Model):
+    """
+    Tracks which developers are certified to review project submissions.
+    Initially seeded with senior members, expanded as more reach Level 2+.
+    """
+    developer = models.OneToOneField(TeamMember, on_delete=models.CASCADE, related_name='reviewer_status')
+    
+    # Reviewer level (determines what they can review)
+    reviewer_level = models.PositiveIntegerField(default=2, help_text="1=L1 only, 2=L1+L2, 3=All levels")
+    
+    # Tracks they can review
+    can_review_frontend = models.BooleanField(default=False)
+    can_review_backend = models.BooleanField(default=False)
+    can_review_product = models.BooleanField(default=False)
+    
+    # Stats
+    total_reviews_completed = models.PositiveIntegerField(default=0)
+    average_review_time_days = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    
+    # Status
+    is_active = models.BooleanField(default=True)
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='approved_reviewers')
+    approved_at = models.DateTimeField(auto_now_add=True)
+    
+    notes = models.TextField(blank=True, help_text="Admin notes about this reviewer")
+    
+    class Meta:
+        ordering = ['-reviewer_level', 'developer__first_name']
+    
+    def __str__(self):
+        tracks = []
+        if self.can_review_frontend:
+            tracks.append('FE')
+        if self.can_review_backend:
+            tracks.append('BE')
+        if self.can_review_product:
+            tracks.append('PM')
+        return f"{self.developer.first_name} {self.developer.last_name} (L{self.reviewer_level}) - {', '.join(tracks)}"
+    
+    def can_review_level(self, target_level):
+        """Check if reviewer can review submissions for a given certification level"""
+        # Level 3 reviewers can review all levels
+        # Level 2 reviewers can review Level 1 and 2
+        # Level 1 reviewers can only review Level 1
+        return self.reviewer_level >= target_level
+
+
+class CertifiedReviewerAdmin(admin.ModelAdmin):
+    list_display = ('developer', 'reviewer_level', 'can_review_frontend', 'can_review_backend', 
+                   'can_review_product', 'total_reviews_completed', 'is_active')
+    list_filter = ('reviewer_level', 'can_review_frontend', 'can_review_backend', 
+                  'can_review_product', 'is_active')
+    search_fields = ('developer__first_name', 'developer__last_name', 'developer__email')
+    raw_id_fields = ('developer',)
+
+admin.site.register(CertifiedReviewer, CertifiedReviewerAdmin)
+
+
+class DeveloperPublicProfile(models.Model):
+    """
+    Extended public profile settings for developers.
+    Controls what's visible on public profile pages and integrates with open.build.
+    """
+    developer = models.OneToOneField(TeamMember, on_delete=models.CASCADE, related_name='public_profile')
+    
+    # Profile visibility
+    is_public = models.BooleanField(default=True, help_text="Show profile on public pages")
+    show_email = models.BooleanField(default=False)
+    show_github_stats = models.BooleanField(default=True)
+    show_certifications = models.BooleanField(default=True)
+    show_badges = models.BooleanField(default=True)
+    show_projects = models.BooleanField(default=True)
+    show_skills = models.BooleanField(default=True)
+    
+    # Custom profile fields
+    headline = models.CharField(max_length=255, blank=True, help_text="e.g., 'Full-Stack Developer & Open Source Enthusiast'")
+    location = models.CharField(max_length=100, blank=True)
+    website = models.URLField(blank=True)
+    twitter = models.CharField(max_length=100, blank=True, help_text="Twitter/X username")
+    
+    # Featured content
+    featured_project_url = models.URLField(blank=True, help_text="GitHub URL of featured repo")
+    featured_project_description = models.CharField(max_length=255, blank=True)
+    
+    # GitHub stats (cached)
+    github_commits = models.PositiveIntegerField(default=0)
+    github_repos = models.PositiveIntegerField(default=0)
+    github_prs = models.PositiveIntegerField(default=0)
+    github_stats_updated = models.DateTimeField(null=True, blank=True)
+    
+    # Profile slug for URL
+    slug = models.SlugField(max_length=100, unique=True, blank=True)
+    
+    # open.build integration
+    openbuild_synced = models.BooleanField(default=False)
+    openbuild_sync_date = models.DateTimeField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Developer Public Profile"
+        verbose_name_plural = "Developer Public Profiles"
+    
+    def __str__(self):
+        return f"Profile: {self.developer.first_name} {self.developer.last_name}"
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            # Generate slug from username or name
+            from django.utils.text import slugify
+            base_slug = slugify(f"{self.developer.first_name}-{self.developer.last_name}")
+            self.slug = base_slug
+            
+            # Handle duplicates
+            counter = 1
+            while DeveloperPublicProfile.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
+                self.slug = f"{base_slug}-{counter}"
+                counter += 1
+        
+        super().save(*args, **kwargs)
+    
+    def get_absolute_url(self):
+        return f"/profile/{self.slug}/"
+
+
+class DeveloperPublicProfileAdmin(admin.ModelAdmin):
+    list_display = ('developer', 'slug', 'headline', 'is_public', 'show_github_stats', 
+                   'github_commits', 'github_repos')
+    list_filter = ('is_public', 'show_github_stats', 'show_certifications', 'openbuild_synced')
+    search_fields = ('developer__first_name', 'developer__last_name', 'headline', 'slug')
+    raw_id_fields = ('developer',)
+    prepopulated_fields = {'slug': ('developer',)}
+    readonly_fields = ('created_at', 'updated_at', 'github_stats_updated')
+
+admin.site.register(DeveloperPublicProfile, DeveloperPublicProfileAdmin)
