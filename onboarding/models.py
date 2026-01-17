@@ -1461,6 +1461,8 @@ class CertificationLevel(models.Model):
         ('backend', 'Backend Developer'),
         ('product_manager', 'Product Manager'),
         ('ai', 'AI/ML Developer'),
+        ('ai_ethics', 'AI Ethical Developer'),
+        ('leadership', 'Leadership'),
         ('general', 'General'),
     ]
     
@@ -2285,11 +2287,14 @@ admin.site.register(APIKey, APIKeyAdmin)
 # ==================== Community Certification System ====================
 
 class CertificationTrack(models.Model):
-    """Defines certification tracks (Frontend, Backend, Product Manager)"""
+    """Defines certification tracks (Frontend, Backend, Product Manager, AI, Leadership)"""
     TRACK_CHOICES = [
         ('frontend', 'Frontend Developer'),
         ('backend', 'Backend Developer'),
         ('product_manager', 'Product Manager'),
+        ('ai', 'AI/ML Developer'),
+        ('ai_ethics', 'AI Ethical Developer'),
+        ('leadership', 'Leadership'),
     ]
     
     key = models.CharField(max_length=50, unique=True, choices=TRACK_CHOICES)
@@ -2387,6 +2392,138 @@ class CommunityCertificationLevelAdmin(admin.ModelAdmin):
     filter_horizontal = ('resources', 'quizzes')
 
 admin.site.register(CommunityCertificationLevel, CommunityCertificationLevelAdmin)
+
+
+class CompositeCertification(models.Model):
+    """
+    Composite certifications that require multiple track certifications.
+    Example: CTO/Lead Badge requires Level 3 in Leadership + 2 other tracks.
+    """
+    key = models.CharField(max_length=50, unique=True, help_text="Unique identifier, e.g., 'cto_lead'")
+    name = models.CharField(max_length=100, help_text="e.g., 'CTO/Lead Certification'")
+    description = models.TextField(help_text="What this composite certification represents")
+    
+    # Requirements
+    required_tracks = models.ManyToManyField(CertificationTrack, blank=True, related_name='composite_requirements',
+                                              help_text="Specific tracks that MUST be completed (e.g., Leadership)")
+    min_level = models.PositiveIntegerField(default=3, help_text="Minimum level required in each track")
+    min_total_tracks = models.PositiveIntegerField(default=3, 
+                                                    help_text="Minimum total number of tracks needed at required level")
+    
+    # Visual
+    icon = models.CharField(max_length=50, default='🏆', help_text="Emoji or icon class")
+    color = models.CharField(max_length=7, default='#F59E0B', help_text="Badge/certificate color")
+    badge_color = models.CharField(max_length=7, default='#F59E0B')
+    
+    # Certificate generation
+    certificate_template = models.CharField(max_length=50, default='cto_lead', help_text="Template name")
+    
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    order = models.PositiveIntegerField(default=0, help_text="Display order")
+    
+    class Meta:
+        ordering = ['order', 'name']
+    
+    def __str__(self):
+        return f"{self.icon} {self.name}"
+    
+    def check_developer_eligibility(self, developer):
+        """
+        Check if a developer qualifies for this composite certification.
+        Returns (is_eligible, message, qualifying_tracks)
+        """
+        from .models import DeveloperCertificationProgress
+        
+        # Get all Level 3 certifications for this developer
+        level_3_certs = DeveloperCertificationProgress.objects.filter(
+            developer=developer,
+            level__level__gte=self.min_level,
+            status='completed'
+        ).select_related('level__track')
+        
+        completed_tracks = set()
+        for cert in level_3_certs:
+            completed_tracks.add(cert.level.track)
+        
+        # Check required tracks
+        required_tracks = set(self.required_tracks.all())
+        missing_required = required_tracks - completed_tracks
+        
+        if missing_required:
+            track_names = ', '.join([t.name for t in missing_required])
+            return False, f"Missing required track(s): {track_names}", list(completed_tracks)
+        
+        # Check minimum total tracks
+        if len(completed_tracks) < self.min_total_tracks:
+            return False, f"Need Level {self.min_level}+ in {self.min_total_tracks} tracks, have {len(completed_tracks)}", list(completed_tracks)
+        
+        return True, "All requirements met!", list(completed_tracks)
+
+
+class CompositeCertificationAdmin(admin.ModelAdmin):
+    list_display = ('icon', 'name', 'min_level', 'min_total_tracks', 'is_active', 'order')
+    list_filter = ('is_active', 'min_level')
+    search_fields = ('name', 'description', 'key')
+    filter_horizontal = ('required_tracks',)
+    ordering = ('order',)
+
+admin.site.register(CompositeCertification, CompositeCertificationAdmin)
+
+
+class DeveloperCompositeCertification(models.Model):
+    """Tracks composite certifications earned by developers"""
+    developer = models.ForeignKey(TeamMember, on_delete=models.CASCADE, related_name='composite_certifications')
+    certification = models.ForeignKey(CompositeCertification, on_delete=models.CASCADE, related_name='awarded_to')
+    
+    # Tracks that qualified the developer
+    qualifying_tracks = models.ManyToManyField(CertificationTrack, related_name='composite_qualifications',
+                                                help_text="The Level 3 tracks that qualified this certification")
+    
+    awarded_at = models.DateTimeField(auto_now_add=True)
+    awarded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    notes = models.TextField(blank=True, help_text="Additional notes about the award")
+    
+    # Verification
+    certificate_number = models.CharField(max_length=50, unique=True, blank=True)
+    verification_hash = models.CharField(max_length=64, blank=True)
+    
+    # Generated files
+    pdf_file = models.FileField(upload_to='certificates/composite/pdf/', blank=True, null=True)
+    png_file = models.FileField(upload_to='certificates/composite/png/', blank=True, null=True)
+    
+    is_revoked = models.BooleanField(default=False)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-awarded_at']
+        unique_together = ['developer', 'certification']
+    
+    def __str__(self):
+        return f"{self.developer.first_name} {self.developer.last_name} - {self.certification.name}"
+    
+    def save(self, *args, **kwargs):
+        import hashlib
+        import uuid
+        
+        if not self.certificate_number:
+            self.certificate_number = f"CTO-{uuid.uuid4().hex[:12].upper()}"
+        
+        if not self.verification_hash:
+            content = f"{self.developer.id}-{self.certification.id}-{self.certificate_number}"
+            self.verification_hash = hashlib.sha256(content.encode()).hexdigest()
+        
+        super().save(*args, **kwargs)
+
+
+class DeveloperCompositeCertificationAdmin(admin.ModelAdmin):
+    list_display = ('developer', 'certification', 'awarded_at', 'certificate_number', 'is_revoked')
+    list_filter = ('certification', 'is_revoked', 'awarded_at')
+    search_fields = ('developer__first_name', 'developer__last_name', 'certificate_number')
+    filter_horizontal = ('qualifying_tracks',)
+    readonly_fields = ('certificate_number', 'verification_hash', 'awarded_at')
+
+admin.site.register(DeveloperCompositeCertification, DeveloperCompositeCertificationAdmin)
 
 
 class CommunityBadge(models.Model):
