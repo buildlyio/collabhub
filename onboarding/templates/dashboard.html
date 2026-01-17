@@ -19,6 +19,25 @@
         </div>
     </div>
 
+    <!-- Certification Journey CTA (if no certificates yet) -->
+    {% if not developer_certifications %}
+    <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-6 mb-8">
+        <div class="flex items-center gap-6">
+            <div class="hidden md:flex w-16 h-16 bg-amber-100 rounded-full items-center justify-center flex-shrink-0">
+                <span class="text-3xl">🎯</span>
+            </div>
+            <div class="flex-1">
+                <h2 class="text-xl font-bold text-amber-900">Start Your Certification Journey</h2>
+                <p class="text-amber-700 mt-1">Earn verifiable certificates in Frontend, Backend, or Product Management. Progress at your own pace through 3 levels.</p>
+            </div>
+            <a href="{% url 'onboarding:certification_journey' %}" 
+               class="px-6 py-3 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition-colors whitespace-nowrap">
+                Get Started →
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Main Dashboard Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         

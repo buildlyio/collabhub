@@ -5865,3 +5865,385 @@ def admin_award_badge(request, developer_id):
     }
     
     return render(request, 'admin_award_badge.html', context)
+
+
+# ==================== CERTIFICATION JOURNEY VIEWS ====================
+
+@login_required
+def certification_journey(request):
+    """
+    Main certification journey page showing all tracks and progress.
+    Allows developers to see available certifications and start/continue their journey.
+    """
+    from .models import (
+        CertificationTrack, CommunityCertificationLevel, DeveloperCertificationProgress,
+        CertificationProjectSubmission
+    )
+    
+    try:
+        team_member = TeamMember.objects.get(user=request.user)
+    except TeamMember.DoesNotExist:
+        messages.error(request, 'You must be a registered developer to view certifications.')
+        return redirect('onboarding:dashboard')
+    
+    # Get all active tracks with their levels
+    tracks = CertificationTrack.objects.filter(is_active=True).order_by('order')
+    
+    # Get developer's progress
+    progress_map = {}
+    developer_progress = DeveloperCertificationProgress.objects.filter(
+        developer=team_member
+    ).select_related('certification_level', 'certification_level__track')
+    
+    for p in developer_progress:
+        progress_map[p.certification_level_id] = p
+    
+    # Build track data with levels and progress
+    track_data = []
+    active_progress = []
+    
+    for track in tracks:
+        levels = CommunityCertificationLevel.objects.filter(
+            track=track, 
+            is_active=True
+        ).order_by('level')
+        
+        levels_list = []
+        completed_levels = 0
+        previous_completed = True  # Level 1 is always unlocked
+        
+        for level in levels:
+            progress = progress_map.get(level.id)
+            
+            # Check if level is locked (previous level not completed)
+            is_locked = level.level > 1 and not previous_completed
+            
+            # Count approved projects for this level
+            approved_projects = 0
+            if progress:
+                approved_projects = CertificationProjectSubmission.objects.filter(
+                    developer=team_member,
+                    project__certification_level=level,
+                    status='approved'
+                ).count()
+            
+            level.progress = progress
+            level.is_locked = is_locked
+            level.approved_projects = approved_projects
+            levels_list.append(level)
+            
+            if progress and progress.status == 'completed':
+                completed_levels += 1
+                previous_completed = True
+            else:
+                previous_completed = False
+            
+            # Track active (in-progress) certifications
+            if progress and progress.status == 'in_progress':
+                active_progress.append(progress)
+        
+        track.levels_list = levels_list
+        track.completed_levels = completed_levels
+        track_data.append(track)
+    
+    context = {
+        'tracks': track_data,
+        'active_progress': active_progress,
+        'team_member': team_member,
+    }
+    
+    return render(request, 'certification_journey.html', context)
+
+
+@login_required
+def start_certification(request, level_id):
+    """
+    Start a new certification level - creates progress record and redirects to detail page.
+    """
+    from .models import CommunityCertificationLevel, DeveloperCertificationProgress
+    from django.utils import timezone
+    
+    try:
+        team_member = TeamMember.objects.get(user=request.user)
+    except TeamMember.DoesNotExist:
+        messages.error(request, 'You must be a registered developer.')
+        return redirect('onboarding:dashboard')
+    
+    level = get_object_or_404(CommunityCertificationLevel, id=level_id, is_active=True)
+    
+    # Check if previous level is completed (for levels > 1)
+    if level.level > 1:
+        previous_level = CommunityCertificationLevel.objects.filter(
+            track=level.track,
+            level=level.level - 1
+        ).first()
+        
+        if previous_level:
+            previous_progress = DeveloperCertificationProgress.objects.filter(
+                developer=team_member,
+                certification_level=previous_level,
+                status='completed'
+            ).exists()
+            
+            if not previous_progress:
+                messages.error(request, f'You must complete Level {level.level - 1} first.')
+                return redirect('onboarding:certification_journey')
+    
+    # Create or get progress record
+    progress, created = DeveloperCertificationProgress.objects.get_or_create(
+        developer=team_member,
+        certification_level=level,
+        defaults={
+            'status': 'in_progress',
+            'started_at': timezone.now()
+        }
+    )
+    
+    if created:
+        messages.success(request, f'Started {level.name}! Good luck on your certification journey.')
+    
+    return redirect('onboarding:certification_level_detail', level_id=level.id)
+
+
+@login_required
+def certification_level_detail(request, level_id):
+    """
+    View details of a specific certification level - resources, quizzes, projects, progress.
+    """
+    from .models import (
+        CommunityCertificationLevel, DeveloperCertificationProgress,
+        CertificationProject, CertificationProjectSubmission
+    )
+    
+    try:
+        team_member = TeamMember.objects.get(user=request.user)
+    except TeamMember.DoesNotExist:
+        messages.error(request, 'You must be a registered developer.')
+        return redirect('onboarding:dashboard')
+    
+    level = get_object_or_404(CommunityCertificationLevel, id=level_id, is_active=True)
+    
+    # Get or create progress
+    progress, created = DeveloperCertificationProgress.objects.get_or_create(
+        developer=team_member,
+        certification_level=level,
+        defaults={'status': 'not_started'}
+    )
+    
+    # If just created, mark as in_progress
+    if created or progress.status == 'not_started':
+        from django.utils import timezone
+        progress.status = 'in_progress'
+        progress.started_at = timezone.now()
+        progress.save()
+    
+    # Get resources linked to this level
+    resources = level.resources.all()
+    completed_resource_ids = list(progress.resources_completed.values_list('id', flat=True))
+    
+    # Get quizzes linked to this level
+    quizzes = level.quizzes.all()
+    passed_quiz_ids = list(progress.quizzes_passed.values_list('id', flat=True))
+    
+    # Get projects for this level
+    projects = CertificationProject.objects.filter(certification_level=level, is_active=True)
+    
+    # Add submission status to each project
+    for project in projects:
+        submission = CertificationProjectSubmission.objects.filter(
+            developer=team_member,
+            project=project
+        ).first()
+        project.submission_status = submission.status if submission else None
+    
+    # Count approved projects
+    approved_projects = CertificationProjectSubmission.objects.filter(
+        developer=team_member,
+        project__certification_level=level,
+        status='approved'
+    ).count()
+    
+    # Check if can complete
+    can_complete, reason = progress.check_completion()
+    
+    context = {
+        'level': level,
+        'progress': progress,
+        'resources': resources,
+        'completed_resource_ids': completed_resource_ids,
+        'quizzes': quizzes,
+        'passed_quiz_ids': passed_quiz_ids,
+        'projects': projects,
+        'approved_projects': approved_projects,
+        'can_complete': can_complete,
+        'team_member': team_member,
+    }
+    
+    return render(request, 'certification_level_detail.html', context)
+
+
+@login_required
+def mark_certification_resource_complete(request, level_id, resource_id):
+    """
+    Mark a resource as complete for a certification level.
+    """
+    from .models import CommunityCertificationLevel, DeveloperCertificationProgress, Resource
+    
+    if request.method != 'POST':
+        return redirect('onboarding:certification_level_detail', level_id=level_id)
+    
+    try:
+        team_member = TeamMember.objects.get(user=request.user)
+    except TeamMember.DoesNotExist:
+        messages.error(request, 'You must be a registered developer.')
+        return redirect('onboarding:dashboard')
+    
+    level = get_object_or_404(CommunityCertificationLevel, id=level_id)
+    resource = get_object_or_404(Resource, id=resource_id)
+    
+    # Get progress record
+    progress = get_object_or_404(DeveloperCertificationProgress, 
+                                  developer=team_member, 
+                                  certification_level=level)
+    
+    # Add resource to completed
+    progress.resources_completed.add(resource)
+    
+    messages.success(request, f'Marked "{resource.title}" as complete!')
+    
+    return redirect('onboarding:certification_level_detail', level_id=level_id)
+
+
+@login_required
+def complete_certification(request, level_id):
+    """
+    Complete a certification level and issue certificate.
+    """
+    from .models import (
+        CommunityCertificationLevel, DeveloperCertificationProgress,
+        DeveloperCertification
+    )
+    from django.utils import timezone
+    import hashlib
+    import uuid
+    
+    if request.method != 'POST':
+        return redirect('onboarding:certification_level_detail', level_id=level_id)
+    
+    try:
+        team_member = TeamMember.objects.get(user=request.user)
+    except TeamMember.DoesNotExist:
+        messages.error(request, 'You must be a registered developer.')
+        return redirect('onboarding:dashboard')
+    
+    level = get_object_or_404(CommunityCertificationLevel, id=level_id)
+    progress = get_object_or_404(DeveloperCertificationProgress,
+                                  developer=team_member,
+                                  certification_level=level)
+    
+    # Verify completion
+    can_complete, reason = progress.check_completion()
+    if not can_complete:
+        messages.error(request, f'Cannot complete certification: {reason}')
+        return redirect('onboarding:certification_level_detail', level_id=level_id)
+    
+    # Check if linked CertificationLevel exists for issuing certificate
+    if level.certification_level:
+        # Generate certificate
+        certificate_number = f"CERT-{level.track.key.upper()[:2]}{level.level}-{uuid.uuid4().hex[:8].upper()}"
+        
+        # Generate hash
+        hash_input = f"{certificate_number}:{team_member.id}:{level.id}:{timezone.now().isoformat()}"
+        certificate_hash = hashlib.sha256(hash_input.encode()).hexdigest()
+        
+        # Create certificate
+        certificate = DeveloperCertification.objects.create(
+            developer=team_member,
+            certification_level=level.certification_level,
+            certificate_number=certificate_number,
+            certificate_hash=certificate_hash,
+            issued_at=timezone.now(),
+            score=progress.average_quiz_score or 100,
+        )
+        
+        # Link certificate to progress
+        progress.issued_certificate = certificate
+    
+    # Mark progress as completed
+    progress.status = 'completed'
+    progress.completed_at = timezone.now()
+    progress.save()
+    
+    messages.success(request, f'🎉 Congratulations! You\'ve earned the {level.name} certification!')
+    
+    return redirect('onboarding:developer_certificates')
+
+
+@login_required  
+def certification_project_submit(request, project_id):
+    """
+    Submit a project for certification review.
+    """
+    from .models import CertificationProject, CertificationProjectSubmission, DeveloperCertificationProgress
+    
+    try:
+        team_member = TeamMember.objects.get(user=request.user)
+    except TeamMember.DoesNotExist:
+        messages.error(request, 'You must be a registered developer.')
+        return redirect('onboarding:dashboard')
+    
+    project = get_object_or_404(CertificationProject, id=project_id, is_active=True)
+    level = project.certification_level
+    
+    # Get existing submission if any
+    existing_submission = CertificationProjectSubmission.objects.filter(
+        developer=team_member,
+        project=project
+    ).first()
+    
+    if request.method == 'POST':
+        title = request.POST.get('title', project.title)
+        repo_url = request.POST.get('repo_url', '')
+        demo_url = request.POST.get('demo_url', '')
+        description = request.POST.get('description', '')
+        
+        if not repo_url:
+            messages.error(request, 'Repository URL is required.')
+            return redirect('onboarding:certification_project_submit', project_id=project_id)
+        
+        if existing_submission and existing_submission.status in ['pending_review', 'approved']:
+            messages.error(request, 'You already have a pending or approved submission for this project.')
+            return redirect('onboarding:certification_level_detail', level_id=level.id)
+        
+        # Create or update submission
+        if existing_submission:
+            existing_submission.title = title
+            existing_submission.repo_url = repo_url
+            existing_submission.demo_url = demo_url
+            existing_submission.description = description
+            existing_submission.status = 'pending_review'
+            existing_submission.save()
+            submission = existing_submission
+        else:
+            submission = CertificationProjectSubmission.objects.create(
+                developer=team_member,
+                project=project,
+                title=title,
+                repo_url=repo_url,
+                demo_url=demo_url,
+                description=description,
+                status='pending_review'
+            )
+        
+        messages.success(request, 'Project submitted for review! You\'ll be notified when it\'s reviewed.')
+        return redirect('onboarding:certification_level_detail', level_id=level.id)
+    
+    context = {
+        'project': project,
+        'level': level,
+        'existing_submission': existing_submission,
+        'team_member': team_member,
+    }
+    
+    return render(request, 'certification_project_submit.html', context)
+

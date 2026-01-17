@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Certification Journey{% endblock %}
+
+{% block page_content %}
+<div class="max-w-6xl mx-auto py-8 px-4">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">🎯 Certification Journey</h1>
+                <p class="text-gray-600 mt-2">Choose a track and progress through certification levels at your own pace</p>
+            </div>
+            <a href="{% url 'onboarding:developer_certificates' %}" 
+               class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
+                ← My Certificates
+            </a>
+        </div>
+    </div>
+
+    <!-- Progress Summary Card -->
+    {% if active_progress %}
+    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-6 mb-8 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold">Continue Your Journey</h2>
+                <p class="text-indigo-100 mt-1">You have certifications in progress</p>
+            </div>
+            <div class="text-right">
+                <span class="text-3xl font-bold">{{ active_progress|length }}</span>
+                <span class="text-indigo-100 block text-sm">Active Track{{ active_progress|length|pluralize }}</span>
+            </div>
+        </div>
+        
+        <!-- Quick progress indicators -->
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-{{ active_progress|length|default:1 }} gap-4">
+            {% for progress in active_progress %}
+            <a href="#track-{{ progress.certification_level.track.key }}" 
+               class="bg-white/10 rounded-lg p-4 hover:bg-white/20 transition-colors block">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">{{ progress.certification_level.track.icon }}</span>
+                    <div class="flex-1">
+                        <h3 class="font-semibold">{{ progress.certification_level.track.name }}</h3>
+                        <p class="text-sm text-indigo-100">Level {{ progress.certification_level.level }} - {{ progress.overall_progress_percent }}% complete</p>
+                    </div>
+                    <div class="w-16">
+                        <div class="h-2 bg-white/20 rounded-full">
+                            <div class="h-2 bg-white rounded-full" style="width: {{ progress.overall_progress_percent }}%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Certification Tracks -->
+    <div class="space-y-8">
+        {% for track in tracks %}
+        <div id="track-{{ track.key }}" class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+            <!-- Track Header -->
+            <div class="p-6 border-b border-gray-200" style="background: linear-gradient(135deg, {{ track.color }}15, {{ track.color }}05);">
+                <div class="flex items-center gap-4">
+                    <span class="text-4xl">{{ track.icon }}</span>
+                    <div class="flex-1">
+                        <h2 class="text-2xl font-bold text-gray-900">{{ track.name }}</h2>
+                        <p class="text-gray-600 mt-1">{{ track.description }}</p>
+                    </div>
+                    {% if track.completed_levels > 0 %}
+                    <div class="text-right">
+                        <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                            ✓ {{ track.completed_levels }}/3 Complete
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Certification Levels -->
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {% for level in track.levels_list %}
+                    <div class="relative">
+                        <!-- Level Card -->
+                        <div class="rounded-lg border-2 p-5 h-full flex flex-col
+                                    {% if level.progress and level.progress.status == 'completed' %}
+                                    border-green-500 bg-green-50
+                                    {% elif level.progress and level.progress.status == 'in_progress' %}
+                                    border-indigo-500 bg-indigo-50
+                                    {% elif level.is_locked %}
+                                    border-gray-200 bg-gray-50 opacity-60
+                                    {% else %}
+                                    border-gray-200 hover:border-indigo-300 bg-white
+                                    {% endif %}">
+                            
+                            <!-- Level Badge -->
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="px-3 py-1 rounded-full text-sm font-bold"
+                                      style="background-color: {{ level.badge_color }}20; color: {{ level.badge_color }}; border: 2px solid {{ level.badge_color }};">
+                                    Level {{ level.level }}
+                                </span>
+                                {% if level.progress and level.progress.status == 'completed' %}
+                                <span class="text-green-600 font-bold">✓ Earned</span>
+                                {% elif level.is_locked %}
+                                <span class="text-gray-400">🔒 Locked</span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Level Info -->
+                            <h3 class="text-lg font-bold text-gray-900 mb-2">{{ level.get_level_display_name }}</h3>
+                            <p class="text-sm text-gray-600 mb-4 flex-grow">{{ level.description|truncatewords:25 }}</p>
+
+                            <!-- Requirements -->
+                            <div class="space-y-2 mb-4 text-sm">
+                                <div class="flex items-center gap-2 {% if level.progress %}{% if level.progress.resources_completed.count >= level.required_resources_count %}text-green-600{% else %}text-gray-600{% endif %}{% else %}text-gray-600{% endif %}">
+                                    <span>📚</span>
+                                    <span>{{ level.required_resources_count }} Resources</span>
+                                    {% if level.progress %}
+                                    <span class="ml-auto font-medium">{{ level.progress.resources_completed.count }}/{{ level.required_resources_count }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="flex items-center gap-2 {% if level.progress %}{% if level.progress.quizzes_passed.count >= level.required_quizzes_count %}text-green-600{% else %}text-gray-600{% endif %}{% else %}text-gray-600{% endif %}">
+                                    <span>📝</span>
+                                    <span>{{ level.required_quizzes_count }} Quizzes ({{ level.min_quiz_score }}%+)</span>
+                                    {% if level.progress %}
+                                    <span class="ml-auto font-medium">{{ level.progress.quizzes_passed.count }}/{{ level.required_quizzes_count }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="flex items-center gap-2 {% if level.progress %}{% if level.approved_projects >= level.required_projects_count %}text-green-600{% else %}text-gray-600{% endif %}{% else %}text-gray-600{% endif %}">
+                                    <span>🛠️</span>
+                                    <span>{{ level.required_projects_count }} Projects</span>
+                                    {% if level.progress %}
+                                    <span class="ml-auto font-medium">{{ level.approved_projects|default:0 }}/{{ level.required_projects_count }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar (if in progress) -->
+                            {% if level.progress and level.progress.status != 'completed' %}
+                            <div class="mb-4">
+                                <div class="flex justify-between text-xs text-gray-500 mb-1">
+                                    <span>Progress</span>
+                                    <span>{{ level.progress.overall_progress_percent }}%</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div class="h-full rounded-full transition-all duration-500"
+                                         style="width: {{ level.progress.overall_progress_percent }}%; background-color: {{ level.badge_color }};">
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Action Button -->
+                            <div class="mt-auto pt-2">
+                                {% if level.progress and level.progress.status == 'completed' %}
+                                <a href="{% url 'onboarding:developer_certificates' %}" 
+                                   class="block w-full text-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium">
+                                    View Certificate
+                                </a>
+                                {% elif level.is_locked %}
+                                <button disabled 
+                                        class="block w-full text-center px-4 py-2 bg-gray-300 text-gray-500 rounded-md cursor-not-allowed text-sm font-medium">
+                                    Complete Level {{ level.level|add:"-1" }} First
+                                </button>
+                                {% elif level.progress %}
+                                <a href="{% url 'onboarding:certification_level_detail' level.id %}" 
+                                   class="block w-full text-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm font-medium">
+                                    Continue Learning →
+                                </a>
+                                {% else %}
+                                <a href="{% url 'onboarding:start_certification' level.id %}" 
+                                   class="block w-full text-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm font-medium">
+                                    Start This Level
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Connector Line (between levels) -->
+                        {% if not forloop.last %}
+                        <div class="hidden md:block absolute top-1/2 -right-3 w-6 border-t-2 border-dashed border-gray-300 z-10"></div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 p-12 text-center">
+            <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">No Certification Tracks Available</h3>
+            <p class="text-gray-600 mb-6">Certification tracks are being set up. Check back soon!</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Info Section -->
+    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
+        <h3 class="text-lg font-bold text-blue-900 mb-3">📘 How Certifications Work</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-blue-800">
+            <div>
+                <h4 class="font-semibold mb-2">1. Choose Your Track</h4>
+                <p>Select Frontend, Backend, or Product Manager based on your interests and career goals.</p>
+            </div>
+            <div>
+                <h4 class="font-semibold mb-2">2. Complete Requirements</h4>
+                <p>Study resources, pass quizzes with 70%+ scores, and submit projects for peer review.</p>
+            </div>
+            <div>
+                <h4 class="font-semibold mb-2">3. Earn Certificates</h4>
+                <p>Once all requirements are met, you'll receive a verifiable certificate and community badge.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -107,6 +107,14 @@ urlpatterns = [
     path('admin/developer/<int:developer_id>/certify/', views.admin_issue_certificate, name='admin_issue_certificate'),
     path('admin/developer/<int:developer_id>/award-badge/', views.admin_award_badge, name='admin_award_badge'),
     
+    # Certification Journey (Self-service certification progress)
+    path('certifications/', views.certification_journey, name='certification_journey'),
+    path('certifications/start/<int:level_id>/', views.start_certification, name='start_certification'),
+    path('certifications/level/<int:level_id>/', views.certification_level_detail, name='certification_level_detail'),
+    path('certifications/level/<int:level_id>/resource/<int:resource_id>/complete/', views.mark_certification_resource_complete, name='mark_certification_resource_complete'),
+    path('certifications/level/<int:level_id>/complete/', views.complete_certification, name='complete_certification'),
+    path('certifications/project/<int:project_id>/submit/', views.certification_project_submit, name='certification_project_submit'),
+    
     # Verification (Public)
     path('verify/', views.verification_home, name='verification_home'),
     path('verify/contract/<str:contract_hash>/', views.verify_contract, name='verify_contract'),
