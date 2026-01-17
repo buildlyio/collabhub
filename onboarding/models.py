@@ -1547,6 +1547,15 @@ class CertificationLevel(models.Model):
         ordering = ['level_type', 'name']
 
 
+class CertificationLevelAdmin(admin.ModelAdmin):
+    list_display = ('name', 'level_type', 'track', 'is_active', 'created_at')
+    search_fields = ('name', 'description')
+    list_filter = ('level_type', 'track', 'is_active')
+    filter_horizontal = ('required_trainings', 'required_sections', 'required_quizzes')
+
+admin.site.register(CertificationLevel, CertificationLevelAdmin)
+
+
 class DeveloperCertification(models.Model):
     """Tracks certifications earned by developers with hash verification"""
     developer = models.ForeignKey(TeamMember, on_delete=models.CASCADE, related_name='certifications_earned')
@@ -1610,6 +1619,33 @@ class DeveloperCertification(models.Model):
     class Meta:
         ordering = ['-issued_at']
         unique_together = ['developer', 'certification_level']
+
+
+class DeveloperCertificationAdmin(admin.ModelAdmin):
+    list_display = ('developer', 'certification_level', 'certificate_number', 'issued_at', 'is_valid', 'is_revoked')
+    search_fields = ('developer__first_name', 'developer__last_name', 'developer__user__username', 'certificate_number')
+    list_filter = ('certification_level', 'is_revoked', 'issued_at')
+    readonly_fields = ('certificate_hash', 'certificate_number', 'issued_at')
+    raw_id_fields = ('developer', 'issued_by', 'revoked_by')
+    
+    fieldsets = (
+        ('Certification Info', {
+            'fields': ('developer', 'certification_level', 'score', 'notes')
+        }),
+        ('Certificate Details', {
+            'fields': ('certificate_number', 'certificate_hash', 'issued_at', 'issued_by', 'expires_at')
+        }),
+        ('Generated Files', {
+            'fields': ('pdf_file', 'png_file'),
+            'classes': ('collapse',)
+        }),
+        ('Revocation', {
+            'fields': ('is_revoked', 'revoked_at', 'revoked_by', 'revoked_reason'),
+            'classes': ('collapse',)
+        }),
+    )
+
+admin.site.register(DeveloperCertification, DeveloperCertificationAdmin)
 
 
 class ContractAdmin(admin.ModelAdmin):
