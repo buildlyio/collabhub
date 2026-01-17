@@ -213,10 +213,17 @@ def dashboard(request):
             pass
         
         # Fetch certificates for this developer
-        from .models import DeveloperCertification
+        from .models import DeveloperCertification, DeveloperPublicProfile
         developer_certifications = DeveloperCertification.objects.filter(
             developer=team_member
         ).select_related('certification_level')
+        
+        # Get public profile for social sharing
+        public_profile = None
+        try:
+            public_profile = DeveloperPublicProfile.objects.get(developer=team_member)
+        except DeveloperPublicProfile.DoesNotExist:
+            pass
         
         # Get available types for filter dropdown
         available_types = TEAM_MEMBER_TYPES
@@ -233,6 +240,7 @@ def dashboard(request):
             'contracts': contracts,
             'company_admin': company_admin,
             'developer_certifications': developer_certifications,
+            'public_profile': public_profile,
             # Filter state
             'type_filter': type_filter,
             'search_query': search_query,
