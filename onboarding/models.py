@@ -3047,6 +3047,9 @@ class DeveloperPublicProfile(models.Model):
             # Generate slug from username or name
             from django.utils.text import slugify
             base_slug = slugify(f"{self.developer.first_name}-{self.developer.last_name}")
+            # Fallback if name is empty
+            if not base_slug:
+                base_slug = f"developer-{self.developer.id}"
             self.slug = base_slug
             
             # Handle duplicates

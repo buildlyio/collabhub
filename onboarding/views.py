@@ -5814,6 +5814,19 @@ def manage_public_profile(request):
         }
     )
     
+    # Ensure profile has a slug (fix for existing profiles without slug)
+    if not profile.slug:
+        from django.utils.text import slugify
+        base_slug = slugify(f"{team_member.first_name}-{team_member.last_name}")
+        if not base_slug:
+            base_slug = f"developer-{team_member.id}"
+        profile.slug = base_slug
+        counter = 1
+        while DeveloperPublicProfile.objects.filter(slug=profile.slug).exclude(pk=profile.pk).exists():
+            profile.slug = f"{base_slug}-{counter}"
+            counter += 1
+        profile.save()
+    
     # Check if user has GitHub OAuth token from social auth
     github_oauth_token = None
     try:
