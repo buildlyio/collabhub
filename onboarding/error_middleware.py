@@ -65,7 +65,7 @@ class ErrorHandlerMiddleware:
                 error_msg = f"❌ Failed to create GitHub issue: {e}"
                 print(error_msg, file=sys.stderr)
                 logger.error(error_msg, exc_info=True)
-        elif not settings.DEBUG and not settings.GITHUB_ERROR_TOKEN:
+        elif not settings.DEBUG and not getattr(settings, 'GITHUB_ERROR_TOKEN', None):
             logger.info("ℹ️ GitHub error reporting not configured (GITHUB_ERROR_TOKEN not set)")
         
         # Return user-friendly error page

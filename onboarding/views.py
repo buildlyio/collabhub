@@ -5593,7 +5593,7 @@ def developer_public_profile(request, slug):
     """
     from .models import (
         DeveloperPublicProfile, TeamMember, DeveloperBadge, 
-        DeveloperCertification, DeveloperSkill
+        DeveloperCertification, TechnologySkill
     )
     
     # Get profile by slug
@@ -5635,10 +5635,10 @@ def developer_public_profile(request, slug):
     # Get skills if profile allows
     skills = []
     if profile.show_skills:
-        dev_skills = DeveloperSkill.objects.filter(
-            developer=developer
-        ).select_related('skill').order_by('-proficiency')[:20]
-        skills = [ds.skill.name for ds in dev_skills]
+        tech_skills = TechnologySkill.objects.filter(
+            team_member=developer
+        ).order_by('-skill_level')[:20]
+        skills = [ts.get_technology_display() for ts in tech_skills]
     
     # Check if developer is verified (has at least one valid certification)
     is_verified = any(c.is_valid for c in certifications) if certifications else False

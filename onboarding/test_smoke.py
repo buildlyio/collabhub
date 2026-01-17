@@ -137,7 +137,7 @@ class FormRenderingSmokeTests(SmokeTestBase):
     
     def test_profile_edit_form_renders(self):
         """Test profile edit form loads"""
-        response = self.client.get('/onboarding/profile/edit/')
+        response = self.client.get('/onboarding/edit_profile/')
         self.assertIn(response.status_code, [200, 302, 404])
         if response.status_code == 200:
             self.assertContains(response, 'form', msg_prefix="Profile edit form not found")
