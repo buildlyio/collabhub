@@ -4,23 +4,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ developer.first_name }} {{ developer.last_name }} - Buildly Developer</title>
+    <title>{{ developer.first_name }} {{ developer.last_name }} - CollabHub Certified Developer</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="{{ profile.headline|default:developer.bio|truncatewords:30 }}">
+    <meta name="description" content="{% if profile.headline %}{{ profile.headline }}{% else %}{{ developer.first_name }} {{ developer.last_name }} is a verified CollabHub developer{% if highest_community_level %} with Level {{ highest_community_level }} certification{% endif %}{% if profile.github_repos %}, {{ profile.github_repos }} repositories and {{ profile.github_stars }} stars on GitHub{% endif %}.{% endif %}">
     <meta name="author" content="{{ developer.first_name }} {{ developer.last_name }}">
+    <meta name="keywords" content="developer, software engineer, {{ developer.first_name }} {{ developer.last_name }}, CollabHub, certified developer{% for skill in skills %}, {{ skill }}{% endfor %}">
     
-    <!-- Open Graph / Social Sharing -->
+    <!-- Open Graph / Social Sharing (LinkedIn, Facebook) -->
     <meta property="og:type" content="profile">
-    <meta property="og:title" content="{{ developer.first_name }} {{ developer.last_name }} - Buildly Certified Developer">
-    <meta property="og:description" content="{{ profile.headline|default:'Buildly Certified Developer' }}">
+    <meta property="og:site_name" content="CollabHub Developer Network">
+    <meta property="og:title" content="🚀 {{ developer.first_name }} {{ developer.last_name }} | {% if highest_community_level %}Level {{ highest_community_level }} {% endif %}CollabHub Certified Developer">
+    <meta property="og:description" content="{% if profile.headline %}{{ profile.headline }} | {% endif %}{% if profile.github_repos %}📦 {{ profile.github_repos }} repos • ⭐ {{ profile.github_stars }} stars • 👥 {{ profile.github_followers }} followers{% endif %}{% if badges %} | 🏆 {{ badges|length }} achievement badge{{ badges|length|pluralize }}{% endif %}{% if is_verified %} | ✅ Verified Developer{% endif %}">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
-    <meta property="og:image" content="{% if developer.github_account %}https://github.com/{{ github_username }}.png{% else %}{% static 'img/buildly-logo.png' %}{% endif %}">
+    <meta property="og:image" content="{% if github_username %}https://github.com/{{ github_username }}.png{% else %}https://cms-static.nyc3.digitaloceanspaces.com/collab/static/img/collab_hub_logo.png{% endif %}">
+    <meta property="og:image:width" content="400">
+    <meta property="og:image:height" content="400">
+    <meta property="profile:first_name" content="{{ developer.first_name }}">
+    <meta property="profile:last_name" content="{{ developer.last_name }}">
+    {% if github_username %}<meta property="profile:username" content="{{ github_username }}">{% endif %}
     
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="{{ developer.first_name }} {{ developer.last_name }}">
-    <meta name="twitter:description" content="{{ profile.headline|default:'Buildly Certified Developer' }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="🚀 {{ developer.first_name }} {{ developer.last_name }} | CollabHub Developer">
+    <meta name="twitter:description" content="{% if profile.headline %}{{ profile.headline }}{% else %}Verified CollabHub Developer{% endif %}{% if profile.github_repos %} • {{ profile.github_repos }} repos • {{ profile.github_stars }} stars{% endif %}">
+    <meta name="twitter:image" content="{% if github_username %}https://github.com/{{ github_username }}.png{% else %}https://cms-static.nyc3.digitaloceanspaces.com/collab/static/img/collab_hub_logo.png{% endif %}">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -151,7 +159,7 @@
                         
                         <!-- Share Button -->
                         <div class="flex items-center space-x-2">
-                            <button onclick="copyProfileLink()" class="share-btn flex items-center space-x-2 px-4 py-2 bg-buildly-blue hover:bg-blue-600 rounded-lg text-sm font-medium">
+                            <button onclick="openShareModal()" class="share-btn flex items-center space-x-2 px-4 py-2 bg-buildly-blue hover:bg-blue-600 rounded-lg text-sm font-medium">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                                 <span>Share Profile</span>
                             </button>
@@ -201,6 +209,47 @@
                         <p class="text-xs text-slate-500 mt-3 text-center">Updated {{ profile.github_stats_updated|timesince }} ago</p>
                         {% endif %}
                     </div>
+                    
+                    <!-- Top Repositories -->
+                    {% if profile.show_github_stats and profile.github_top_repos %}
+                    <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
+                        <h3 class="flex items-center text-lg font-semibold mb-4">
+                            <svg class="w-5 h-5 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                            Top Repositories
+                        </h3>
+                        <div class="space-y-3">
+                            {% for repo in profile.github_top_repos %}
+                            <a href="{{ repo.url }}" target="_blank" class="block bg-slate-700/50 hover:bg-slate-700 rounded-lg p-3 transition group">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="font-medium text-white group-hover:text-buildly-blue transition">{{ repo.name }}</span>
+                                    <div class="flex items-center space-x-3 text-xs text-slate-400">
+                                        {% if repo.language %}
+                                        <span class="flex items-center">
+                                            <span class="w-2 h-2 rounded-full mr-1 {% if repo.language == 'Python' %}bg-blue-500{% elif repo.language == 'JavaScript' %}bg-yellow-400{% elif repo.language == 'TypeScript' %}bg-blue-400{% elif repo.language == 'Go' %}bg-cyan-400{% elif repo.language == 'Rust' %}bg-orange-500{% elif repo.language == 'Ruby' %}bg-red-500{% elif repo.language == 'Java' %}bg-red-400{% else %}bg-gray-400{% endif %}"></span>
+                                            {{ repo.language }}
+                                        </span>
+                                        {% endif %}
+                                        <span class="flex items-center">
+                                            <svg class="w-3.5 h-3.5 mr-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                            {{ repo.stars }}
+                                        </span>
+                                        <span class="flex items-center">
+                                            <svg class="w-3.5 h-3.5 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                                            {{ repo.forks }}
+                                        </span>
+                                    </div>
+                                </div>
+                                {% if repo.description %}
+                                <p class="text-xs text-slate-400 line-clamp-2">{{ repo.description }}</p>
+                                {% endif %}
+                            </a>
+                            {% endfor %}
+                        </div>
+                        <a href="https://github.com/{{ github_username }}?tab=repositories" target="_blank" class="mt-3 block text-center text-xs text-buildly-blue hover:text-blue-400 transition">
+                            View all repositories →
+                        </a>
+                    </div>
+                    {% endif %}
                     {% endif %}
                     
                     <!-- Bio -->
@@ -440,6 +489,94 @@
         </div>
     </div>
 
+    <!-- Share Profile Modal -->
+    <div id="shareModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-2xl border border-slate-700 max-w-lg w-full mx-4 shadow-2xl">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-buildly-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                        Share Your Profile
+                    </h3>
+                    <button onclick="closeShareModal()" class="text-slate-400 hover:text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                
+                <!-- Pre-formatted LinkedIn Post -->
+                <div class="mb-4">
+                    <label class="block text-sm text-slate-400 mb-2">📝 Pre-formatted post (copy and customize)</label>
+                    <textarea id="linkedinPostText" rows="8" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg p-3 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-buildly-blue resize-none">🚀 Excited to share my verified developer profile on CollabHub!
+
+{% if profile.headline %}{{ profile.headline }}
+
+{% endif %}📊 My Journey:
+{% if profile.github_repos %}📦 {{ profile.github_repos }} repositories
+⭐ {{ profile.github_stars }} stars earned
+👥 {{ profile.github_followers }} followers
+{% endif %}{% if badges %}🏆 {{ badges|length }} achievement badge{{ badges|length|pluralize }} earned
+{% endif %}{% if highest_community_level %}🎓 Level {{ highest_community_level }} Certified Developer
+{% endif %}{% if is_verified %}✅ Verified by CollabHub{% endif %}
+
+Check out my full profile to see my certifications, achievements, and open source contributions!
+
+#Developer #OpenSource #CollabHub #TechCommunity #Coding</textarea>
+                </div>
+                
+                <!-- Quick Stats Preview -->
+                <div class="bg-slate-700/30 rounded-lg p-4 mb-4">
+                    <p class="text-xs text-slate-400 mb-2">Preview stats that will show in the link:</p>
+                    <div class="flex items-center space-x-4 text-sm">
+                        {% if profile.github_repos %}
+                        <span class="flex items-center text-slate-300">
+                            <svg class="w-4 h-4 mr-1 text-buildly-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                            {{ profile.github_repos }} repos
+                        </span>
+                        {% endif %}
+                        {% if profile.github_stars %}
+                        <span class="flex items-center text-slate-300">
+                            <svg class="w-4 h-4 mr-1 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            {{ profile.github_stars }} stars
+                        </span>
+                        {% endif %}
+                        {% if badges %}
+                        <span class="flex items-center text-slate-300">
+                            <span class="mr-1">🏆</span>
+                            {{ badges|length }} badge{{ badges|length|pluralize }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap gap-3">
+                    <button onclick="copyShareText()" class="flex-1 flex items-center justify-center px-4 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium transition">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                        Copy Text
+                    </button>
+                    <button onclick="shareToLinkedIn()" class="flex-1 flex items-center justify-center px-4 py-3 bg-blue-700 hover:bg-blue-600 rounded-lg text-sm font-medium transition">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                        Share to LinkedIn
+                    </button>
+                    <button onclick="shareToTwitter()" class="flex items-center justify-center px-4 py-3 bg-slate-700 hover:bg-blue-500 rounded-lg text-sm font-medium transition">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
+                    </button>
+                </div>
+                
+                <!-- Copy Link -->
+                <div class="mt-4 pt-4 border-t border-slate-700">
+                    <label class="block text-xs text-slate-400 mb-2">Profile Link</label>
+                    <div class="flex gap-2">
+                        <input type="text" value="{{ request.build_absolute_uri }}" readonly class="flex-1 bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-300">
+                        <button onclick="copyProfileLink()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition">
+                            Copy
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="border-t border-slate-800 py-8 text-center text-slate-500 text-sm">
         <p>Powered by <a href="https://www.open.build" class="text-open-blue hover:text-blue-400">Open Build</a></p>
@@ -468,7 +605,10 @@
         
         function copyProfileLink() {
             navigator.clipboard.writeText(window.location.href).then(() => {
-                alert('Profile link copied to clipboard!');
+                const btn = event.target.closest('button');
+                const origText = btn.innerHTML;
+                btn.innerHTML = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Copied!';
+                setTimeout(() => { btn.innerHTML = origText; }, 2000);
             });
         }
         
@@ -489,12 +629,55 @@
             window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
         }
         
+        // Share Profile Modal functions
+        function openShareModal() {
+            document.getElementById('shareModal').classList.remove('hidden');
+            document.getElementById('shareModal').classList.add('flex');
+        }
+        
+        function closeShareModal() {
+            document.getElementById('shareModal').classList.add('hidden');
+            document.getElementById('shareModal').classList.remove('flex');
+        }
+        
+        function copyShareText() {
+            const text = document.getElementById('linkedinPostText').value;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target.closest('button');
+                btn.innerHTML = '<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Copied!';
+                btn.classList.remove('bg-slate-700');
+                btn.classList.add('bg-green-600');
+                setTimeout(() => { 
+                    btn.innerHTML = '<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>Copy Text';
+                    btn.classList.remove('bg-green-600');
+                    btn.classList.add('bg-slate-700');
+                }, 2000);
+            });
+        }
+        
+        function shareToLinkedIn() {
+            const url = window.location.href;
+            window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank', 'width=600,height=600');
+        }
+        
+        function shareToTwitter() {
+            const text = document.getElementById('linkedinPostText').value;
+            const url = window.location.href;
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank', 'width=600,height=400');
+        }
+        
         // Close modal on escape or outside click
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeBadgeModal();
+            if (e.key === 'Escape') {
+                closeBadgeModal();
+                closeShareModal();
+            }
         });
         document.getElementById('badgeModal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('badgeModal')) closeBadgeModal();
+        });
+        document.getElementById('shareModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('shareModal')) closeShareModal();
         });
     </script>
 </body>

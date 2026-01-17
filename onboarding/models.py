@@ -3022,6 +3022,9 @@ class DeveloperPublicProfile(models.Model):
     github_stars = models.PositiveIntegerField(default=0)
     github_stats_updated = models.DateTimeField(null=True, blank=True)
     
+    # Top repositories (cached as JSON)
+    github_top_repos = models.JSONField(default=list, blank=True, help_text="Cached top repositories data")
+    
     # Profile slug for URL
     slug = models.SlugField(max_length=100, unique=True, blank=True)
     

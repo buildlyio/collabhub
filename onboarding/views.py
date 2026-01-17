@@ -5857,8 +5857,9 @@ def manage_public_profile(request):
                         profile.github_repos = user_data.get('public_repos', 0)
                         profile.github_followers = user_data.get('followers', 0)
                         
-                        # Fetch starred repos count (total stars received on user's repos)
+                        # Fetch repos with stars for total stars count and top repos
                         total_stars = 0
+                        top_repos = []
                         repos_response = requests.get(
                             f'https://api.github.com/users/{github_username}/repos?per_page=100&sort=updated',
                             headers=headers,
@@ -5867,7 +5868,22 @@ def manage_public_profile(request):
                         if repos_response.status_code == 200:
                             repos = repos_response.json()
                             total_stars = sum(repo.get('stargazers_count', 0) for repo in repos)
+                            
+                            # Sort by stars and get top 6 repos
+                            sorted_repos = sorted(repos, key=lambda r: r.get('stargazers_count', 0), reverse=True)
+                            top_repos = [{
+                                'name': repo.get('name'),
+                                'full_name': repo.get('full_name'),
+                                'description': (repo.get('description') or '')[:200],
+                                'url': repo.get('html_url'),
+                                'stars': repo.get('stargazers_count', 0),
+                                'forks': repo.get('forks_count', 0),
+                                'language': repo.get('language'),
+                                'updated_at': repo.get('updated_at'),
+                            } for repo in sorted_repos[:6] if not repo.get('fork')]
+                        
                         profile.github_stars = total_stars
+                        profile.github_top_repos = top_repos
                         
                         # Get contribution stats from events
                         events_response = requests.get(
