@@ -1,0 +1,258 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer Portfolios - Open Build</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Showcase of portfolios built by Open Build developers featuring GitHub contributions, featured repositories, and earned badges.">
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Open Build Developer Portfolios">
+    <meta property="og:description" content="Discover talented developers with verified certifications and community badges.">
+    <meta property="og:image" content="https://www.open.build/assets/img/OPEN-BUILD-LOGO.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'open-blue': '#3B82F6',
+                        'open-green': '#10B981',
+                        'open-purple': '#8B5CF6',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .profile-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .profile-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3); }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen text-white">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 bg-slate-900/90 backdrop-blur-sm z-50 border-b border-slate-700">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="https://www.open.build" class="flex items-center space-x-2">
+                <img src="https://www.open.build/assets/img/OPEN-BUILD-LOGO.png" alt="Open Build" class="h-8">
+                <span class="font-bold text-lg">Open Build</span>
+            </a>
+            <div class="flex items-center space-x-4">
+                <a href="{% url 'onboarding:verification_home' %}" class="text-slate-300 hover:text-white text-sm">Verify Credentials</a>
+                <a href="https://github.com/open-build/portfolio" target="_blank" class="px-4 py-2 bg-open-blue hover:bg-blue-600 rounded-lg text-sm font-medium">
+                    Fork Template
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-24 pb-12">
+        <div class="max-w-6xl mx-auto px-4">
+            <!-- Header -->
+            <div class="text-center mb-12">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">Developer Portfolios</h1>
+                <p class="text-xl text-slate-400 max-w-2xl mx-auto">
+                    Showcase of portfolios built by Open Build developers featuring GitHub contributions, 
+                    featured repositories, and earned badges
+                </p>
+                <div class="flex justify-center gap-4 mt-6">
+                    <a href="https://github.com/open-build/portfolio" target="_blank" 
+                       class="inline-flex items-center px-6 py-3 bg-open-blue hover:bg-blue-600 rounded-lg font-medium">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        Fork Portfolio Template
+                    </a>
+                    <a href="#badges" class="inline-flex items-center px-6 py-3 border border-slate-600 hover:border-slate-500 rounded-lg font-medium">
+                        Learn About Badges
+                    </a>
+                </div>
+            </div>
+
+            <!-- Profiles Grid -->
+            {% if profiles %}
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+                {% for item in profiles %}
+                <a href="{% url 'onboarding:developer_public_profile' item.profile.slug %}" 
+                   class="profile-card bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden block">
+                    <!-- Card Header -->
+                    <div class="h-20 bg-gradient-to-r from-open-blue via-open-purple to-open-green relative">
+                        {% if item.highest_level %}
+                        <span class="absolute top-2 right-2 px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium">
+                            {{ item.highest_level }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="p-5 -mt-10 relative">
+                        <!-- Avatar -->
+                        <div class="mb-4">
+                            {% if item.github_username %}
+                            <img src="https://github.com/{{ item.github_username }}.png" 
+                                 alt="{{ item.developer.first_name }}"
+                                 class="w-20 h-20 rounded-full border-4 border-slate-800 bg-slate-700">
+                            {% else %}
+                            <div class="w-20 h-20 rounded-full border-4 border-slate-800 bg-gradient-to-br from-open-blue to-open-purple flex items-center justify-center text-2xl font-bold">
+                                {{ item.developer.first_name.0 }}{{ item.developer.last_name.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Name & Headline -->
+                        <h3 class="text-lg font-bold mb-1">{{ item.developer.first_name }} {{ item.developer.last_name }}</h3>
+                        <p class="text-slate-400 text-sm mb-4">{{ item.profile.headline|default:"Open Build Developer"|truncatewords:10 }}</p>
+                        
+                        <!-- GitHub Stats -->
+                        {% if item.profile.show_github_stats and item.profile.github_commits %}
+                        <div class="flex items-center space-x-4 text-xs text-slate-400 mb-4">
+                            <span class="flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                                {{ item.profile.github_commits }} commits
+                            </span>
+                            <span>{{ item.profile.github_repos }} repos</span>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Badges -->
+                        {% if item.badges %}
+                        <div class="flex flex-wrap gap-1">
+                            {% for badge in item.badges %}
+                            <span class="text-lg" title="{{ badge.badge.name }}">{{ badge.badge.icon }}</span>
+                            {% endfor %}
+                            {% if item.cert_count %}
+                            <span class="ml-1 px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">
+                                {{ item.cert_count }} cert{{ item.cert_count|pluralize }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-16">
+                <div class="text-6xl mb-4">👋</div>
+                <h2 class="text-2xl font-bold mb-2">No profiles yet</h2>
+                <p class="text-slate-400 mb-6">Be the first to create your Open Build portfolio!</p>
+                <a href="https://github.com/open-build/portfolio" target="_blank" 
+                   class="inline-flex items-center px-6 py-3 bg-open-blue hover:bg-blue-600 rounded-lg font-medium">
+                    Get Started
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- Badges Section -->
+            <section id="badges" class="py-12 border-t border-slate-700">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold mb-4">🏆 Open Build Contribution Badges</h2>
+                    <p class="text-slate-400 max-w-xl mx-auto">
+                        Earn recognition for your contributions to the open source community. 
+                        Every developer starts with their first badge!
+                    </p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                    <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6 text-center">
+                        <div class="text-5xl mb-3">🌟</div>
+                        <h3 class="font-bold mb-2">First Contribution</h3>
+                        <p class="text-slate-400 text-sm">Complete your first GitHub commit or pull request</p>
+                        <span class="inline-block mt-3 px-3 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">Starter Badge</span>
+                    </div>
+                    
+                    <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6 text-center">
+                        <div class="text-5xl mb-3">🚀</div>
+                        <h3 class="font-bold mb-2">Active Contributor</h3>
+                        <p class="text-slate-400 text-sm">Make 10+ commits and contribute regularly</p>
+                        <span class="inline-block mt-3 px-3 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">Growth Badge</span>
+                    </div>
+                    
+                    <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6 text-center">
+                        <div class="text-5xl mb-3">🏆</div>
+                        <h3 class="font-bold mb-2">Open Build Graduate</h3>
+                        <p class="text-slate-400 text-sm">Complete the Open Build development program</p>
+                        <span class="inline-block mt-3 px-3 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">Achievement Badge</span>
+                    </div>
+                    
+                    <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6 text-center">
+                        <div class="text-5xl mb-3">👑</div>
+                        <h3 class="font-bold mb-2">Community Leader</h3>
+                        <p class="text-slate-400 text-sm">Mentor others and lead community projects</p>
+                        <span class="inline-block mt-3 px-3 py-1 bg-purple-500/20 text-purple-400 text-xs rounded-full">Leadership Badge</span>
+                    </div>
+                </div>
+
+                <!-- How to Earn -->
+                <div class="bg-slate-800/30 rounded-xl p-8 border border-slate-700">
+                    <h3 class="text-xl font-bold mb-6 text-center">📋 How to Earn Your First Badge</h3>
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-open-blue rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-3">1</div>
+                            <h4 class="font-semibold mb-2">Fork Our Template</h4>
+                            <p class="text-slate-400 text-sm">Use our portfolio template to create your first repository</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-open-purple rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-3">2</div>
+                            <h4 class="font-semibold mb-2">Make Changes</h4>
+                            <p class="text-slate-400 text-sm">Customize your portfolio and make your first commit</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-open-green rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-3">3</div>
+                            <h4 class="font-semibold mb-2">Get Your Badge</h4>
+                            <p class="text-slate-400 text-sm">Register and receive your first verified badge!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-12">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="grid md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <img src="https://www.open.build/assets/img/OPEN-BUILD-LOGO.png" alt="Open Build" class="h-8">
+                        <span class="font-bold">Open Build</span>
+                    </div>
+                    <p class="text-slate-400 text-sm">Empowering developers to build, learn, and grow together in an open source community.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li><a href="https://www.open.build" class="hover:text-white">Home</a></li>
+                        <li><a href="{% url 'onboarding:all_developer_profiles' %}" class="hover:text-white">Portfolios</a></li>
+                        <li><a href="{% url 'onboarding:verification_home' %}" class="hover:text-white">Verify</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Programs</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li><a href="#" class="hover:text-white">Developer Program</a></li>
+                        <li><a href="#" class="hover:text-white">Mentorship</a></li>
+                        <li><a href="#badges" class="hover:text-white">Badge System</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Contact</h4>
+                    <ul class="space-y-2 text-slate-400 text-sm">
+                        <li>team@open.build</li>
+                        <li>Global Remote</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-slate-800 pt-8 text-center text-slate-500 text-sm">
+                © {% now "Y" %} Open Build. All rights reserved. | Built with ❤️ for the developer community
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

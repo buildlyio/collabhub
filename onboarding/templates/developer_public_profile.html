@@ -1,0 +1,428 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ developer.first_name }} {{ developer.last_name }} - Open Build Developer</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{{ profile.headline|default:developer.bio|truncatewords:30 }}">
+    <meta name="author" content="{{ developer.first_name }} {{ developer.last_name }}">
+    
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:type" content="profile">
+    <meta property="og:title" content="{{ developer.first_name }} {{ developer.last_name }} - Open Build Developer">
+    <meta property="og:description" content="{{ profile.headline|default:'Open Build Certified Developer' }}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:image" content="{% if developer.github_account %}https://github.com/{{ github_username }}.png{% else %}https://www.open.build/assets/img/OPEN-BUILD-LOGO.png{% endif %}">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ developer.first_name }} {{ developer.last_name }}">
+    <meta name="twitter:description" content="{{ profile.headline|default:'Open Build Certified Developer' }}">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'open-blue': '#3B82F6',
+                        'open-green': '#10B981',
+                        'open-purple': '#8B5CF6',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .badge-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .badge-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        .share-btn { transition: all 0.2s; }
+        .share-btn:hover { transform: scale(1.05); }
+        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 5px currentColor; } 50% { box-shadow: 0 0 20px currentColor; } }
+        .verified-badge { animation: pulse-glow 2s infinite; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen text-white">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 bg-slate-900/90 backdrop-blur-sm z-50 border-b border-slate-700">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="https://www.open.build" class="flex items-center space-x-2">
+                <img src="https://www.open.build/assets/img/OPEN-BUILD-LOGO.png" alt="Open Build" class="h-8">
+                <span class="font-bold text-lg">Open Build</span>
+            </a>
+            <div class="flex items-center space-x-4">
+                <a href="{% url 'onboarding:verification_home' %}" class="text-slate-300 hover:text-white text-sm">Verify Credentials</a>
+                <a href="https://www.open.build/portfolios" class="text-slate-300 hover:text-white text-sm">All Portfolios</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-20 pb-12">
+        <div class="max-w-6xl mx-auto px-4">
+            <!-- Profile Header Card -->
+            <div class="bg-slate-800/50 rounded-2xl border border-slate-700 overflow-hidden mb-8">
+                <div class="bg-gradient-to-r from-open-blue via-open-purple to-open-green h-32 relative">
+                    {% if highest_certification %}
+                    <div class="absolute top-4 right-4 flex items-center space-x-2">
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/20 backdrop-blur-sm">
+                            {{ highest_certification.certification_level.get_level_type_display }}
+                        </span>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/20 backdrop-blur-sm">
+                            Open Build Certified
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="px-8 pb-8 -mt-16 relative">
+                    <!-- Profile Picture -->
+                    <div class="flex flex-col md:flex-row md:items-end gap-6">
+                        <div class="relative">
+                            {% if github_username %}
+                            <img src="https://github.com/{{ github_username }}.png" 
+                                 alt="{{ developer.first_name }}" 
+                                 class="w-32 h-32 rounded-full border-4 border-slate-800 shadow-xl bg-slate-700">
+                            {% else %}
+                            <div class="w-32 h-32 rounded-full border-4 border-slate-800 shadow-xl bg-gradient-to-br from-open-blue to-open-purple flex items-center justify-center text-4xl font-bold">
+                                {{ developer.first_name.0 }}{{ developer.last_name.0 }}
+                            </div>
+                            {% endif %}
+                            {% if is_verified %}
+                            <div class="absolute -bottom-1 -right-1 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center border-4 border-slate-800 verified-badge" title="Verified Developer">
+                                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="flex-1">
+                            <h1 class="text-3xl font-bold mb-1">{{ developer.first_name }} {{ developer.last_name }}</h1>
+                            <p class="text-slate-400 text-lg mb-3">{{ profile.headline|default:"Open Build Developer" }}</p>
+                            
+                            <!-- Social Links -->
+                            <div class="flex flex-wrap gap-3">
+                                {% if developer.github_account %}
+                                <a href="{{ developer.github_account }}" target="_blank" class="flex items-center space-x-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-full text-sm transition">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                                    <span>GitHub</span>
+                                </a>
+                                {% endif %}
+                                {% if developer.linkedin %}
+                                <a href="{{ developer.linkedin }}" target="_blank" class="flex items-center space-x-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-full text-sm transition">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                                    <span>LinkedIn</span>
+                                </a>
+                                {% endif %}
+                                {% if profile.website %}
+                                <a href="{{ profile.website }}" target="_blank" class="flex items-center space-x-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-full text-sm transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                                    <span>Website</span>
+                                </a>
+                                {% endif %}
+                                {% if profile.show_email and developer.email %}
+                                <a href="mailto:{{ developer.email }}" class="flex items-center space-x-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-full text-sm transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                    <span>{{ developer.email }}</span>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Share Button -->
+                        <div class="flex items-center space-x-2">
+                            <button onclick="copyProfileLink()" class="share-btn flex items-center space-x-2 px-4 py-2 bg-open-blue hover:bg-blue-600 rounded-lg text-sm font-medium">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                                <span>Share Profile</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Left Column: Stats & Info -->
+                <div class="space-y-6">
+                    <!-- GitHub Stats -->
+                    {% if profile.show_github_stats and github_username %}
+                    <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
+                        <h3 class="flex items-center text-lg font-semibold mb-4">
+                            <svg class="w-5 h-5 mr-2 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                            GitHub Stats
+                        </h3>
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <div class="text-2xl font-bold text-open-blue">{{ profile.github_commits|default:"—" }}</div>
+                                <div class="text-xs text-slate-400">Commits</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-open-green">{{ profile.github_repos|default:"—" }}</div>
+                                <div class="text-xs text-slate-400">Repos</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-open-purple">{{ profile.github_prs|default:"—" }}</div>
+                                <div class="text-xs text-slate-400">PRs</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Bio -->
+                    {% if developer.bio %}
+                    <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
+                        <h3 class="text-lg font-semibold mb-3">About</h3>
+                        <p class="text-slate-300 text-sm leading-relaxed">{{ developer.bio }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Location & Info -->
+                    {% if profile.location or developer.experience_years %}
+                    <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
+                        <h3 class="text-lg font-semibold mb-3">Info</h3>
+                        <div class="space-y-2 text-sm">
+                            {% if profile.location %}
+                            <div class="flex items-center text-slate-300">
+                                <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                {{ profile.location }}
+                            </div>
+                            {% endif %}
+                            {% if developer.experience_years %}
+                            <div class="flex items-center text-slate-300">
+                                <svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                {{ developer.experience_years }}+ years experience
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Middle & Right Columns -->
+                <div class="md:col-span-2 space-y-6">
+                    <!-- Achievements / Badges -->
+                    {% if badges and profile.show_badges %}
+                    <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="flex items-center text-lg font-semibold">
+                                <svg class="w-5 h-5 mr-2 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                Achievements
+                            </h3>
+                            <span class="text-sm text-slate-400">{{ badges|length }} badge{{ badges|length|pluralize }}</span>
+                        </div>
+                        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {% for dev_badge in badges %}
+                            <div class="badge-card bg-slate-700/50 rounded-lg p-4 border border-slate-600 hover:border-slate-500 cursor-pointer group" 
+                                 onclick="showBadgeModal('{{ dev_badge.badge.key }}', '{{ dev_badge.badge.icon }}', '{{ dev_badge.badge.name }}', '{{ dev_badge.badge.description|escapejs }}', '{{ dev_badge.awarded_at|date:"M d, Y" }}', '{{ dev_badge.verification_hash }}')">
+                                <div class="flex items-center space-x-3">
+                                    <div class="text-3xl">{{ dev_badge.badge.icon }}</div>
+                                    <div>
+                                        <h4 class="font-semibold text-sm">{{ dev_badge.badge.name }}</h4>
+                                        <p class="text-xs text-slate-400">{{ dev_badge.awarded_at|date:"M Y" }}</p>
+                                    </div>
+                                </div>
+                                <div class="mt-2 flex items-center justify-between">
+                                    <span class="text-xs px-2 py-0.5 rounded-full" style="background-color: {{ dev_badge.badge.color }}20; color: {{ dev_badge.badge.color }};">
+                                        {{ dev_badge.badge.get_badge_type_display }}
+                                    </span>
+                                    <span class="text-xs text-slate-500 group-hover:text-open-blue">
+                                        Click to verify →
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Certifications -->
+                    {% if certifications and profile.show_certifications %}
+                    <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="flex items-center text-lg font-semibold">
+                                <svg class="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                                Certifications
+                            </h3>
+                            <span class="text-sm text-slate-400">{{ certifications|length }} certification{{ certifications|length|pluralize }}</span>
+                        </div>
+                        <div class="space-y-4">
+                            {% for cert in certifications %}
+                            <div class="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg border border-slate-600 hover:border-slate-500 transition">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold" 
+                                         style="background-color: {{ cert.certification_level.badge_color }};">
+                                        L{{ cert.certification_level.level_type|slice:"0:1"|upper }}
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold">{{ cert.certification_level.name }}</h4>
+                                        <p class="text-sm text-slate-400">Issued {{ cert.issued_at|date:"M d, Y" }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    {% if cert.is_valid %}
+                                    <span class="px-2 py-1 bg-green-500/20 text-green-400 text-xs font-medium rounded-full">✓ Valid</span>
+                                    {% else %}
+                                    <span class="px-2 py-1 bg-red-500/20 text-red-400 text-xs font-medium rounded-full">Expired</span>
+                                    {% endif %}
+                                    <a href="{% url 'onboarding:verify_certificate' cert.certificate_hash %}" target="_blank" 
+                                       class="text-open-blue hover:text-blue-400 text-sm flex items-center">
+                                        <span>Verify</span>
+                                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Featured Project -->
+                    {% if profile.featured_project_url %}
+                    <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
+                        <h3 class="flex items-center text-lg font-semibold mb-4">
+                            <svg class="w-5 h-5 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                            Featured Repository
+                        </h3>
+                        <a href="{{ profile.featured_project_url }}" target="_blank" 
+                           class="block p-4 bg-slate-700/50 rounded-lg border border-slate-600 hover:border-open-blue transition group">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <h4 class="font-semibold text-open-blue group-hover:text-blue-400">{{ profile.featured_project_url|cut:"https://github.com/" }}</h4>
+                                    {% if profile.featured_project_description %}
+                                    <p class="text-sm text-slate-400 mt-1">{{ profile.featured_project_description }}</p>
+                                    {% endif %}
+                                </div>
+                                <svg class="w-5 h-5 text-slate-400 group-hover:text-open-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                            </div>
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    <!-- Skills -->
+                    {% if profile.show_skills and skills %}
+                    <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
+                        <h3 class="flex items-center text-lg font-semibold mb-4">
+                            <svg class="w-5 h-5 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                            Skills
+                        </h3>
+                        <div class="flex flex-wrap gap-2">
+                            {% for skill in skills %}
+                            <span class="px-3 py-1 bg-slate-700 text-slate-300 rounded-full text-sm">{{ skill }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Badge Detail Modal -->
+    <div id="badgeModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-2xl border border-slate-700 max-w-md w-full mx-4 shadow-2xl">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold" id="modalBadgeName">Badge</h3>
+                    <button onclick="closeBadgeModal()" class="text-slate-400 hover:text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="text-center mb-6">
+                    <div class="text-6xl mb-4" id="modalBadgeIcon">🌟</div>
+                    <p class="text-slate-300" id="modalBadgeDesc">Description</p>
+                    <p class="text-sm text-slate-500 mt-2">Awarded: <span id="modalBadgeDate"></span></p>
+                </div>
+                
+                <!-- Verification -->
+                <div class="bg-slate-700/50 rounded-lg p-4 mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-slate-400">Verification Hash</span>
+                        <button onclick="copyBadgeHash()" class="text-xs text-open-blue hover:text-blue-400">Copy</button>
+                    </div>
+                    <code class="text-xs text-slate-300 break-all block" id="modalBadgeHash"></code>
+                </div>
+                
+                <!-- Share Options -->
+                <div class="border-t border-slate-700 pt-4">
+                    <p class="text-sm text-slate-400 mb-3">Share this achievement</p>
+                    <div class="flex justify-center space-x-3">
+                        <button onclick="shareBadgeTwitter()" class="p-3 bg-slate-700 hover:bg-blue-500 rounded-full transition" title="Share on Twitter">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
+                        </button>
+                        <button onclick="shareBadgeLinkedIn()" class="p-3 bg-slate-700 hover:bg-blue-700 rounded-full transition" title="Share on LinkedIn">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                        </button>
+                        <a id="modalVerifyLink" href="#" target="_blank" class="p-3 bg-slate-700 hover:bg-green-600 rounded-full transition" title="Verify Badge">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-8 text-center text-slate-500 text-sm">
+        <p>Powered by <a href="https://www.open.build" class="text-open-blue hover:text-blue-400">Open Build</a></p>
+        <p class="mt-2">Profile verification available at <a href="{% url 'onboarding:verification_home' %}" class="text-open-blue hover:text-blue-400">collab.buildly.io/onboarding/verify</a></p>
+    </footer>
+
+    <script>
+        let currentBadgeData = {};
+        
+        function showBadgeModal(key, icon, name, desc, date, hash) {
+            currentBadgeData = { key, icon, name, desc, date, hash };
+            document.getElementById('modalBadgeIcon').textContent = icon;
+            document.getElementById('modalBadgeName').textContent = name;
+            document.getElementById('modalBadgeDesc').textContent = desc;
+            document.getElementById('modalBadgeDate').textContent = date;
+            document.getElementById('modalBadgeHash').textContent = hash;
+            document.getElementById('modalVerifyLink').href = `/onboarding/verify/badge/${hash}/`;
+            document.getElementById('badgeModal').classList.remove('hidden');
+            document.getElementById('badgeModal').classList.add('flex');
+        }
+        
+        function closeBadgeModal() {
+            document.getElementById('badgeModal').classList.add('hidden');
+            document.getElementById('badgeModal').classList.remove('flex');
+        }
+        
+        function copyProfileLink() {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert('Profile link copied to clipboard!');
+            });
+        }
+        
+        function copyBadgeHash() {
+            navigator.clipboard.writeText(currentBadgeData.hash).then(() => {
+                alert('Verification hash copied!');
+            });
+        }
+        
+        function shareBadgeTwitter() {
+            const text = `I earned the ${currentBadgeData.name} badge on Open Build! 🎉`;
+            const url = `${window.location.origin}/onboarding/verify/badge/${currentBadgeData.hash}/`;
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+        }
+        
+        function shareBadgeLinkedIn() {
+            const url = `${window.location.origin}/onboarding/verify/badge/${currentBadgeData.hash}/`;
+            window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
+        }
+        
+        // Close modal on escape or outside click
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeBadgeModal();
+        });
+        document.getElementById('badgeModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('badgeModal')) closeBadgeModal();
+        });
+    </script>
+</body>
+</html>

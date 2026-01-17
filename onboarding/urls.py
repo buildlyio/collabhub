@@ -105,11 +105,18 @@ urlpatterns = [
     path('admin/certifications/', views.admin_certification_levels, name='admin_certification_levels'),
     path('admin/certification/create/', views.admin_certification_create, name='admin_certification_create'),
     path('admin/developer/<int:developer_id>/certify/', views.admin_issue_certificate, name='admin_issue_certificate'),
+    path('admin/developer/<int:developer_id>/award-badge/', views.admin_award_badge, name='admin_award_badge'),
     
     # Verification (Public)
     path('verify/', views.verification_home, name='verification_home'),
     path('verify/contract/<str:contract_hash>/', views.verify_contract, name='verify_contract'),
     path('verify/certificate/<str:certificate_hash>/', views.verify_certificate, name='verify_certificate'),
+    path('verify/badge/<str:badge_hash>/', views.verify_badge, name='verify_badge'),
+    
+    # Public Developer Profiles (open.build style)
+    path('profile/<slug:slug>/', views.developer_public_profile, name='developer_public_profile'),
+    path('profiles/', views.all_developer_profiles, name='all_developer_profiles'),
+    path('my-profile/', views.manage_public_profile, name='manage_public_profile'),
     
     # Notifications
     path('notifications/', views.notification_center, name='notification_center'),

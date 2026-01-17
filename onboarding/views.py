@@ -2,6 +2,7 @@
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.models import User
 from django.views.generic import CreateView
@@ -5581,3 +5582,286 @@ def community_newsletters(request):
     return render(request, 'community_newsletters.html', {
         'newsletters': newsletters,
     })
+
+
+# ==================== PUBLIC PROFILE & BADGE VERIFICATION ====================
+
+def developer_public_profile(request, slug):
+    """
+    Public profile page matching open.build portfolio style.
+    Shows badges, certifications, GitHub stats, and achievements.
+    """
+    from .models import (
+        DeveloperPublicProfile, TeamMember, DeveloperBadge, 
+        DeveloperCertification, DeveloperSkill
+    )
+    
+    # Get profile by slug
+    profile = get_object_or_404(DeveloperPublicProfile, slug=slug, is_public=True)
+    developer = profile.developer
+    
+    # Extract GitHub username from URL
+    github_username = None
+    if developer.github_account:
+        # Handle various GitHub URL formats
+        github_url = developer.github_account.rstrip('/')
+        if 'github.com/' in github_url:
+            github_username = github_url.split('github.com/')[-1].split('/')[0]
+    
+    # Get badges if profile allows
+    badges = []
+    if profile.show_badges:
+        badges = DeveloperBadge.objects.filter(
+            developer=developer
+        ).select_related('badge').order_by('-awarded_at')
+    
+    # Get certifications if profile allows
+    certifications = []
+    highest_certification = None
+    if profile.show_certifications:
+        certifications = DeveloperCertification.objects.filter(
+            developer=developer,
+            is_revoked=False
+        ).select_related('certification_level').order_by('-issued_at')
+        
+        # Find highest certification level
+        if certifications:
+            level_order = {'junior': 1, 'intermediate': 2, 'senior': 3, 'expert': 4, 'specialty': 5}
+            highest_certification = max(
+                certifications, 
+                key=lambda c: level_order.get(c.certification_level.level_type, 0)
+            )
+    
+    # Get skills if profile allows
+    skills = []
+    if profile.show_skills:
+        dev_skills = DeveloperSkill.objects.filter(
+            developer=developer
+        ).select_related('skill').order_by('-proficiency')[:20]
+        skills = [ds.skill.name for ds in dev_skills]
+    
+    # Check if developer is verified (has at least one valid certification)
+    is_verified = any(c.is_valid for c in certifications) if certifications else False
+    
+    context = {
+        'profile': profile,
+        'developer': developer,
+        'github_username': github_username,
+        'badges': badges,
+        'certifications': certifications,
+        'highest_certification': highest_certification,
+        'skills': skills,
+        'is_verified': is_verified,
+    }
+    
+    return render(request, 'developer_public_profile.html', context)
+
+
+def verify_badge(request, badge_hash):
+    """
+    Public endpoint to verify a badge by its verification hash.
+    Shows badge details and developer info with social sharing options.
+    """
+    from .models import DeveloperBadge, DeveloperPublicProfile
+    
+    # Find badge by hash
+    developer_badge = get_object_or_404(DeveloperBadge, verification_hash=badge_hash)
+    badge = developer_badge.badge
+    developer = developer_badge.developer
+    
+    # Verify the hash is correct (regenerate and compare)
+    import hashlib
+    expected_hash = hashlib.sha256(
+        f"{developer.id}-{badge.id}-{developer_badge.awarded_at}".encode()
+    ).hexdigest()
+    is_valid = (badge_hash == expected_hash) or (badge_hash == developer_badge.verification_hash)
+    
+    # Get profile slug for links
+    try:
+        profile = developer.public_profile
+        profile_slug = profile.slug
+    except DeveloperPublicProfile.DoesNotExist:
+        # Create profile if doesn't exist
+        from django.utils.text import slugify
+        profile_slug = slugify(f"{developer.first_name}-{developer.last_name}")
+    
+    # Extract GitHub username
+    github_username = None
+    if developer.github_account:
+        github_url = developer.github_account.rstrip('/')
+        if 'github.com/' in github_url:
+            github_username = github_url.split('github.com/')[-1].split('/')[0]
+    
+    context = {
+        'developer_badge': developer_badge,
+        'badge': badge,
+        'developer': developer,
+        'is_valid': is_valid,
+        'verification_hash': badge_hash,
+        'profile_slug': profile_slug,
+        'github_username': github_username,
+    }
+    
+    return render(request, 'verify_badge.html', context)
+
+
+def all_developer_profiles(request):
+    """
+    Public page listing all public developer profiles.
+    Matches open.build/portfolios style.
+    """
+    from .models import DeveloperPublicProfile, DeveloperBadge, DeveloperCertification
+    
+    profiles = DeveloperPublicProfile.objects.filter(
+        is_public=True
+    ).select_related('developer').order_by('-created_at')
+    
+    # Annotate with badge counts and certification info
+    profile_data = []
+    for profile in profiles:
+        dev = profile.developer
+        badges = DeveloperBadge.objects.filter(developer=dev).select_related('badge')[:3]
+        certs = DeveloperCertification.objects.filter(
+            developer=dev, is_revoked=False
+        ).select_related('certification_level')
+        
+        # Get highest cert level
+        highest_level = None
+        if certs:
+            level_order = {'junior': 1, 'intermediate': 2, 'senior': 3, 'expert': 4, 'specialty': 5}
+            highest_cert = max(certs, key=lambda c: level_order.get(c.certification_level.level_type, 0))
+            highest_level = highest_cert.certification_level.get_level_type_display()
+        
+        # Extract GitHub username
+        github_username = None
+        if dev.github_account:
+            github_url = dev.github_account.rstrip('/')
+            if 'github.com/' in github_url:
+                github_username = github_url.split('github.com/')[-1].split('/')[0]
+        
+        profile_data.append({
+            'profile': profile,
+            'developer': dev,
+            'github_username': github_username,
+            'badges': badges,
+            'highest_level': highest_level,
+            'cert_count': certs.count(),
+        })
+    
+    context = {
+        'profiles': profile_data,
+    }
+    
+    return render(request, 'all_developer_profiles.html', context)
+
+
+@login_required
+def manage_public_profile(request):
+    """
+    Allow developers to manage their public profile settings.
+    """
+    from .models import DeveloperPublicProfile, TeamMember
+    
+    try:
+        team_member = TeamMember.objects.get(user=request.user)
+    except TeamMember.DoesNotExist:
+        messages.error(request, "You need to complete registration first.")
+        return redirect('onboarding:register')
+    
+    # Get or create public profile
+    profile, created = DeveloperPublicProfile.objects.get_or_create(
+        developer=team_member,
+        defaults={
+            'is_public': True,
+            'show_github_stats': True,
+            'show_certifications': True,
+            'show_badges': True,
+            'show_skills': True,
+        }
+    )
+    
+    if request.method == 'POST':
+        # Update profile settings
+        profile.is_public = request.POST.get('is_public') == 'on'
+        profile.show_email = request.POST.get('show_email') == 'on'
+        profile.show_github_stats = request.POST.get('show_github_stats') == 'on'
+        profile.show_certifications = request.POST.get('show_certifications') == 'on'
+        profile.show_badges = request.POST.get('show_badges') == 'on'
+        profile.show_projects = request.POST.get('show_projects') == 'on'
+        profile.show_skills = request.POST.get('show_skills') == 'on'
+        
+        profile.headline = request.POST.get('headline', '')[:255]
+        profile.location = request.POST.get('location', '')[:100]
+        profile.website = request.POST.get('website', '')
+        profile.twitter = request.POST.get('twitter', '')[:100]
+        profile.featured_project_url = request.POST.get('featured_project_url', '')
+        profile.featured_project_description = request.POST.get('featured_project_description', '')[:255]
+        
+        profile.save()
+        messages.success(request, "Your public profile has been updated!")
+        return redirect('onboarding:manage_public_profile')
+    
+    # Get preview data
+    from .models import DeveloperBadge, DeveloperCertification
+    badges = DeveloperBadge.objects.filter(developer=team_member).select_related('badge')[:5]
+    certs = DeveloperCertification.objects.filter(
+        developer=team_member, is_revoked=False
+    ).select_related('certification_level')[:5]
+    
+    context = {
+        'profile': profile,
+        'developer': team_member,
+        'badges': badges,
+        'certifications': certs,
+        'profile_url': request.build_absolute_uri(f'/onboarding/profile/{profile.slug}/'),
+    }
+    
+    return render(request, 'manage_public_profile.html', context)
+
+
+@login_required
+@staff_member_required
+def admin_award_badge(request, developer_id):
+    """
+    Admin view to award a badge to a developer.
+    """
+    from .models import TeamMember, CommunityBadge, DeveloperBadge
+    
+    developer = get_object_or_404(TeamMember, id=developer_id)
+    
+    if request.method == 'POST':
+        badge_id = request.POST.get('badge_id')
+        notes = request.POST.get('notes', '')
+        
+        try:
+            badge = CommunityBadge.objects.get(id=badge_id, is_active=True)
+            
+            # Check if already awarded
+            if DeveloperBadge.objects.filter(developer=developer, badge=badge).exists():
+                messages.warning(request, f"{developer.first_name} already has the {badge.name} badge.")
+            else:
+                DeveloperBadge.objects.create(
+                    developer=developer,
+                    badge=badge,
+                    awarded_by=request.user,
+                    notes=notes,
+                )
+                messages.success(request, f"Awarded {badge.icon} {badge.name} to {developer.first_name}!")
+        except CommunityBadge.DoesNotExist:
+            messages.error(request, "Badge not found.")
+        
+        return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
+    
+    # GET - show available badges
+    available_badges = CommunityBadge.objects.filter(is_active=True)
+    existing_badge_ids = DeveloperBadge.objects.filter(
+        developer=developer
+    ).values_list('badge_id', flat=True)
+    
+    context = {
+        'developer': developer,
+        'badges': available_badges,
+        'existing_badge_ids': list(existing_badge_ids),
+    }
+    
+    return render(request, 'admin_award_badge.html', context)

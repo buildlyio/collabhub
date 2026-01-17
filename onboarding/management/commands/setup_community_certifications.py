@@ -79,6 +79,39 @@ class Command(BaseCommand):
         CertifiedReviewer.objects.all().delete()
         self.stdout.write('  ✓ Cleared existing data')
 
+    def get_or_create_resource(self, title, link, descr, member_type):
+        """
+        Safely get or create a resource, handling duplicates.
+        If duplicates exist, use the first one and optionally clean up extras.
+        """
+        existing = Resource.objects.filter(title=title)
+        if existing.count() > 1:
+            # Duplicates exist - use the first one
+            resource = existing.first()
+            # Update with current values
+            resource.link = link
+            resource.descr = descr
+            resource.team_member_type = member_type
+            resource.save()
+            return resource, False
+        elif existing.count() == 1:
+            resource = existing.first()
+            # Update if needed
+            resource.link = link
+            resource.descr = descr
+            resource.team_member_type = member_type
+            resource.save()
+            return resource, False
+        else:
+            # Create new
+            resource = Resource.objects.create(
+                title=title,
+                link=link,
+                descr=descr,
+                team_member_type=member_type
+            )
+            return resource, True
+
     def setup_certification_tracks(self):
         """Create the three certification tracks"""
         self.stdout.write('Setting up certification tracks...')
@@ -221,10 +254,7 @@ class Command(BaseCommand):
         ]
         
         for title, link, descr, member_type in resources_l1_data:
-            resource, created = Resource.objects.get_or_create(
-                title=title,
-                defaults={'link': link, 'descr': descr, 'team_member_type': member_type}
-            )
+            resource, created = self.get_or_create_resource(title, link, descr, member_type)
             l1_resources.append(resource)
             self.stdout.write(f'    ✓ Resource: {title}')
         
@@ -334,10 +364,7 @@ class Command(BaseCommand):
         ]
         
         for title, link, descr, member_type in resources_l2_data:
-            resource, created = Resource.objects.get_or_create(
-                title=title,
-                defaults={'link': link, 'descr': descr, 'team_member_type': member_type}
-            )
+            resource, created = self.get_or_create_resource(title, link, descr, member_type)
             l2_resources.append(resource)
             self.stdout.write(f'    ✓ Resource: {title}')
         
@@ -434,10 +461,7 @@ class Command(BaseCommand):
         ]
         
         for title, link, descr, member_type in resources_l3_data:
-            resource, created = Resource.objects.get_or_create(
-                title=title,
-                defaults={'link': link, 'descr': descr, 'team_member_type': member_type}
-            )
+            resource, created = self.get_or_create_resource(title, link, descr, member_type)
             l3_resources.append(resource)
             self.stdout.write(f'    ✓ Resource: {title}')
         
@@ -535,10 +559,7 @@ class Command(BaseCommand):
         ]
         
         for title, link, descr, member_type in resources_l1_data:
-            resource, created = Resource.objects.get_or_create(
-                title=title,
-                defaults={'link': link, 'descr': descr, 'team_member_type': member_type}
-            )
+            resource, created = self.get_or_create_resource(title, link, descr, member_type)
             l1_resources.append(resource)
             self.stdout.write(f'    ✓ Resource: {title}')
         
@@ -627,10 +648,7 @@ class Command(BaseCommand):
         ]
         
         for title, link, descr, member_type in resources_l2_data:
-            resource, created = Resource.objects.get_or_create(
-                title=title,
-                defaults={'link': link, 'descr': descr, 'team_member_type': member_type}
-            )
+            resource, created = self.get_or_create_resource(title, link, descr, member_type)
             l2_resources.append(resource)
             self.stdout.write(f'    ✓ Resource: {title}')
         
@@ -726,10 +744,7 @@ class Command(BaseCommand):
         ]
         
         for title, link, descr, member_type in resources_l3_data:
-            resource, created = Resource.objects.get_or_create(
-                title=title,
-                defaults={'link': link, 'descr': descr, 'team_member_type': member_type}
-            )
+            resource, created = self.get_or_create_resource(title, link, descr, member_type)
             l3_resources.append(resource)
             self.stdout.write(f'    ✓ Resource: {title}')
         
@@ -827,10 +842,7 @@ class Command(BaseCommand):
         ]
         
         for title, link, descr, member_type in resources_l1_data:
-            resource, created = Resource.objects.get_or_create(
-                title=title,
-                defaults={'link': link, 'descr': descr, 'team_member_type': member_type}
-            )
+            resource, created = self.get_or_create_resource(title, link, descr, member_type)
             l1_resources.append(resource)
             self.stdout.write(f'    ✓ Resource: {title}')
         
@@ -919,10 +931,7 @@ class Command(BaseCommand):
         ]
         
         for title, link, descr, member_type in resources_l2_data:
-            resource, created = Resource.objects.get_or_create(
-                title=title,
-                defaults={'link': link, 'descr': descr, 'team_member_type': member_type}
-            )
+            resource, created = self.get_or_create_resource(title, link, descr, member_type)
             l2_resources.append(resource)
             self.stdout.write(f'    ✓ Resource: {title}')
         
@@ -1018,10 +1027,7 @@ class Command(BaseCommand):
         ]
         
         for title, link, descr, member_type in resources_l3_data:
-            resource, created = Resource.objects.get_or_create(
-                title=title,
-                defaults={'link': link, 'descr': descr, 'team_member_type': member_type}
-            )
+            resource, created = self.get_or_create_resource(title, link, descr, member_type)
             l3_resources.append(resource)
             self.stdout.write(f'    ✓ Resource: {title}')
         
