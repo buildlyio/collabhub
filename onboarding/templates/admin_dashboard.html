@@ -83,8 +83,8 @@
         </a>
     </div>
 
-    <!-- Newsletter Action Card (Superuser only) -->
-    {% if user.is_superuser %}
+    <!-- Newsletter Action Card (Staff only) -->
+    {% if user.is_staff %}
     <div class="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
         <a href="{% url 'onboarding:admin_community_newsletter' %}" 
            class="block bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg p-6 hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md">

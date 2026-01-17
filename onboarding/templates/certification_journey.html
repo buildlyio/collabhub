@@ -12,10 +12,18 @@
                 <h1 class="text-3xl font-bold text-gray-900">🎯 Certification Journey</h1>
                 <p class="text-gray-600 mt-2">Choose a track and progress through certification levels at your own pace</p>
             </div>
-            <a href="{% url 'onboarding:developer_certificates' %}" 
-               class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
-                ← My Certificates
-            </a>
+            <div class="flex items-center gap-3">
+                {% if user.is_staff %}
+                <a href="{% url 'onboarding:invite_to_certification' %}" 
+                   class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex items-center gap-2">
+                    <span>✉️</span> Invite Developer
+                </a>
+                {% endif %}
+                <a href="{% url 'onboarding:developer_certificates' %}" 
+                   class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
+                    ← My Certificates
+                </a>
+            </div>
         </div>
     </div>
 

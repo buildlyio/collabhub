@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_title %}Invite Developer to Certification{% endblock %}
+
+{% block page_content %}
+<div class="max-w-4xl mx-auto py-8 px-4">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">✉️ Invite to Certification</h1>
+                <p class="text-gray-600 mt-2">Send personalized invitations to developers who haven't started certifications</p>
+            </div>
+            <a href="{% url 'onboarding:certification_journey' %}" 
+               class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
+                ← Back to Certifications
+            </a>
+        </div>
+    </div>
+
+    <!-- Invite Form Card -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Send Invitation</h2>
+        
+        {% if available_developers %}
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Developer Selection -->
+            <div>
+                <label for="developer_id" class="block text-sm font-medium text-gray-700 mb-2">
+                    Select Developer <span class="text-red-500">*</span>
+                </label>
+                <select name="developer_id" id="developer_id" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">-- Choose a developer --</option>
+                    {% for developer in available_developers %}
+                    <option value="{{ developer.id }}">
+                        {{ developer.first_name }} {{ developer.last_name }} ({{ developer.email }})
+                        {% if developer.team_member_type %}
+                         - {{ developer.get_team_member_type_display }}
+                        {% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+                <p class="mt-1 text-sm text-gray-500">
+                    Only showing approved developers who haven't started any certification yet
+                </p>
+            </div>
+            
+            <!-- Track Suggestion (Optional) -->
+            <div>
+                <label for="track_id" class="block text-sm font-medium text-gray-700 mb-2">
+                    Suggest a Track (Optional)
+                </label>
+                <select name="track_id" id="track_id"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">-- No specific recommendation --</option>
+                    {% for track in tracks %}
+                    <option value="{{ track.id }}">
+                        {{ track.icon }} {{ track.name }} - {{ track.description|truncatewords:10 }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <p class="mt-1 text-sm text-gray-500">
+                    If you have a track recommendation based on their skills, select it here
+                </p>
+            </div>
+            
+            <!-- Personal Message -->
+            <div>
+                <label for="personal_message" class="block text-sm font-medium text-gray-700 mb-2">
+                    Personal Message (Optional)
+                </label>
+                <textarea name="personal_message" id="personal_message" rows="4"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          placeholder="Add a personal touch to your invitation...
+
+Example: 'Hi! I noticed your great work on the recent project. I think you'd be a great fit for the Backend certification track!'"></textarea>
+                <p class="mt-1 text-sm text-gray-500">
+                    This message will be included in the invitation email
+                </p>
+            </div>
+            
+            <!-- Preview -->
+            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <h3 class="font-semibold text-gray-700 mb-2">📧 Email Preview</h3>
+                <div class="text-sm text-gray-600 space-y-2">
+                    <p><strong>Subject:</strong> 🎯 You're Invited to Start Your Buildly Certification!</p>
+                    <p class="text-xs text-gray-500">The email includes information about certification benefits, available tracks, and a link to get started.</p>
+                </div>
+            </div>
+            
+            <!-- Submit Button -->
+            <div class="flex justify-end">
+                <button type="submit"
+                        class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                    ✉️ Send Invitation
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <div class="text-center py-8">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-3xl">🎉</span>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">All Developers Invited!</h3>
+            <p class="text-gray-600">
+                All approved developers have already started their certification journey.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Recent Invitations -->
+    {% if recent_invitations %}
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-gray-900">📋 Recent Invitations</h2>
+            <p class="text-sm text-gray-600 mt-1">Last 10 invitations sent</p>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Developer</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Track</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sent</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for invitation in recent_invitations %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
+                                    <span class="text-indigo-700 font-semibold text-sm">
+                                        {{ invitation.developer.first_name|slice:":1" }}{{ invitation.developer.last_name|slice:":1" }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-900">
+                                        {{ invitation.developer.first_name }} {{ invitation.developer.last_name }}
+                                    </div>
+                                    <div class="text-sm text-gray-500">{{ invitation.developer.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if invitation.suggested_track %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full" 
+                                  style="background-color: {{ invitation.suggested_track.color }}15; color: {{ invitation.suggested_track.color }};">
+                                {{ invitation.suggested_track.icon }} {{ invitation.suggested_track.name }}
+                            </span>
+                            {% else %}
+                            <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {{ invitation.sent_at|timesince }} ago
+                            <div class="text-xs text-gray-400">
+                                by {{ invitation.invited_by.first_name|default:invitation.invited_by.username }}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if invitation.status == 'sent' %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                Sent
+                            </span>
+                            {% elif invitation.status == 'opened' %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                                Opened
+                            </span>
+                            {% elif invitation.status == 'started' %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                                Started
+                            </span>
+                            {% else %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                                {{ invitation.get_status_display }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if invitation.email_sent %}
+                            <span class="text-green-600" title="Email sent successfully">✓ Sent</span>
+                            {% else %}
+                            <span class="text-red-600" title="{{ invitation.email_error }}">✗ Failed</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Stats Summary -->
+    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
+        <h3 class="text-lg font-bold text-blue-900 mb-3">📊 Quick Stats</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-blue-800">
+            <div class="text-center">
+                <span class="text-3xl font-bold text-blue-600">{{ available_developers|length }}</span>
+                <p class="mt-1">Developers to Invite</p>
+            </div>
+            <div class="text-center">
+                <span class="text-3xl font-bold text-blue-600">{{ tracks|length }}</span>
+                <p class="mt-1">Active Tracks</p>
+            </div>
+            <div class="text-center">
+                <span class="text-3xl font-bold text-blue-600">{{ recent_invitations|length }}</span>
+                <p class="mt-1">Recent Invitations</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

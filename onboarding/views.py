@@ -263,7 +263,7 @@ def upload_resource(request):
         form = ResourceForm()
     return render(request, 'upload_resource.html', {'form': form})
 
-@user_passes_test(lambda u: u.is_superuser)
+@login_required
 def resource_list(request):
     from django.db.models import Q
     
@@ -308,7 +308,7 @@ def resource_list(request):
     })
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def resource_create(request):
     if request.method == 'POST':
         team_member_type = request.POST.get('team_member_type')
@@ -334,7 +334,7 @@ def resource_create(request):
     })
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def resource_edit(request, resource_id):
     resource = get_object_or_404(Resource, id=resource_id)
     
@@ -359,7 +359,7 @@ def resource_edit(request, resource_id):
     })
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def resource_delete(request, resource_id):
     resource = get_object_or_404(Resource, id=resource_id)
     
@@ -782,7 +782,7 @@ def assessment_complete(request):
 # ADMIN VIEWS - Dashboard, Reports, and Management
 # ============================================================================
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_assessment_reports(request):
     """List all assessment submissions with filtering and search"""
     # Get filter parameters
@@ -865,7 +865,7 @@ def admin_assessment_reports(request):
     return render(request, 'admin_assessment_reports.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_assessment_review(request, team_member_id):
     """Detailed review of a specific team member's assessment"""
     team_member = get_object_or_404(TeamMember, id=team_member_id)
@@ -955,7 +955,7 @@ def admin_assessment_review(request, team_member_id):
     return render(request, 'admin_assessment_review.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_quiz_list(request):
     """List all quizzes with management options"""
     quizzes = Quiz.objects.annotate(
@@ -1003,7 +1003,7 @@ def admin_quiz_list(request):
     return render(request, 'admin_quiz_list.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_quiz_create(request):
     """Create a new quiz"""
     if request.method == 'POST':
@@ -1037,7 +1037,7 @@ def admin_quiz_create(request):
     return render(request, 'admin_quiz_form.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_quiz_edit(request, quiz_id):
     """Edit an existing quiz"""
     quiz = get_object_or_404(Quiz, id=quiz_id)
@@ -1068,7 +1068,7 @@ def admin_quiz_edit(request, quiz_id):
     return render(request, 'admin_quiz_form.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_quiz_delete(request, quiz_id):
     """Delete a quiz"""
     quiz = get_object_or_404(Quiz, id=quiz_id)
@@ -1091,7 +1091,7 @@ def admin_quiz_delete(request, quiz_id):
     return render(request, 'admin_quiz_confirm_delete.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_quiz_questions(request, quiz_id):
     """Manage all questions for a quiz"""
     quiz = get_object_or_404(Quiz, id=quiz_id)
@@ -1122,7 +1122,7 @@ def admin_quiz_questions(request, quiz_id):
     return render(request, 'admin_quiz_questions.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_question_create(request, quiz_id):
     """Create a new question for a quiz"""
     quiz = get_object_or_404(Quiz, id=quiz_id)
@@ -1152,7 +1152,7 @@ def admin_question_create(request, quiz_id):
     return render(request, 'admin_question_form.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_question_edit(request, question_id):
     """Edit an existing question"""
     question = get_object_or_404(QuizQuestion, id=question_id)
@@ -1174,7 +1174,7 @@ def admin_question_edit(request, question_id):
     return render(request, 'admin_question_form.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_question_delete(request, question_id):
     """Delete a question"""
     question = get_object_or_404(QuizQuestion, id=question_id)
@@ -1751,7 +1751,7 @@ def customer_shared_quiz_preview(request, token, quiz_id):
 # CUSTOM ADMIN DASHBOARD VIEWS
 # ============================================================
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_dashboard(request):
     """Assessment-focused admin dashboard (original)"""
     from datetime import timedelta
@@ -1816,7 +1816,7 @@ def admin_dashboard(request):
     return render(request, 'admin_dashboard.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_intake_requests(request):
     """List intake requests for superusers"""
     from .models import CustomerIntakeRequest
@@ -1835,7 +1835,7 @@ def admin_intake_requests(request):
     return render(request, 'admin_intake_requests.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_intake_request_detail(request, intake_id):
     """Detail view and actions for a single intake request"""
     from .models import CustomerIntakeRequest
@@ -1876,7 +1876,7 @@ def admin_intake_request_detail(request, intake_id):
     return render(request, 'admin_intake_request_detail.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_customer_dashboard(request):
     """Customer management admin dashboard (new)"""
     customers = Customer.objects.all().order_by('-created_at')
@@ -1900,7 +1900,7 @@ def admin_customer_dashboard(request):
     return render(request, 'admin_dashboard_custom.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_customers_list(request):
     """List all customers with search and filter"""
     customers = Customer.objects.all().order_by('-created_at')
@@ -1938,7 +1938,7 @@ def admin_customers_list(request):
     return render(request, 'admin_customers_list.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_customer_detail(request, customer_id):
     """View and edit customer details, assign developers"""
     customer = get_object_or_404(Customer, id=customer_id)
@@ -2029,7 +2029,7 @@ def admin_customer_detail(request, customer_id):
     return render(request, 'admin_customer_detail.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_contract_create(request, customer_id):
     """Create a new contract for a customer"""
     customer = get_object_or_404(Customer, id=customer_id)
@@ -2106,7 +2106,7 @@ def admin_contract_create(request, customer_id):
     return render(request, 'admin_contract_create.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_contract_edit(request, contract_id):
     """Edit an existing contract"""
     contract = get_object_or_404(Contract, id=contract_id)
@@ -2148,7 +2148,7 @@ def admin_contract_edit(request, contract_id):
     return render(request, 'admin_contract_edit.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_contract_delete(request, contract_id):
     """Delete a contract"""
     if request.method != 'POST':
@@ -2163,8 +2163,8 @@ def admin_contract_delete(request, contract_id):
     return redirect('onboarding:admin_customer_detail', customer_id=customer_id)
 
 
-@user_passes_test(lambda u: u.is_superuser)
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(lambda u: u.is_staff)
 def admin_developers_list(request):
     """Unified admin developer management with search, filters, and approval"""
     from onboarding.models import DeveloperTeam, DeveloperTrainingEnrollment, Quiz
@@ -2259,7 +2259,7 @@ def admin_developers_list(request):
     return render(request, 'admin_developers_list.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_developer_profile(request, developer_id):
     """View full developer profile with assessment results and approval options"""
     developer = get_object_or_404(TeamMember, id=developer_id)
@@ -2672,7 +2672,7 @@ def sync_github_skills(request, developer_id):
     return redirect('onboarding:admin_developer_profile', developer_id=developer.id)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_developer_remove(request, developer_id):
     """Remove a developer from the community (fully delete from system)"""
     from onboarding.utils import send_community_revocation_email
@@ -2716,7 +2716,7 @@ def admin_developer_remove(request, developer_id):
     return redirect('onboarding:admin_developers_list')
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_customer_create(request):
     """Create a new customer"""
     if request.method == 'POST':
@@ -2757,7 +2757,7 @@ def admin_customer_create(request):
     return render(request, 'admin_customer_create.html', {})
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_customer_delete(request, customer_id):
     """Delete a customer"""
     customer = get_object_or_404(Customer, id=customer_id)
@@ -2919,7 +2919,7 @@ def labs_unlink(request):
 
 # ==================== APPROVAL WORKFLOW VIEWS ====================
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_approval_queue(request):
     """Admin view of developers - shows all with pending first"""
     developers = TeamMember.objects.filter(
@@ -2988,7 +2988,7 @@ def admin_approval_queue(request):
     })
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_approve_community(request, developer_id):
     """Approve developer for community"""
     if request.method != 'POST':
@@ -3518,7 +3518,7 @@ def certificate_download(request, cert_id):
             return response
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_certification_levels(request):
     """Manage certification levels"""
     from .models import CertificationLevel
@@ -3531,7 +3531,7 @@ def admin_certification_levels(request):
     return render(request, 'admin_certification_levels.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_certification_create(request):
     """Create a new certification level"""
     from .models import CertificationLevel, TeamTraining, TrainingSection, Quiz
@@ -3586,7 +3586,7 @@ def admin_certification_create(request):
     return render(request, 'admin_certification_create.html', context)
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_issue_certificate(request, developer_id):
     """Issue a certificate to a developer"""
     from .models import DeveloperCertification, CertificationLevel
@@ -4936,7 +4936,7 @@ def admin_forge_request_review(request, request_id):
 # ==================== COMMUNITY NEWSLETTER ====================
 
 @login_required
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_community_newsletter(request):
     """Admin view to compose and send community newsletter"""
     from onboarding.models import CommunityNewsletter
@@ -5068,7 +5068,7 @@ def admin_community_newsletter(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_newsletter_detail(request, newsletter_id):
     """View newsletter details including recipient status"""
     from onboarding.models import CommunityNewsletter, NewsletterRecipient
@@ -5095,7 +5095,7 @@ def admin_newsletter_detail(request, newsletter_id):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_newsletter_process(request, newsletter_id):
     """Process a batch of pending newsletter emails with rate limiting"""
     from onboarding.models import CommunityNewsletter, NewsletterRecipient
@@ -5197,7 +5197,7 @@ def admin_newsletter_process(request, newsletter_id):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_newsletter_status(request, newsletter_id):
     """Get current newsletter status (for AJAX polling)"""
     from onboarding.models import CommunityNewsletter
@@ -5220,7 +5220,7 @@ def admin_newsletter_status(request, newsletter_id):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_newsletter_resend(request, newsletter_id):
     """Mark failed recipients as pending for retry"""
     from onboarding.models import CommunityNewsletter, NewsletterRecipient
@@ -5244,7 +5244,7 @@ def admin_newsletter_resend(request, newsletter_id):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_newsletter_history(request):
     """View all sent newsletters (admin view with delete option)"""
     from onboarding.models import CommunityNewsletter
@@ -5257,7 +5257,7 @@ def admin_newsletter_history(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_newsletter_delete(request, newsletter_id):
     """Delete a newsletter (superuser only)"""
     from onboarding.models import CommunityNewsletter
@@ -5274,7 +5274,7 @@ def admin_newsletter_delete(request, newsletter_id):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_email_analytics(request):
     """View email analytics from MailerSend API (superadmin only)"""
     from onboarding.utils import (
@@ -5356,7 +5356,7 @@ def admin_email_analytics(request):
 # ==================== API Key Management ====================
 
 @login_required
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_api_keys(request):
     """Admin view for managing API keys"""
     from onboarding.models import APIKey
@@ -5389,7 +5389,7 @@ def admin_api_keys(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_api_keys_generate(request):
     """Generate a new inbound API key"""
     from onboarding.models import APIKey
@@ -5414,7 +5414,7 @@ def admin_api_keys_generate(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_api_keys_store(request):
     """Store an outbound API key from a partner"""
     from onboarding.models import APIKey
@@ -5443,7 +5443,7 @@ def admin_api_keys_store(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_staff)
 def admin_api_keys_revoke(request, key_id):
     """Revoke/deactivate an API key"""
     from onboarding.models import APIKey
@@ -5601,7 +5601,7 @@ def developer_public_profile(request, slug):
     """
     from .models import (
         DeveloperPublicProfile, TeamMember, DeveloperBadge, 
-        DeveloperCertification, TechnologySkill
+        DeveloperCertification, TechnologySkill, DeveloperCertificationProgress
     )
     
     # Get profile by slug
@@ -5623,22 +5623,44 @@ def developer_public_profile(request, slug):
             developer=developer
         ).select_related('badge').order_by('-awarded_at')
     
-    # Get certifications if profile allows
+    # Get certifications if profile allows (both old and new community certs)
     certifications = []
+    community_certifications = []
     highest_certification = None
+    highest_community_level = 0
+    
     if profile.show_certifications:
+        # Old-style certifications
         certifications = DeveloperCertification.objects.filter(
             developer=developer,
             is_revoked=False
         ).select_related('certification_level').order_by('-issued_at')
         
-        # Find highest certification level
+        # Find highest old certification level
         if certifications:
             level_order = {'junior': 1, 'intermediate': 2, 'senior': 3, 'expert': 4, 'specialty': 5}
             highest_certification = max(
                 certifications, 
                 key=lambda c: level_order.get(c.certification_level.level_type, 0)
             )
+        
+        # New community certifications (completed progress records)
+        community_progress = DeveloperCertificationProgress.objects.filter(
+            developer=developer,
+            status='completed'
+        ).select_related('certification_level', 'certification_level__track', 'issued_certificate')
+        
+        for progress in community_progress:
+            community_certifications.append({
+                'progress': progress,
+                'level': progress.certification_level,
+                'track': progress.certification_level.track,
+                'certificate': progress.issued_certificate,
+                'completed_at': progress.completed_at,
+            })
+            # Track highest level
+            if progress.certification_level.level > highest_community_level:
+                highest_community_level = progress.certification_level.level
     
     # Get skills if profile allows
     skills = []
@@ -5649,7 +5671,9 @@ def developer_public_profile(request, slug):
         skills = [ts.get_technology_display() for ts in tech_skills]
     
     # Check if developer is verified (has at least one valid certification)
-    is_verified = any(c.is_valid for c in certifications) if certifications else False
+    is_verified = (
+        any(c.is_valid for c in certifications) if certifications else False
+    ) or len(community_certifications) > 0
     
     context = {
         'profile': profile,
@@ -5657,7 +5681,9 @@ def developer_public_profile(request, slug):
         'github_username': github_username,
         'badges': badges,
         'certifications': certifications,
+        'community_certifications': community_certifications,
         'highest_certification': highest_certification,
+        'highest_community_level': highest_community_level,
         'skills': skills,
         'is_verified': is_verified,
     }
@@ -5788,7 +5814,99 @@ def manage_public_profile(request):
         }
     )
     
+    # Check if user has GitHub OAuth token from social auth
+    github_oauth_token = None
+    try:
+        from social_django.models import UserSocialAuth
+        social_auth = UserSocialAuth.objects.filter(user=request.user, provider='github').first()
+        if social_auth and social_auth.extra_data:
+            github_oauth_token = social_auth.extra_data.get('access_token')
+    except Exception:
+        pass
+    
     if request.method == 'POST':
+        action = request.POST.get('action', 'save')
+        
+        if action == 'sync_github':
+            # Sync GitHub stats
+            github_username = None
+            if team_member.github_account:
+                github_url = team_member.github_account.rstrip('/')
+                if 'github.com/' in github_url:
+                    github_username = github_url.split('github.com/')[-1].split('/')[0]
+            
+            if github_username:
+                try:
+                    import requests
+                    from django.utils import timezone
+                    
+                    # Use OAuth token if available for better rate limits
+                    headers = {'Accept': 'application/vnd.github.v3+json'}
+                    if github_oauth_token:
+                        headers['Authorization'] = f'token {github_oauth_token}'
+                    
+                    # Fetch user data from GitHub API
+                    user_response = requests.get(
+                        f'https://api.github.com/users/{github_username}',
+                        headers=headers,
+                        timeout=10
+                    )
+                    
+                    if user_response.status_code == 200:
+                        user_data = user_response.json()
+                        profile.github_repos = user_data.get('public_repos', 0)
+                        profile.github_followers = user_data.get('followers', 0)
+                        
+                        # Fetch starred repos count (total stars received on user's repos)
+                        total_stars = 0
+                        repos_response = requests.get(
+                            f'https://api.github.com/users/{github_username}/repos?per_page=100&sort=updated',
+                            headers=headers,
+                            timeout=15
+                        )
+                        if repos_response.status_code == 200:
+                            repos = repos_response.json()
+                            total_stars = sum(repo.get('stargazers_count', 0) for repo in repos)
+                        profile.github_stars = total_stars
+                        
+                        # Get contribution stats from events
+                        events_response = requests.get(
+                            f'https://api.github.com/users/{github_username}/events/public?per_page=100',
+                            headers=headers,
+                            timeout=10
+                        )
+                        
+                        if events_response.status_code == 200:
+                            events = events_response.json()
+                            push_events = [e for e in events if e.get('type') == 'PushEvent']
+                            pr_events = [e for e in events if e.get('type') == 'PullRequestEvent']
+                            
+                            # Count commits from push events
+                            total_commits = sum(
+                                len(e.get('payload', {}).get('commits', [])) 
+                                for e in push_events
+                            )
+                            profile.github_commits = total_commits
+                            profile.github_prs = len(pr_events)
+                        
+                        profile.github_stats_updated = timezone.now()
+                        profile.save()
+                        
+                        oauth_note = " (using GitHub OAuth)" if github_oauth_token else ""
+                        messages.success(request, f"GitHub stats synced for @{github_username}!{oauth_note}")
+                    else:
+                        messages.error(request, f"Could not fetch GitHub data. Status: {user_response.status_code}")
+                        
+                except requests.RequestException as e:
+                    messages.error(request, f"Error syncing GitHub stats: {str(e)}")
+                except Exception as e:
+                    messages.error(request, f"Unexpected error: {str(e)}")
+            else:
+                messages.warning(request, "No GitHub account linked. Update your profile to add one.")
+            
+            return redirect('onboarding:manage_public_profile')
+        
+        # Regular save action
         # Update profile settings
         profile.is_public = request.POST.get('is_public') == 'on'
         profile.show_email = request.POST.get('show_email') == 'on'
@@ -5802,6 +5920,7 @@ def manage_public_profile(request):
         profile.location = request.POST.get('location', '')[:100]
         profile.website = request.POST.get('website', '')
         profile.twitter = request.POST.get('twitter', '')[:100]
+        profile.openbuild_profile_url = request.POST.get('openbuild_profile_url', '')
         profile.featured_project_url = request.POST.get('featured_project_url', '')
         profile.featured_project_description = request.POST.get('featured_project_description', '')[:255]
         
@@ -5810,17 +5929,32 @@ def manage_public_profile(request):
         return redirect('onboarding:manage_public_profile')
     
     # Get preview data
-    from .models import DeveloperBadge, DeveloperCertification
+    from .models import DeveloperBadge, DeveloperCertification, DeveloperCertificationProgress
     badges = DeveloperBadge.objects.filter(developer=team_member).select_related('badge')[:5]
     certs = DeveloperCertification.objects.filter(
         developer=team_member, is_revoked=False
     ).select_related('certification_level')[:5]
+    
+    # Get community certifications
+    community_certs = DeveloperCertificationProgress.objects.filter(
+        developer=team_member, status='completed'
+    ).select_related('certification_level', 'certification_level__track')[:5]
+    
+    # Extract GitHub username for display
+    github_username = None
+    if team_member.github_account:
+        github_url = team_member.github_account.rstrip('/')
+        if 'github.com/' in github_url:
+            github_username = github_url.split('github.com/')[-1].split('/')[0]
     
     context = {
         'profile': profile,
         'developer': team_member,
         'badges': badges,
         'certifications': certs,
+        'community_certifications': community_certs,
+        'github_username': github_username,
+        'has_github_oauth': github_oauth_token is not None,
         'profile_url': request.build_absolute_uri(f'/onboarding/profile/{profile.slug}/'),
     }
     
@@ -6254,4 +6388,129 @@ def certification_project_submit(request, project_id):
     }
     
     return render(request, 'certification_project_submit.html', context)
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def invite_to_certification(request):
+    """
+    Allow superusers to invite developers to start their certification journey.
+    Shows a dropdown of developers without active certifications.
+    """
+    from .models import (
+        TeamMember, CertificationTrack, DeveloperCertificationProgress,
+        CertificationInvitation
+    )
+    
+    # Get developers who don't have any certification progress
+    developers_with_progress = DeveloperCertificationProgress.objects.values_list('developer_id', flat=True).distinct()
+    
+    # Get all team members who haven't started any certification
+    available_developers = TeamMember.objects.filter(
+        approved=True
+    ).exclude(
+        id__in=developers_with_progress
+    ).select_related('user').order_by('first_name', 'last_name')
+    
+    # Get active certification tracks
+    tracks = CertificationTrack.objects.filter(is_active=True).order_by('order')
+    
+    # Get recent invitations
+    recent_invitations = CertificationInvitation.objects.select_related(
+        'developer', 'invited_by', 'suggested_track'
+    ).order_by('-sent_at')[:10]
+    
+    if request.method == 'POST':
+        developer_id = request.POST.get('developer_id')
+        track_id = request.POST.get('track_id')
+        personal_message = request.POST.get('personal_message', '').strip()
+        
+        if not developer_id:
+            messages.error(request, 'Please select a developer to invite.')
+            return redirect('onboarding:invite_to_certification')
+        
+        try:
+            developer = TeamMember.objects.get(id=developer_id)
+        except TeamMember.DoesNotExist:
+            messages.error(request, 'Developer not found.')
+            return redirect('onboarding:invite_to_certification')
+        
+        suggested_track = None
+        if track_id:
+            suggested_track = CertificationTrack.objects.filter(id=track_id).first()
+        
+        # Create invitation record
+        invitation = CertificationInvitation.objects.create(
+            developer=developer,
+            invited_by=request.user,
+            suggested_track=suggested_track,
+            personal_message=personal_message,
+        )
+        
+        # Send invitation email
+        try:
+            subject = '🎯 You\'re Invited to Start Your Buildly Certification!'
+            
+            track_info = ""
+            if suggested_track:
+                track_info = f"\n\nWe especially recommend the {suggested_track.name} track based on your skills and interests."
+            
+            personal_section = ""
+            if personal_message:
+                personal_section = f"\n\n--- Personal Message ---\n{personal_message}\n---"
+            
+            message = f"""Hi {developer.first_name},
+
+You've been personally invited to start your certification journey with the Buildly Developer Community!
+
+Certifications help you:
+✅ Validate your skills with verifiable credentials
+✅ Stand out to potential clients and employers
+✅ Contribute to peer reviews and help others grow
+✅ Earn badges and build your professional portfolio
+{track_info}
+{personal_section}
+
+Get Started Now: https://collab.buildly.io/onboarding/certifications/
+
+We have three certification tracks:
+🎨 Frontend Developer - Master modern UI/UX skills
+⚙️ Backend Developer - Build robust APIs and services  
+📋 Product Manager - Lead with RAD methodology
+
+Each track has 3 levels, and you can work at your own pace. Complete resources, pass quizzes, and submit projects for peer review to earn your certifications.
+
+Questions? Reply to this email or reach out in our community channels.
+
+Best regards,
+The Buildly Team
+"""
+            
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=None,  # Uses DEFAULT_FROM_EMAIL
+                recipient_list=[developer.email],
+                fail_silently=False,
+            )
+            
+            invitation.email_sent = True
+            invitation.save()
+            
+            messages.success(request, f'✉️ Invitation sent to {developer.first_name} {developer.last_name} ({developer.email})')
+            
+        except Exception as e:
+            invitation.email_error = str(e)
+            invitation.save()
+            messages.warning(request, f'Invitation created but email failed: {str(e)}')
+        
+        return redirect('onboarding:invite_to_certification')
+    
+    context = {
+        'available_developers': available_developers,
+        'tracks': tracks,
+        'recent_invitations': recent_invitations,
+    }
+    
+    return render(request, 'admin_invite_certification.html', context)
 

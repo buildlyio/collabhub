@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ developer.first_name }} {{ developer.last_name }} - Open Build Developer</title>
+    <title>{{ developer.first_name }} {{ developer.last_name }} - Buildly Developer</title>
     
     <!-- SEO Meta Tags -->
     <meta name="description" content="{{ profile.headline|default:developer.bio|truncatewords:30 }}">
@@ -12,15 +12,15 @@
     
     <!-- Open Graph / Social Sharing -->
     <meta property="og:type" content="profile">
-    <meta property="og:title" content="{{ developer.first_name }} {{ developer.last_name }} - Open Build Developer">
-    <meta property="og:description" content="{{ profile.headline|default:'Open Build Certified Developer' }}">
+    <meta property="og:title" content="{{ developer.first_name }} {{ developer.last_name }} - Buildly Certified Developer">
+    <meta property="og:description" content="{{ profile.headline|default:'Buildly Certified Developer' }}">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
-    <meta property="og:image" content="{% if developer.github_account %}https://github.com/{{ github_username }}.png{% else %}https://www.open.build/assets/img/OPEN-BUILD-LOGO.png{% endif %}">
+    <meta property="og:image" content="{% if developer.github_account %}https://github.com/{{ github_username }}.png{% else %}{% static 'img/buildly-logo.png' %}{% endif %}">
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="{{ developer.first_name }} {{ developer.last_name }}">
-    <meta name="twitter:description" content="{{ profile.headline|default:'Open Build Certified Developer' }}">
+    <meta name="twitter:description" content="{{ profile.headline|default:'Buildly Certified Developer' }}">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -28,9 +28,10 @@
             theme: {
                 extend: {
                     colors: {
-                        'open-blue': '#3B82F6',
-                        'open-green': '#10B981',
-                        'open-purple': '#8B5CF6',
+                        'buildly-blue': '#3B82F6',
+                        'buildly-green': '#10B981',
+                        'buildly-purple': '#8B5CF6',
+                        'buildly-orange': '#F97316',
                     }
                 }
             }
@@ -53,13 +54,19 @@
     <!-- Navigation -->
     <nav class="fixed top-0 left-0 right-0 bg-slate-900/90 backdrop-blur-sm z-50 border-b border-slate-700">
         <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-            <a href="https://www.open.build" class="flex items-center space-x-2">
-                <img src="https://www.open.build/assets/img/OPEN-BUILD-LOGO.png" alt="Open Build" class="h-8">
-                <span class="font-bold text-lg">Open Build</span>
+            <a href="https://buildly.io" class="flex items-center space-x-2">
+                <img src="{% static 'img/buildly-logo.png' %}" alt="Buildly" class="h-8" onerror="this.src='https://buildly.io/wp-content/uploads/2023/01/buildly-logo-white.png'">
+                <span class="font-bold text-lg">Buildly</span>
             </a>
             <div class="flex items-center space-x-4">
                 <a href="{% url 'onboarding:verification_home' %}" class="text-slate-300 hover:text-white text-sm">Verify Credentials</a>
-                <a href="https://www.open.build/portfolios" class="text-slate-300 hover:text-white text-sm">All Portfolios</a>
+                <a href="{% url 'onboarding:all_developer_profiles' %}" class="text-slate-300 hover:text-white text-sm">All Developers</a>
+                {% if profile.openbuild_profile_url %}
+                <a href="{{ profile.openbuild_profile_url }}" target="_blank" class="flex items-center space-x-1 text-buildly-green hover:text-green-400 text-sm">
+                    <span>Open.Build Profile</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                </a>
+                {% endif %}
             </div>
         </div>
     </nav>
@@ -69,11 +76,18 @@
             <!-- Profile Header Card -->
             <div class="bg-slate-800/50 rounded-2xl border border-slate-700 overflow-hidden mb-8">
                 <div class="bg-gradient-to-r from-open-blue via-open-purple to-open-green h-32 relative">
-                    {% if highest_certification %}
+                    {% if highest_certification or highest_community_level %}
                     <div class="absolute top-4 right-4 flex items-center space-x-2">
+                        {% if highest_community_level %}
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/20 backdrop-blur-sm">
+                            Level {{ highest_community_level }} Certified
+                        </span>
+                        {% endif %}
+                        {% if highest_certification %}
                         <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/20 backdrop-blur-sm">
                             {{ highest_certification.certification_level.get_level_type_display }}
                         </span>
+                        {% endif %}
                         <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/20 backdrop-blur-sm">
                             Open Build Certified
                         </span>
@@ -138,7 +152,7 @@
                         
                         <!-- Share Button -->
                         <div class="flex items-center space-x-2">
-                            <button onclick="copyProfileLink()" class="share-btn flex items-center space-x-2 px-4 py-2 bg-open-blue hover:bg-blue-600 rounded-lg text-sm font-medium">
+                            <button onclick="copyProfileLink()" class="share-btn flex items-center space-x-2 px-4 py-2 bg-buildly-blue hover:bg-blue-600 rounded-lg text-sm font-medium">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                                 <span>Share Profile</span>
                             </button>
@@ -153,24 +167,40 @@
                     <!-- GitHub Stats -->
                     {% if profile.show_github_stats and github_username %}
                     <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
-                        <h3 class="flex items-center text-lg font-semibold mb-4">
-                            <svg class="w-5 h-5 mr-2 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                            GitHub Stats
-                        </h3>
-                        <div class="grid grid-cols-3 gap-4 text-center">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="flex items-center text-lg font-semibold">
+                                <svg class="w-5 h-5 mr-2 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                                GitHub Stats
+                            </h3>
+                            <a href="https://github.com/{{ github_username }}" target="_blank" class="text-xs text-slate-400 hover:text-white">@{{ github_username }}</a>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-center mb-4">
+                            <div class="bg-slate-700/50 rounded-lg p-3">
+                                <div class="text-2xl font-bold text-buildly-blue">{{ profile.github_repos|default:"—" }}</div>
+                                <div class="text-xs text-slate-400">Repositories</div>
+                            </div>
+                            <div class="bg-slate-700/50 rounded-lg p-3">
+                                <div class="text-2xl font-bold text-buildly-green">{{ profile.github_followers|default:"—" }}</div>
+                                <div class="text-xs text-slate-400">Followers</div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3 text-center">
                             <div>
-                                <div class="text-2xl font-bold text-open-blue">{{ profile.github_commits|default:"—" }}</div>
+                                <div class="text-lg font-bold text-buildly-purple">{{ profile.github_commits|default:"—" }}</div>
                                 <div class="text-xs text-slate-400">Commits</div>
                             </div>
                             <div>
-                                <div class="text-2xl font-bold text-open-green">{{ profile.github_repos|default:"—" }}</div>
-                                <div class="text-xs text-slate-400">Repos</div>
-                            </div>
-                            <div>
-                                <div class="text-2xl font-bold text-open-purple">{{ profile.github_prs|default:"—" }}</div>
+                                <div class="text-lg font-bold text-buildly-orange">{{ profile.github_prs|default:"—" }}</div>
                                 <div class="text-xs text-slate-400">PRs</div>
                             </div>
+                            <div>
+                                <div class="text-lg font-bold text-yellow-400">{{ profile.github_stars|default:"—" }}</div>
+                                <div class="text-xs text-slate-400">Stars</div>
+                            </div>
                         </div>
+                        {% if profile.github_stats_updated %}
+                        <p class="text-xs text-slate-500 mt-3 text-center">Updated {{ profile.github_stats_updated|timesince }} ago</p>
+                        {% endif %}
                     </div>
                     {% endif %}
                     
@@ -275,6 +305,50 @@
                                         <span>Verify</span>
                                         <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                                     </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Community Certifications (New System) -->
+                    {% if community_certifications and profile.show_certifications %}
+                    <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="flex items-center text-lg font-semibold">
+                                <svg class="w-5 h-5 mr-2 text-open-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                                Community Certifications
+                            </h3>
+                            <span class="text-sm text-slate-400">{{ community_certifications|length }} certification{{ community_certifications|length|pluralize }}</span>
+                        </div>
+                        <div class="space-y-4">
+                            {% for comm_cert in community_certifications %}
+                            <div class="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg border border-slate-600 hover:border-slate-500 transition">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold" 
+                                         style="background-color: {{ comm_cert.level.badge_color }};">
+                                        {{ comm_cert.track.icon }}
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold">{{ comm_cert.level.name }}</h4>
+                                        <p class="text-sm text-slate-400">
+                                            {{ comm_cert.track.name }} • Level {{ comm_cert.level.level }}
+                                            {% if comm_cert.completed_at %}
+                                            • Completed {{ comm_cert.completed_at|date:"M d, Y" }}
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="px-2 py-1 bg-green-500/20 text-green-400 text-xs font-medium rounded-full">✓ Certified</span>
+                                    {% if comm_cert.certificate %}
+                                    <a href="{% url 'onboarding:verify_certificate' comm_cert.certificate.certificate_hash %}" target="_blank" 
+                                       class="text-open-blue hover:text-blue-400 text-sm flex items-center">
+                                        <span>Verify</span>
+                                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                    </a>
+                                    {% endif %}
                                 </div>
                             </div>
                             {% endfor %}

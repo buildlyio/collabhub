@@ -92,8 +92,8 @@ def newsletter_reminder(request):
         'show_newsletter_reminder': False,
     }
     
-    # Only check for superusers
-    if request.user.is_authenticated and request.user.is_superuser:
+    # Only check for staff users
+    if request.user.is_authenticated and request.user.is_staff:
         try:
             from onboarding.models import CommunityNewsletter
             context['show_newsletter_reminder'] = CommunityNewsletter.should_show_reminder()

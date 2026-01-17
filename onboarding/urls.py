@@ -115,6 +115,9 @@ urlpatterns = [
     path('certifications/level/<int:level_id>/complete/', views.complete_certification, name='complete_certification'),
     path('certifications/project/<int:project_id>/submit/', views.certification_project_submit, name='certification_project_submit'),
     
+    # Admin: Certification Invitations (superuser only)
+    path('admin/certifications/invite/', views.invite_to_certification, name='invite_to_certification'),
+    
     # Verification (Public)
     path('verify/', views.verification_home, name='verification_home'),
     path('verify/contract/<str:contract_hash>/', views.verify_contract, name='verify_contract'),

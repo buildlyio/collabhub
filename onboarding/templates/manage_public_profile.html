@@ -61,6 +61,72 @@
                            class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
                 </label>
                 
+                <!-- GitHub Stats Sync Box -->
+                {% if github_username %}
+                <div class="p-4 bg-gray-800 rounded-lg text-white">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                            </svg>
+                            <span class="font-medium">@{{ github_username }}</span>
+                            {% if has_github_oauth %}
+                            <span class="text-xs bg-green-600 px-2 py-0.5 rounded-full">OAuth ✓</span>
+                            {% endif %}
+                        </div>
+                        <button type="submit" name="action" value="sync_github"
+                                class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 font-medium">
+                            🔄 Sync GitHub Stats
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-center mb-3">
+                        <div>
+                            <span class="text-2xl font-bold text-blue-400">{{ profile.github_repos|default:"—" }}</span>
+                            <p class="text-xs text-gray-400">Repositories</p>
+                        </div>
+                        <div>
+                            <span class="text-2xl font-bold text-green-400">{{ profile.github_followers|default:"—" }}</span>
+                            <p class="text-xs text-gray-400">Followers</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                            <span class="text-xl font-bold text-purple-400">{{ profile.github_commits|default:"—" }}</span>
+                            <p class="text-xs text-gray-400">Commits</p>
+                        </div>
+                        <div>
+                            <span class="text-xl font-bold text-orange-400">{{ profile.github_prs|default:"—" }}</span>
+                            <p class="text-xs text-gray-400">PRs</p>
+                        </div>
+                        <div>
+                            <span class="text-xl font-bold text-yellow-400">{{ profile.github_stars|default:"—" }}</span>
+                            <p class="text-xs text-gray-400">Stars</p>
+                        </div>
+                    </div>
+                    {% if profile.github_stats_updated %}
+                    <p class="text-xs text-gray-400 mt-2 text-center">Last synced: {{ profile.github_stats_updated|date:"M d, Y H:i" }}</p>
+                    {% else %}
+                    <p class="text-xs text-gray-400 mt-2 text-center">Click "Sync GitHub Stats" to fetch your latest data</p>
+                    {% endif %}
+                    {% if not has_github_oauth %}
+                    <div class="mt-3 pt-3 border-t border-gray-700">
+                        <a href="{% url 'social:begin' 'github' %}?next={% url 'onboarding:manage_public_profile' %}" 
+                           class="text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                            Connect GitHub OAuth for better stats sync
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p class="text-sm text-yellow-800">
+                        <strong>No GitHub account linked.</strong> 
+                        <a href="{% url 'onboarding:edit_profile' %}" class="text-yellow-700 underline">Update your profile</a> to add your GitHub URL.
+                    </p>
+                </div>
+                {% endif %}
+                
                 <label class="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
                     <div>
                         <span class="font-medium text-gray-900">Show Certifications</span>
@@ -140,6 +206,17 @@
                                class="flex-1 px-4 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500">
                     </div>
                 </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Open.Build Profile URL
+                        <span class="ml-1 text-xs text-gray-400">(optional)</span>
+                    </label>
+                    <input type="url" name="openbuild_profile_url" value="{{ profile.openbuild_profile_url }}"
+                           placeholder="https://open.build/profile/username"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <p class="mt-1 text-xs text-gray-500">Link to your open.build developer profile (displayed on your public page)</p>
+                </div>
             </div>
         </div>
 
@@ -184,7 +261,7 @@
         </div>
 
         <!-- Current Badges & Certs Preview -->
-        {% if badges or certifications %}
+        {% if badges or certifications or community_certifications %}
         <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
             <h3 class="font-bold text-gray-900 mb-4">Your Achievements</h3>
             
@@ -196,6 +273,23 @@
                     <div class="flex items-center px-3 py-2 bg-white rounded-lg border border-gray-200">
                         <span class="text-2xl mr-2">{{ dev_badge.badge.icon }}</span>
                         <span class="text-sm font-medium">{{ dev_badge.badge.name }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if community_certifications %}
+            <div class="mb-4">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">Community Certifications</h4>
+                <div class="flex flex-wrap gap-3">
+                    {% for progress in community_certifications %}
+                    <div class="flex items-center px-3 py-2 bg-white rounded-lg border border-gray-200">
+                        <span class="text-xl mr-2">{{ progress.certification_level.track.icon }}</span>
+                        <div>
+                            <span class="text-sm font-medium">{{ progress.certification_level.name }}</span>
+                            <span class="text-xs text-gray-500 block">Level {{ progress.certification_level.level }}</span>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -215,6 +309,21 @@
                 </div>
             </div>
             {% endif %}
+            
+            {% if not badges and not certifications and not community_certifications %}
+            <p class="text-gray-500 text-sm">No achievements yet. Start your <a href="{% url 'onboarding:certification_journey' %}" class="text-blue-600 hover:underline">certification journey</a> to earn badges and certificates!</p>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="bg-blue-50 rounded-lg p-6 border border-blue-200">
+            <h3 class="font-bold text-blue-900 mb-2">🎯 Start Your Certification Journey</h3>
+            <p class="text-sm text-blue-800 mb-3">
+                Earn badges and certifications to showcase your skills on your public profile.
+            </p>
+            <a href="{% url 'onboarding:certification_journey' %}" 
+               class="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                Get Started →
+            </a>
         </div>
         {% endif %}
 

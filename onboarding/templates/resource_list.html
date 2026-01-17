@@ -11,7 +11,7 @@
                 <h1 class="text-3xl md:text-4xl font-bold mb-4">Developer Resources</h1>
                 <p class="text-lg opacity-90">Explore our curated collection of tools, guides, and materials to enhance your development journey.</p>
             </div>
-            {% if user.is_superuser %}
+            {% if user.is_staff %}
             <a href="{% url 'onboarding:resource_create' %}" class="inline-flex items-center px-4 py-2 bg-white text-blue-600 rounded-md hover:bg-gray-100 transition-colors font-semibold">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -42,8 +42,8 @@
                 </select>
             </div>
             
-            <!-- Customer Filter (for superusers) -->
-            {% if user.is_superuser and customers %}
+            <!-- Customer Filter (for staff) -->
+            {% if user.is_staff and customers %}
             <div class="min-w-[180px]">
                 <select name="customer" class="w-full px-3 py-2 border border-gray-300 rounded text-sm">
                     <option value="">All Resources</option>
@@ -124,7 +124,7 @@
                     </a>
                     {% endif %}
                     
-                    {% if user.is_superuser %}
+                    {% if user.is_staff %}
                     <div class="flex gap-2 mt-2 pt-2 border-t border-gray-200">
                         <a href="{% url 'onboarding:resource_edit' resource.id %}"
                            class="flex-1 inline-flex items-center justify-center px-3 py-1.5 bg-yellow-50 text-yellow-700 rounded-md hover:bg-yellow-100 transition-colors text-sm">

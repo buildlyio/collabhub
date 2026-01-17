@@ -2830,14 +2830,23 @@ class DeveloperPublicProfile(models.Model):
     website = models.URLField(blank=True)
     twitter = models.CharField(max_length=100, blank=True, help_text="Twitter/X username")
     
+    # Open.build profile link
+    openbuild_profile_url = models.URLField(blank=True, help_text="Your open.build profile URL")
+    
     # Featured content
     featured_project_url = models.URLField(blank=True, help_text="GitHub URL of featured repo")
     featured_project_description = models.CharField(max_length=255, blank=True)
+    
+    # GitHub OAuth integration
+    github_access_token = models.CharField(max_length=255, blank=True, help_text="GitHub OAuth access token for API calls")
+    github_token_updated = models.DateTimeField(null=True, blank=True)
     
     # GitHub stats (cached)
     github_commits = models.PositiveIntegerField(default=0)
     github_repos = models.PositiveIntegerField(default=0)
     github_prs = models.PositiveIntegerField(default=0)
+    github_followers = models.PositiveIntegerField(default=0)
+    github_stars = models.PositiveIntegerField(default=0)
     github_stats_updated = models.DateTimeField(null=True, blank=True)
     
     # Profile slug for URL
@@ -2878,11 +2887,61 @@ class DeveloperPublicProfile(models.Model):
 
 class DeveloperPublicProfileAdmin(admin.ModelAdmin):
     list_display = ('developer', 'slug', 'headline', 'is_public', 'show_github_stats', 
-                   'github_commits', 'github_repos')
+                   'github_commits', 'github_repos', 'github_followers')
     list_filter = ('is_public', 'show_github_stats', 'show_certifications', 'openbuild_synced')
     search_fields = ('developer__first_name', 'developer__last_name', 'headline', 'slug')
     raw_id_fields = ('developer',)
     prepopulated_fields = {'slug': ('developer',)}
-    readonly_fields = ('created_at', 'updated_at', 'github_stats_updated')
+    readonly_fields = ('created_at', 'updated_at', 'github_stats_updated', 'github_token_updated')
 
 admin.site.register(DeveloperPublicProfile, DeveloperPublicProfileAdmin)
+
+
+class CertificationInvitation(models.Model):
+    """
+    Tracks certification invitations sent by admins to developers.
+    Allows superusers to invite developers to start their certification journey.
+    """
+    STATUS_CHOICES = [
+        ('sent', 'Sent'),
+        ('opened', 'Opened'),
+        ('started', 'Started'),
+        ('expired', 'Expired'),
+    ]
+    
+    developer = models.ForeignKey(TeamMember, on_delete=models.CASCADE, related_name='certification_invitations')
+    invited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='sent_cert_invitations')
+    
+    # Optional: specific track/level to recommend
+    suggested_track = models.ForeignKey(CertificationTrack, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # Personal message from admin
+    personal_message = models.TextField(blank=True, help_text="Personal message to include in the invitation email")
+    
+    # Status tracking
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='sent')
+    
+    # Timestamps
+    sent_at = models.DateTimeField(auto_now_add=True)
+    opened_at = models.DateTimeField(null=True, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    
+    # Email tracking
+    email_sent = models.BooleanField(default=False)
+    email_error = models.TextField(blank=True)
+    
+    class Meta:
+        ordering = ['-sent_at']
+    
+    def __str__(self):
+        return f"Invite to {self.developer.first_name} {self.developer.last_name} ({self.status})"
+
+
+class CertificationInvitationAdmin(admin.ModelAdmin):
+    list_display = ('developer', 'invited_by', 'suggested_track', 'status', 'sent_at', 'email_sent')
+    list_filter = ('status', 'email_sent', 'suggested_track')
+    search_fields = ('developer__first_name', 'developer__last_name', 'developer__email')
+    raw_id_fields = ('developer',)
+    readonly_fields = ('sent_at', 'opened_at', 'started_at')
+
+admin.site.register(CertificationInvitation, CertificationInvitationAdmin)

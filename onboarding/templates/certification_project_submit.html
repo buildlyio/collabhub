@@ -108,7 +108,7 @@
                 <input type="text" 
                        id="title" 
                        name="title" 
-                       value="{{ existing_submission.title|default:project.title }}"
+                       value="{% if existing_submission %}{{ existing_submission.title }}{% else %}{{ project.title }}{% endif %}"
                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                        required>
             </div>
@@ -120,7 +120,7 @@
                 <input type="url" 
                        id="repo_url" 
                        name="repo_url" 
-                       value="{{ existing_submission.repo_url|default:'' }}"
+                       value="{% if existing_submission %}{{ existing_submission.repo_url }}{% endif %}"
                        placeholder="https://github.com/username/repository"
                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                        required>
@@ -134,7 +134,7 @@
                 <input type="url" 
                        id="demo_url" 
                        name="demo_url" 
-                       value="{{ existing_submission.demo_url|default:'' }}"
+                       value="{% if existing_submission %}{{ existing_submission.demo_url }}{% endif %}"
                        placeholder="https://your-demo.vercel.app"
                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                 <p class="text-xs text-gray-500 mt-1">Live demo link if applicable</p>
@@ -148,7 +148,7 @@
                           name="description" 
                           rows="4"
                           placeholder="Any additional context, challenges faced, or things you'd like feedback on..."
-                          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">{{ existing_submission.description|default:'' }}</textarea>
+                          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">{% if existing_submission %}{{ existing_submission.description }}{% endif %}</textarea>
             </div>
             
             <div class="flex items-center gap-4 pt-4">
